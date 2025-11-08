@@ -101,6 +101,19 @@ mod tests {
         assert_eq!(decode_register(0xD), Some(Register::SP));
         assert_eq!(decode_register(0xE), Some(Register::PC));
         assert_eq!(decode_register(0xF), Some(Register::F));
+        assert_eq!(decode_register(0xFF), None);
+    }
+
+    #[test]
+    fn test_invalid_instructions() {
+        assert_eq!(decode(0xF000), None);
+
+        // Control instructions
+        assert_eq!(decode(0x0F00), None);
+        // reg-reg instructions
+        assert_eq!(decode(0x1F00), None);
+        // stack instructions
+        assert_eq!(decode(0x7F00), None);
     }
 
     #[test]

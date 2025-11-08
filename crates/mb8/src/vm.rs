@@ -80,4 +80,20 @@ mod tests {
         vm.run();
         assert_eq!(vm.registers.read(Register::PC), STACK_SIZE as u16 + 4);
     }
+
+    #[test]
+    fn test_end_of_memory() {
+        let mut vm = VirtualMachine::new();
+        vm.registers.write(Register::PC, 4095);
+        vm.step();
+        assert!(vm.halted);
+    }
+
+    #[test]
+    fn test_invalid_opcode() {
+        let mut vm = VirtualMachine::new();
+        vm.load_memory(&[0xFF]);
+        vm.step();
+        assert!(vm.halted);
+    }
 }

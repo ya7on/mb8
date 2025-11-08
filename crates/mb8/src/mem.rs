@@ -145,4 +145,14 @@ mod tests {
         let (value, _) = mem.pop_u16(stack_pointer);
         assert_eq!(value, 0x3412);
     }
+
+    #[test]
+    fn test_stack() {
+        let mut mem = Memory::default();
+        let mut stack_pointer = 0;
+        stack_pointer = mem.push_u8(stack_pointer, 0x12);
+        mem.push_u8(stack_pointer, 0x34);
+
+        assert_eq!(&mem.stack()[254..256], &[0x34, 0x12]);
+    }
 }

@@ -11,6 +11,8 @@ impl VirtualMachine {
 
 #[cfg(test)]
 mod tests {
+    use mb8_isa::opcodes::Opcode;
+
     use super::*;
 
     #[test]
@@ -18,7 +20,10 @@ mod tests {
         // VM moves registers values from source register to destination register
         let mut vm = VirtualMachine::new();
         vm.registers.write(Register::R0, 42);
-        vm.mov(Register::R1, Register::R0);
+        vm.execute(&Opcode::Mov {
+            dst: Register::R1,
+            src: Register::R0,
+        });
         assert_eq!(vm.registers.read(Register::R1), 42);
     }
 }
