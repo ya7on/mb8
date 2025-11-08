@@ -133,12 +133,12 @@ Virtual machine handles the following opcodes:
         <td>Return from subroutine</td>
     </tr>
     <tr>
-        <td>LD dst addr</td>
+        <td>LD addr</td>
         <td>0x8XXX</td>
         <td>Load data from memory address XXX into R7 register</td>
     </tr>
     <tr>
-        <td>ST dst addr</td>
+        <td>ST addr</td>
         <td>0x9XXX</td>
         <td>Store data from R7 register into memory address XXX</td>
     </tr>
