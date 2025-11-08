@@ -11,7 +11,10 @@ pub fn parse_register(reg: u16) -> Option<Register> {
         0x1 => Some(Register::R1),
         0x2 => Some(Register::R2),
         0x3 => Some(Register::R3),
-        // TODO
+        0x4 => Some(Register::R4),
+        0x5 => Some(Register::R5),
+        0x6 => Some(Register::R6),
+        0x7 => Some(Register::R7),
         0xD => Some(Register::SP),
         0xE => Some(Register::PC),
         0xF => Some(Register::F),
@@ -64,15 +67,10 @@ mod tests {
         assert_eq!(parse_register(0x1), Some(Register::R1));
         assert_eq!(parse_register(0x2), Some(Register::R2));
         assert_eq!(parse_register(0x3), Some(Register::R3));
-        assert_eq!(parse_register(0x4), None); // TODO
-        assert_eq!(parse_register(0x5), None); // TODO
-        assert_eq!(parse_register(0x6), None); // TODO
-        assert_eq!(parse_register(0x7), None); // TODO
-        assert_eq!(parse_register(0x8), None); // TODO
-        assert_eq!(parse_register(0x9), None); // TODO
-        assert_eq!(parse_register(0xA), None); // TODO
-        assert_eq!(parse_register(0xB), None); // TODO
-        assert_eq!(parse_register(0xC), None); // TODO
+        assert_eq!(parse_register(0x4), Some(Register::R4));
+        assert_eq!(parse_register(0x5), Some(Register::R5));
+        assert_eq!(parse_register(0x6), Some(Register::R6));
+        assert_eq!(parse_register(0x7), Some(Register::R7));
         assert_eq!(parse_register(0xD), Some(Register::SP));
         assert_eq!(parse_register(0xE), Some(Register::PC));
         assert_eq!(parse_register(0xF), Some(Register::F));

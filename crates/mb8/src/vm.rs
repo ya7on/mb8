@@ -40,24 +40,41 @@ impl VirtualMachine {
         }
     }
 
+    pub fn step(&mut self) {
+        let pc = self.registers.read(Register::PC);
+        self.registers.write(Register::PC, pc.saturating_add(2));
+
+        if usize::from(pc) >= MEMORY_SIZE - 1 {
+            self.halted = true;
+            return;
+        }
+
+        let binary_instruction = [self.mem[pc as usize], self.mem[pc as usize + 1]];
+        let Some(opcode) = parse(u16::from_be_bytes(binary_instruction)) else {
+            self.halted = true;
+            return;
+        };
+
+        self.execute(&opcode);
+    }
+
     /// Execute a program.
     pub fn run(&mut self) {
         while !self.halted {
-            let pc = self.registers.read(Register::PC);
-            self.registers.write(Register::PC, pc.saturating_add(2));
-
-            if usize::from(pc) >= MEMORY_SIZE - 1 {
-                self.halted = true;
-                continue;
-            }
-
-            let binary_instruction = [self.mem[pc as usize], self.mem[pc as usize + 1]];
-            let Some(opcode) = parse(u16::from_le_bytes(binary_instruction)) else {
-                self.halted = true;
-                continue;
-            };
-
-            self.execute(&opcode);
+            self.step();
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_vm() {
+        let mut vm = VirtualMachine::new();
+        vm.load_memory(&[0x00, 0x00, 0x01, 0x00]);
+        vm.run();
+        assert_eq!(vm.registers.read(Register::PC), 4);
     }
 }

@@ -14,6 +14,14 @@ pub enum Register {
     R2,
     /// General-purpose register 3
     R3,
+    /// General-purpose register 4
+    R4,
+    /// General-purpose register 5
+    R5,
+    /// General-purpose register 6
+    R6,
+    /// General-purpose register 7
+    R7,
     /// Stack pointer
     SP,
     /// Program counter
