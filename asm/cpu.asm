@@ -38,6 +38,4 @@
     POP { dst: register } => 0x72 @ dst @ 0x0
     LD { addr: u12 } => 0x8 @ addr
     ST { addr: u12 } => 0x9 @ addr
-
-    ZERO { reg: register } => asm { LDI {reg} 0 }
 }
