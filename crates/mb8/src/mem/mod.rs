@@ -1,48 +1,55 @@
 use context::MemoryContext;
-use mb8_isa::{GRAPHIC_BUFFER_SIZE, MEMORY_BANK_SIZE, STACK_SIZE};
+use mb8_isa::BOTS_LIMIT;
 use regions::{
     general::GeneralRegion, graphic_buffer::GraphicBufferRegion, rom::ROMRegion, stack::StackRegion,
 };
+
+use crate::vm::Role;
 
 pub mod context;
 pub mod regions;
 
 #[derive(Debug, Default)]
 pub struct Memory {
+    current_context: Role,
     host: MemoryContext,
+    bots: [MemoryContext; BOTS_LIMIT],
 }
 
 impl Memory {
+    pub fn current_context(&mut self) -> &mut MemoryContext {
+        match self.current_context {
+            Role::Judge => &mut self.host,
+            Role::Bot(id) => &mut self.bots[id as usize],
+        }
+    }
+
+    pub fn switch_context(&mut self, role: Role) {
+        self.current_context = role;
+    }
+
+    pub fn host(&mut self) -> &mut MemoryContext {
+        &mut self.host
+    }
+
+    pub fn bot(&mut self, id: u8) -> &mut MemoryContext {
+        &mut self.bots[id as usize]
+    }
+
     pub fn stack(&mut self) -> StackRegion<'_> {
-        let ram = self.host.ram();
-        let stack_begin = 0;
-        let stack_end = stack_begin + STACK_SIZE - 1;
-        StackRegion::new(
-            stack_begin,
-            stack_end,
-            &mut ram[stack_begin as usize..=(stack_end as usize)],
-        )
+        self.current_context().stack()
     }
 
     pub fn graphic_buffer(&mut self) -> GraphicBufferRegion<'_> {
-        let ram = self.host.ram();
-        let begin = MEMORY_BANK_SIZE - GRAPHIC_BUFFER_SIZE;
-        let end = MEMORY_BANK_SIZE - 1;
-        GraphicBufferRegion::new(begin as u16, end as u16, &mut ram[begin..=end])
+        self.current_context().graphic_buffer()
     }
 
     pub fn general(&mut self) -> GeneralRegion<'_> {
-        let ram = self.host.ram();
-        let begin = STACK_SIZE;
-        let end = MEMORY_BANK_SIZE - GRAPHIC_BUFFER_SIZE - 1;
-        GeneralRegion::new(begin, end as u16, &mut ram[begin as usize..=end])
+        self.current_context().general()
     }
 
     pub fn rom(&mut self) -> ROMRegion<'_> {
-        let ram = self.host.rom();
-        let begin = 0;
-        let end = MEMORY_BANK_SIZE - 1;
-        ROMRegion::new(begin, end as u16, &mut ram[begin as usize..=end])
+        self.current_context().rom()
     }
 }
 

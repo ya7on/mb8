@@ -7,6 +7,7 @@ use crate::registers::Register;
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Syscall {
     Putc,
+    Yield,
 }
 
 /// Full list of MB8 opcodes used in VM.

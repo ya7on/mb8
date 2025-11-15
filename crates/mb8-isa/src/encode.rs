@@ -40,6 +40,7 @@ pub fn encode(opcode: &Opcode) -> u16 {
         Opcode::Sys { syscall, src } => {
             let syscall = match syscall {
                 Syscall::Putc => 0x0,
+                Syscall::Yield => 0x1,
             };
             let src = encode_register(*src);
             0x0200 | (syscall) << 4 | src as u16
@@ -164,13 +165,24 @@ mod tests {
     }
 
     #[test]
-    fn test_encode_syscall() {
+    fn test_encode_syscall_putc() {
         assert_eq!(
             encode(&Opcode::Sys {
                 syscall: Syscall::Putc,
                 src: Register::R1
             }),
             0x0201
+        );
+    }
+
+    #[test]
+    fn test_encode_syscall_yield() {
+        assert_eq!(
+            encode(&Opcode::Sys {
+                syscall: Syscall::Yield,
+                src: Register::R1
+            }),
+            0x0211
         );
     }
 

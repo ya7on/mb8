@@ -1,10 +1,7 @@
-use std::fmt::Display;
-
 use mb8_isa::{registers::Register, GENERAL_PURPOSE_REGISTERS_COUNT};
 
-/// API for accessing and manipulating the registers.
-#[derive(Debug)]
-pub struct Registers {
+#[derive(Debug, Default)]
+pub struct RegistersContext {
     /// General purpose registers.
     pub general_purpose: [u8; GENERAL_PURPOSE_REGISTERS_COUNT],
     /// Index register.
@@ -17,19 +14,7 @@ pub struct Registers {
     pub flag: u8,
 }
 
-impl Default for Registers {
-    fn default() -> Self {
-        Self {
-            general_purpose: [0; GENERAL_PURPOSE_REGISTERS_COUNT],
-            index_register: 0,
-            program_counter: 0,
-            stack_pointer: 0,
-            flag: 0,
-        }
-    }
-}
-
-impl Registers {
+impl RegistersContext {
     /// Write a value to a register.
     pub fn write(&mut self, register: Register, value: u16) {
         match register {
@@ -64,46 +49,6 @@ impl Registers {
             Register::F => self.flag as u16,
             Register::PC => self.program_counter,
             Register::SP => self.stack_pointer as u16,
-        }
-    }
-}
-
-impl Display for Registers {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "R0={}\t", self.read(Register::R0))?;
-        write!(f, "R1={}\t", self.read(Register::R1))?;
-        write!(f, "R2={}\t", self.read(Register::R2))?;
-        write!(f, "R3={}\t", self.read(Register::R3))?;
-        write!(f, "R4={}\t", self.read(Register::R4))?;
-        write!(f, "R5={}\t", self.read(Register::R5))?;
-        write!(f, "R6={}\t", self.read(Register::R6))?;
-        write!(f, "R7={}\t", self.read(Register::R7))?;
-        write!(f, "I={}\t", self.read(Register::I))?;
-        write!(f, "F={}\t", self.read(Register::F))?;
-        write!(f, "PC={}\t", self.read(Register::PC))?;
-        write!(f, "SP={}", self.read(Register::SP))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_read_general_purpose_register() {
-        let mut registers = Registers::default();
-        for gpr in [
-            Register::R0,
-            Register::R1,
-            Register::R2,
-            Register::R3,
-            Register::R4,
-            Register::R5,
-            Register::R6,
-            Register::R7,
-        ] {
-            registers.write(gpr, 42);
-            assert_eq!(registers.read(gpr), 42);
         }
     }
 }

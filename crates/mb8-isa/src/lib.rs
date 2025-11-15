@@ -11,3 +11,5 @@ pub const STACK_SIZE: u16 = 256;
 pub const GRAPHIC_BUFFER_SIZE: usize = 256;
 /// Represents the general purpose registers count of the CPU.
 pub const GENERAL_PURPOSE_REGISTERS_COUNT: usize = 8;
+/// Represents the maximum number of bots allowed in the game.
+pub const BOTS_LIMIT: usize = 4;

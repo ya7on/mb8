@@ -15,5 +15,8 @@ pub enum Commands {
     Run {
         /// Path to the executable file
         file: PathBuf,
+
+        /// Path to the bot file
+        bot: Option<PathBuf>,
     },
 }

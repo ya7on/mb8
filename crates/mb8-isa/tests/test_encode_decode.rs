@@ -26,6 +26,14 @@ fn test_round_trip() {
         assert_eq!(decode(bin), Some(opcode));
     }
     {
+        let opcode = Opcode::Sys {
+            syscall: Syscall::Yield,
+            src: Register::R1,
+        };
+        let bin = encode(&opcode);
+        assert_eq!(decode(bin), Some(opcode));
+    }
+    {
         let opcode = Opcode::Mov {
             dst: Register::R0,
             src: Register::R1,

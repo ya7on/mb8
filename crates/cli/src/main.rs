@@ -6,19 +6,24 @@ use minifb::{Window, WindowOptions};
 
 mod config;
 
-fn run_vm(file: PathBuf) {
+fn run_vm(file: PathBuf, bot: Option<PathBuf>) {
     let Ok(source) = std::fs::read(file) else {
         return;
     };
+    let mut vm = vm::VirtualMachine::default();
+    vm.load_mem(&source);
+    if let Some(bot) = bot {
+        let Ok(source) = std::fs::read(bot) else {
+            return;
+        };
+        vm.load_bot(&source);
+    }
 
     let mut buf = vec![0u32; 64 * 32];
 
     let Ok(mut window) = Window::new("MB8", 640, 320, WindowOptions::default()) else {
         return;
     };
-
-    let mut vm = vm::VirtualMachine::default();
-    vm.load_mem(&source);
 
     let mut i = 0;
     while !vm.halted && window.is_open() {
@@ -30,7 +35,7 @@ fn run_vm(file: PathBuf) {
         }
         i = 0;
 
-        let gfx = vm.mem.graphic_buffer();
+        let gfx = vm.mem.host().graphic_buffer();
 
         for y in 0..32 {
             for x in 0..64 {
@@ -53,8 +58,8 @@ fn main() {
     let cli = config::Cli::parse();
 
     match cli.command {
-        config::Commands::Run { file } => {
-            run_vm(file);
+        config::Commands::Run { file, bot } => {
+            run_vm(file, bot);
         }
     }
 }

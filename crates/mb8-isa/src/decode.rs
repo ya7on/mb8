@@ -48,6 +48,10 @@ pub fn decode(instruction: u16) -> Option<Opcode> {
                         syscall: Syscall::Putc,
                         src: decode_register(c)?,
                     }),
+                    0x1 => Some(Opcode::Sys {
+                        syscall: Syscall::Yield,
+                        src: decode_register(c)?,
+                    }),
                     _ => None,
                 },
                 _ => None,
@@ -198,11 +202,22 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_syscall() {
+    fn test_parse_syscall_putc() {
         assert_eq!(
             decode(0x0201),
             Some(Opcode::Sys {
                 syscall: Syscall::Putc,
+                src: Register::R1,
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_syscall_yield() {
+        assert_eq!(
+            decode(0x0211),
+            Some(Opcode::Sys {
+                syscall: Syscall::Yield,
                 src: Register::R1,
             })
         );
