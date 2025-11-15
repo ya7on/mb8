@@ -1,6 +1,9 @@
-use mb8_isa::{decode::decode, opcodes::Opcode, registers::Register, MEMORY_SIZE, STACK_SIZE};
+use mb8_isa::{decode::decode, opcodes::Opcode, registers::Register, MEMORY_BANK_SIZE};
 
-use crate::{mem::Memory, registers::Registers};
+use crate::{
+    mem::{regions::MemoryRegion, Memory},
+    registers::Registers,
+};
 
 /// MB8 Virtual Machine
 #[derive(Debug)]
@@ -20,9 +23,9 @@ impl VirtualMachine {
     }
 
     /// Load memory into the virtual machine.
-    pub fn load_memory(&mut self, data: &[u8]) {
+    pub fn load_rom(&mut self, data: &[u8]) {
         for (i, &byte) in data.iter().enumerate() {
-            self.mem.write_u8(i as u16 + STACK_SIZE, byte);
+            self.mem.rom().write(i as u16, byte);
         }
     }
 
@@ -48,8 +51,12 @@ impl VirtualMachine {
             Opcode::Ret => self.ret(),
             Opcode::Push { src } => self.push(*src),
             Opcode::Pop { dst } => self.pop(*dst),
-            Opcode::Ld { addr } => self.ld(*addr),
-            Opcode::St { addr } => self.st(*addr),
+            Opcode::LdiI { value } => self.ldi_i(*value),
+            Opcode::Ld { dst } => self.ld(*dst),
+            Opcode::St { src } => self.st(*src),
+            Opcode::IncI { src } => self.inc_i(*src),
+            Opcode::DecI { src } => self.dec_i(*src),
+            Opcode::Draw { x, y, height } => self.draw(*x, *y, *height),
         }
     }
 
@@ -57,13 +64,14 @@ impl VirtualMachine {
         let pc = self.registers.read(Register::PC);
         self.registers.write(Register::PC, pc.saturating_add(2));
 
-        if usize::from(pc) >= MEMORY_SIZE - 1 {
+        if usize::from(pc) >= MEMORY_BANK_SIZE - 1 {
             self.halted = true;
             return;
         }
 
-        let binary_instruction = [self.mem.read_u8(pc), self.mem.read_u8(pc + 1)];
-        let Some(opcode) = decode(u16::from_be_bytes(binary_instruction)) else {
+        let rom = self.mem.rom();
+        let binary_instruction = rom.next_instruction(pc);
+        let Some(opcode) = decode(binary_instruction) else {
             self.halted = true;
             return;
         };
@@ -91,9 +99,9 @@ mod tests {
     #[test]
     fn test_vm() {
         let mut vm = VirtualMachine::new();
-        vm.load_memory(&[0x00, 0x00, 0x01, 0x00]);
+        vm.load_rom(&[0x00, 0x00, 0x01, 0x00]);
         vm.run();
-        assert_eq!(vm.registers.read(Register::PC), STACK_SIZE + 4);
+        assert_eq!(vm.registers.read(Register::PC), 4);
     }
 
     #[test]
@@ -107,7 +115,7 @@ mod tests {
     #[test]
     fn test_invalid_opcode() {
         let mut vm = VirtualMachine::new();
-        vm.load_memory(&[0xFF]);
+        vm.load_rom(&[0xFF]);
         vm.step();
         assert!(vm.halted);
     }

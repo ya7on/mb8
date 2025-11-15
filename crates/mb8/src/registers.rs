@@ -1,12 +1,14 @@
 use std::fmt::Display;
 
-use mb8_isa::{registers::Register, GENERAL_PURPOSE_REGISTERS_COUNT, STACK_SIZE};
+use mb8_isa::{registers::Register, GENERAL_PURPOSE_REGISTERS_COUNT};
 
 /// API for accessing and manipulating the registers.
 #[derive(Debug)]
 pub struct Registers {
     /// General purpose registers.
     pub general_purpose: [u8; GENERAL_PURPOSE_REGISTERS_COUNT],
+    /// Index register.
+    pub index_register: u16,
     /// Program counter register.
     pub program_counter: u16,
     /// Stack pointer register.
@@ -19,7 +21,8 @@ impl Default for Registers {
     fn default() -> Self {
         Self {
             general_purpose: [0; GENERAL_PURPOSE_REGISTERS_COUNT],
-            program_counter: STACK_SIZE,
+            index_register: 0,
+            program_counter: 0,
             stack_pointer: 0,
             flag: 0,
         }
@@ -38,6 +41,7 @@ impl Registers {
             Register::R5 => self.general_purpose[5] = value as u8,
             Register::R6 => self.general_purpose[6] = value as u8,
             Register::R7 => self.general_purpose[7] = value as u8,
+            Register::I => self.index_register = value,
             Register::F => self.flag = value as u8,
             Register::PC => self.program_counter = value,
             Register::SP => self.stack_pointer = value as u8,
@@ -55,6 +59,7 @@ impl Registers {
             Register::R5 => self.general_purpose[5] as u16,
             Register::R6 => self.general_purpose[6] as u16,
             Register::R7 => self.general_purpose[7] as u16,
+            Register::I => self.index_register,
             Register::F => self.flag as u16,
             Register::PC => self.program_counter,
             Register::SP => self.stack_pointer as u16,

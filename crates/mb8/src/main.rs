@@ -10,6 +10,6 @@ fn main() {
 
     let mut vm = vm::VirtualMachine::new();
 
-    vm.load_memory(&source);
+    vm.load_rom(&source);
     vm.run();
 }

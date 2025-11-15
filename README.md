@@ -62,6 +62,11 @@ Virtual machine contains the following registers:
         <td>General purpose registers</td>
     </tr>
     <tr>
+        <td>I</td>
+        <td>0x0C</td>
+        <td>Index register</td>
+    </tr>
+    <tr>
         <td>SP</td>
         <td>0x0D</td>
         <td>Stack pointer</td>
@@ -246,14 +251,37 @@ Virtual machine handles the following opcodes:
         <td colspan="3">0x8 - 0x9 MEMORY: Memory operations</td>
     </tr>
     <tr>
-        <td>LD addr</td>
+        <td>LDI_I addr</td>
         <td>0x8XXX</td>
-        <td>Load data from memory address XXX into R7 register</td>
+        <td>Load address XXX into I register</td>
     </tr>
     <tr>
-        <td>ST addr</td>
-        <td>0x9XXX</td>
-        <td>Store data from R7 register into memory address XXX</td>
+        <td>LD src</td>
+        <td>0x90A0</td>
+        <td>Load data from memory address stored in I register into A register</td>
+    </tr>
+    <tr>
+        <td>ST src</td>
+        <td>0x91A0</td>
+        <td>Store data from A register into memory address stored in I register</td>
+    </tr>
+    <tr>
+        <td>INC_I src</td>
+        <td>0x92A0</td>
+        <td>Increment memory address stored in I register by value in A register</td>
+    </tr>
+    <tr>
+        <td>DEC_I src</td>
+        <td>0x93A0</td>
+        <td>Decrement memory address stored in I register by value in A register</td>
+    </tr>
+    <tr>
+        <td colspan="3">0xA DRAWING: Drawing operations</td>
+    </tr>
+    <tr>
+        <td>DRAW x y height</td>
+        <td>0xA000</td>
+        <td>Draw sprite at (x, y) with height height. Sprite is stored in memory starting at address stored in I register. Sprite is drawn using XOR operation. If sprite overlaps with existing pixels, it will invert the color of those pixels.</td>
     </tr>
 </table>
 

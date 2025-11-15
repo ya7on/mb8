@@ -100,13 +100,33 @@ pub enum Opcode {
         dst: Register,
     },
 
-    /* Memory instructions */
-    /// Load value from memory address `addr` into R7 register.
-    Ld {
-        addr: u16,
+    /* Memory operations */
+    /// Set memory index register `I` to `value`.
+    LdiI {
+        value: u16,
     },
-    /// Store value from R7 register into memory address `addr`.
+    /// Load value from memory address stored in `I` register to `dst` register.
+    Ld {
+        dst: Register,
+    },
+    /// Store value in memory address stored in `I` register from `src` register.
     St {
-        addr: u16,
+        src: Register,
+    },
+    /// Increment memory address stored in `I` register by value stored in `src` register.
+    IncI {
+        src: Register,
+    },
+    /// Decrement memory address stored in `I` register by value stored in `src` register.
+    DecI {
+        src: Register,
+    },
+
+    /* Draw sprite */
+    /// Draw sprite at position (x, y) with height `height`.
+    Draw {
+        x: Register,
+        y: Register,
+        height: u8,
     },
 }

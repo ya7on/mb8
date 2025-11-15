@@ -30,6 +30,8 @@ pub enum Register {
     R6,
     /// General-purpose register 7
     R7,
+    /// Index register
+    I,
     /// Stack pointer
     SP,
     /// Program counter

@@ -15,6 +15,7 @@ pub fn encode_register(register: Register) -> u8 {
         Register::R5 => 0x5,
         Register::R6 => 0x6,
         Register::R7 => 0x7,
+        Register::I => 0xC,
         Register::SP => 0xD,
         Register::PC => 0xE,
         Register::F => 0xF,
@@ -100,8 +101,28 @@ pub fn encode(opcode: &Opcode) -> u16 {
             let dst = encode_register(*dst);
             0x7200 | (dst as u16) << 4
         }
-        Opcode::Ld { addr } => 0x8000 | (*addr & 0xFFF),
-        Opcode::St { addr } => 0x9000 | (*addr & 0xFFF),
+        Opcode::LdiI { value } => 0x8000 | (*value & 0xFFF),
+        Opcode::Ld { dst } => {
+            let dst = encode_register(*dst);
+            0x9000 | (dst as u16) << 4
+        }
+        Opcode::St { src } => {
+            let src = encode_register(*src);
+            0x9100 | (src as u16) << 4
+        }
+        Opcode::IncI { src } => {
+            let src = encode_register(*src);
+            0x9200 | (src as u16) << 4
+        }
+        Opcode::DecI { src } => {
+            let src = encode_register(*src);
+            0x9300 | (src as u16) << 4
+        }
+        Opcode::Draw { x, y, height } => {
+            let x = encode_register(*x);
+            let y = encode_register(*y);
+            0xA000 | (x as u16) << 8 | (y as u16) << 4 | (*height & 0xF) as u16
+        }
     }
 }
 
@@ -286,18 +307,39 @@ mod tests {
     }
 
     #[test]
+    fn test_encode_ldi_i() {
+        assert_eq!(encode(&Opcode::LdiI { value: 0x123 }), 0x8123);
+    }
+
+    #[test]
     fn test_encode_ld() {
-        assert_eq!(
-            encode(&Opcode::Ld { addr: 0x123 }),
-            0x8000 | (Register::R0 as u16) << 4 | 0x123
-        );
+        assert_eq!(encode(&Opcode::Ld { dst: Register::R1 }), 0x9010);
     }
 
     #[test]
     fn test_encode_st() {
+        assert_eq!(encode(&Opcode::St { src: Register::R1 }), 0x9110);
+    }
+
+    #[test]
+    fn test_encode_inc_i() {
+        assert_eq!(encode(&Opcode::IncI { src: Register::R1 }), 0x9210);
+    }
+
+    #[test]
+    fn test_encode_dec_i() {
+        assert_eq!(encode(&Opcode::DecI { src: Register::R1 }), 0x9310);
+    }
+
+    #[test]
+    fn test_encode_draw() {
         assert_eq!(
-            encode(&Opcode::St { addr: 0x123 }),
-            0x9000 | (Register::R0 as u16) << 4 | 0x123
+            encode(&Opcode::Draw {
+                x: Register::R1,
+                y: Register::R2,
+                height: 0x3
+            }),
+            0xA123
         );
     }
 }

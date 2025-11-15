@@ -1,11 +1,12 @@
 use mb8_isa::registers::Register;
 
-use crate::vm::VirtualMachine;
+use crate::{mem::regions::MemoryRegion, vm::VirtualMachine};
 
 impl VirtualMachine {
-    pub fn st(&mut self, addr: u16) {
-        let value = self.registers.read(Register::R7);
-        self.mem.write_u8(addr, value as u8);
+    pub fn st(&mut self, src: Register) {
+        let addr = self.registers.read(Register::I);
+        let value = self.registers.read(src);
+        self.mem.general().write(addr, value as u8);
     }
 }
 
@@ -13,14 +14,17 @@ impl VirtualMachine {
 mod tests {
     use mb8_isa::opcodes::Opcode;
 
+    use crate::mem::regions::MemoryRegion;
+
     use super::*;
 
     #[test]
     fn test_opcode_st() {
-        // VM save register value to memory
+        // VM loads data from memory
         let mut vm = VirtualMachine::new();
-        vm.registers.write(Register::R7, 0x12);
-        vm.execute(&Opcode::St { addr: 0x200 });
-        assert_eq!(vm.mem.read_u8(0x200), 0x12);
+        vm.registers.write(Register::I, 0x123);
+        vm.registers.write(Register::R0, 0x77);
+        vm.execute(&Opcode::St { src: Register::R0 });
+        assert_eq!(vm.mem.general().read(0x123), 0x77);
     }
 }

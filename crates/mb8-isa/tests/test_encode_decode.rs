@@ -133,12 +133,36 @@ fn test_round_trip() {
         assert_eq!(decode(bin), Some(opcode));
     }
     {
-        let opcode = Opcode::Ld { addr: 0x123 };
+        let opcode = Opcode::LdiI { value: 0x123 };
         let bin = encode(&opcode);
         assert_eq!(decode(bin), Some(opcode));
     }
     {
-        let opcode = Opcode::St { addr: 0x123 };
+        let opcode = Opcode::Ld { dst: Register::R1 };
+        let bin = encode(&opcode);
+        assert_eq!(decode(bin), Some(opcode));
+    }
+    {
+        let opcode = Opcode::St { src: Register::R1 };
+        let bin = encode(&opcode);
+        assert_eq!(decode(bin), Some(opcode));
+    }
+    {
+        let opcode = Opcode::IncI { src: Register::R1 };
+        let bin = encode(&opcode);
+        assert_eq!(decode(bin), Some(opcode));
+    }
+    {
+        let opcode = Opcode::DecI { src: Register::R1 };
+        let bin = encode(&opcode);
+        assert_eq!(decode(bin), Some(opcode));
+    }
+    {
+        let opcode = Opcode::Draw {
+            x: Register::R1,
+            y: Register::R2,
+            height: 3,
+        };
         let bin = encode(&opcode);
         assert_eq!(decode(bin), Some(opcode));
     }

@@ -17,3 +17,4 @@ start:
     SHRI R0 2 ; Shifting value of register right by 2 bits
     SHLI R0 3 ; Shifting value of register left by 3 bits
     SWAP R0 R1 ; Swapping values of two registers
+    JMPR 0x1 ; Relative jump to address PC + 0x1

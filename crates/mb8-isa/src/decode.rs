@@ -10,6 +10,7 @@ const C_MASK: u16 = 0x000F;
 
 /// Parse a 4-bit register value into a Register enum.
 #[must_use]
+#[allow(clippy::too_many_lines)]
 pub fn decode_register(reg: u16) -> Option<Register> {
     match reg {
         0x0 => Some(Register::R0),
@@ -20,6 +21,7 @@ pub fn decode_register(reg: u16) -> Option<Register> {
         0x5 => Some(Register::R5),
         0x6 => Some(Register::R6),
         0x7 => Some(Register::R7),
+        0xC => Some(Register::I),
         0xD => Some(Register::SP),
         0xE => Some(Register::PC),
         0xF => Some(Register::F),
@@ -29,6 +31,7 @@ pub fn decode_register(reg: u16) -> Option<Register> {
 
 /// Decode a 16-bit instruction into an Opcode.
 #[must_use]
+#[allow(clippy::too_many_lines)]
 pub fn decode(instruction: u16) -> Option<Opcode> {
     let opcode = (instruction & OPCODE_MASK) >> 12;
     let a = (instruction & A_MASK) >> 8;
@@ -117,11 +120,31 @@ pub fn decode(instruction: u16) -> Option<Opcode> {
                 _ => None,
             }
         }
-        0x8 => Some(Opcode::Ld {
-            addr: (a << 8) | (b << 4) | c,
+        0x8 => Some(Opcode::LdiI {
+            value: (a << 8) | (b << 4) | c,
         }),
-        0x9 => Some(Opcode::St {
-            addr: (a << 8) | (b << 4) | c,
+        0x9 => {
+            // Memory operations
+            match a {
+                0x0 => Some(Opcode::Ld {
+                    dst: decode_register(b)?,
+                }),
+                0x1 => Some(Opcode::St {
+                    src: decode_register(b)?,
+                }),
+                0x2 => Some(Opcode::IncI {
+                    src: decode_register(b)?,
+                }),
+                0x3 => Some(Opcode::DecI {
+                    src: decode_register(b)?,
+                }),
+                _ => None,
+            }
+        }
+        0xA => Some(Opcode::Draw {
+            x: decode_register(a)?,
+            y: decode_register(b)?,
+            height: c as u8,
         }),
         _ => None,
     }
@@ -314,12 +337,39 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_ldi_i() {
+        assert_eq!(decode(0x8123), Some(Opcode::LdiI { value: 0x123 }));
+    }
+
+    #[test]
     fn test_parse_ld() {
-        assert_eq!(decode(0x8123), Some(Opcode::Ld { addr: 0x123 }));
+        assert_eq!(decode(0x9010), Some(Opcode::Ld { dst: Register::R1 }));
     }
 
     #[test]
     fn test_parse_st() {
-        assert_eq!(decode(0x9123), Some(Opcode::St { addr: 0x123 }));
+        assert_eq!(decode(0x9110), Some(Opcode::St { src: Register::R1 }));
+    }
+
+    #[test]
+    fn test_parse_inc_i() {
+        assert_eq!(decode(0x9210), Some(Opcode::IncI { src: Register::R1 }));
+    }
+
+    #[test]
+    fn test_parse_dec_i() {
+        assert_eq!(decode(0x9310), Some(Opcode::DecI { src: Register::R1 }));
+    }
+
+    #[test]
+    fn test_parse_draw() {
+        assert_eq!(
+            decode(0xA123),
+            Some(Opcode::Draw {
+                x: Register::R1,
+                y: Register::R2,
+                height: 3,
+            })
+        );
     }
 }

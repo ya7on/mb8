@@ -8,6 +8,7 @@
     R5 => 0x5
     R6 => 0x6
     R7 => 0x7
+    I => 0xC
     SP => 0xD
     PC => 0xE
     F => 0xF
@@ -36,6 +37,10 @@
     RET => 0x7000
     PUSH { src: register } => 0x71 @ src @ 0x0
     POP { dst: register } => 0x72 @ dst @ 0x0
-    LD { addr: u12 } => 0x8 @ addr
-    ST { addr: u12 } => 0x9 @ addr
+    LDI_I { addr: u12 } => 0x8 @ addr
+    LD { dst: register } => 0x90 @ dst @ 0x0
+    ST { src: register } => 0x91 @ src @ 0x0
+    INC_I { src: register } => 0x92 @ src @ 0x0
+    DEC_I { src: register } => 0x93 @ src @ 0x0
+    DRAW { x: register } { y: register } { height: u4 } => 0xA @ x @ y @ height
 }

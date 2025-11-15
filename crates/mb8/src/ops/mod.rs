@@ -1,12 +1,16 @@
 mod add;
 mod and;
 mod call;
+mod dec_i;
+mod draw;
 mod halt;
+mod inc_i;
 mod jmp;
 mod jnz;
 mod jz;
 mod ld;
 mod ldi;
+mod ldi_i;
 mod mov;
 mod nop;
 mod or;
