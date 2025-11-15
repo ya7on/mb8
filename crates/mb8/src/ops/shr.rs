@@ -33,7 +33,7 @@ mod tests {
     #[test]
     fn test_opcode_shr() {
         // VM executes SHR operation
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 0b1111_0011);
         vm.registers.write(Register::R1, 2);
         vm.execute(&Opcode::Shr {

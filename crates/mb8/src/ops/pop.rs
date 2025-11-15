@@ -26,7 +26,7 @@ mod tests {
     #[test]
     fn test_opcode_pop() {
         // VM pops a value from the stack
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::SP, 1);
         vm.mem.stack().write(0, 0x45);
         vm.execute(&Opcode::Pop { dst: Register::R0 });
@@ -37,7 +37,7 @@ mod tests {
     #[test]
     fn test_opcode_pop_stack_underflow() {
         // VM halts when the stack underflows
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::SP, 0);
         vm.execute(&Opcode::Pop { dst: Register::R0 });
         assert!(vm.halted);

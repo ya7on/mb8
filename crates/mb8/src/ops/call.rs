@@ -29,7 +29,7 @@ mod tests {
     #[test]
     fn test_opcode_call() {
         // VM calls a subroutine at a given address
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::PC, 0x100);
         vm.execute(&Opcode::Call { addr: 0x200 });
         assert_eq!(vm.registers.read(Register::SP), 2);
@@ -41,7 +41,7 @@ mod tests {
     #[test]
     fn test_opcode_call_stack_overflow() {
         // VM halts when the stack overflows
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::SP, STACK_SIZE - 2);
         vm.execute(&Opcode::Call { addr: 0x456 });
         assert!(vm.halted);

@@ -18,7 +18,7 @@ mod tests {
     #[test]
     fn test_opcode_mov() {
         // VM moves registers values from source register to destination register
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 42);
         vm.execute(&Opcode::Mov {
             dst: Register::R1,

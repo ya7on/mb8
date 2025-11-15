@@ -21,7 +21,7 @@ mod tests {
     #[test]
     fn test_opcode_ld() {
         // VM loads data from memory
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.mem.general().write(0x123, 0x77);
         vm.registers.write(Register::I, 0x123);
         vm.execute(&Opcode::Ld { dst: Register::R0 });

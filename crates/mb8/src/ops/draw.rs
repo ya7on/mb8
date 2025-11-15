@@ -69,7 +69,7 @@ mod tests {
 
     #[test]
     fn test_opcode_draw() {
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
 
         vm.mem.general().write(0x123, 0b0000_0000);
         vm.mem.general().write(0x124, 0b0010_0100);

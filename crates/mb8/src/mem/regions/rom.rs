@@ -1,5 +1,6 @@
 use super::MemoryRegion;
 
+#[derive(Debug)]
 pub struct ROMRegion<'a> {
     start: u16,
     end: u16,
@@ -11,6 +12,7 @@ impl<'a> ROMRegion<'a> {
         ROMRegion { start, end, data }
     }
 
+    #[must_use]
     pub fn next_instruction(&self, pc: u16) -> u16 {
         let hi = self.data[pc as usize];
         let lo = self.data[(pc + 1) as usize];

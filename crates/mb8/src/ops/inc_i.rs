@@ -19,7 +19,7 @@ mod tests {
     #[test]
     fn test_opcode_inc_i() {
         // VM increments register I
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::I, 0x123);
         vm.registers.write(Register::R0, 0x11);
         vm.execute(&Opcode::IncI { src: Register::R0 });

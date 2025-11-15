@@ -6,6 +6,7 @@ pub enum StackError {
     Underflow,
 }
 
+#[derive(Debug)]
 pub struct StackRegion<'a> {
     start: u16,
     end: u16,
@@ -17,6 +18,11 @@ impl<'a> StackRegion<'a> {
         StackRegion { start, end, data }
     }
 
+    /// Pushes a byte onto the stack.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the stack is full.
     pub fn push_u8(&mut self, sp: u16, value: u8) -> Result<u16, StackError> {
         if sp >= self.end {
             return Err(StackError::Overflow);
@@ -25,6 +31,11 @@ impl<'a> StackRegion<'a> {
         Ok(sp + 1)
     }
 
+    /// Pops a byte from the stack.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the stack is empty.
     pub fn pop_u8(&mut self, sp: u16) -> Result<(u8, u16), StackError> {
         if sp <= self.start {
             return Err(StackError::Underflow);
@@ -33,6 +44,11 @@ impl<'a> StackRegion<'a> {
         Ok((value, sp - 1))
     }
 
+    /// Pushes a 16-bit value onto the stack.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the stack is full.
     pub fn push_u16(&mut self, sp: u16, value: u16) -> Result<u16, StackError> {
         if sp >= self.end - 2 {
             return Err(StackError::Overflow);
@@ -43,6 +59,11 @@ impl<'a> StackRegion<'a> {
         Ok(sp + 2)
     }
 
+    /// Pops a 16-bit value from the stack.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the stack is empty.
     pub fn pop_u16(&mut self, sp: u16) -> Result<(u16, u16), StackError> {
         if sp < self.start + 2 {
             return Err(StackError::Underflow);

@@ -15,7 +15,7 @@ mod tests {
     #[test]
     fn test_opcode_halt() {
         // VM halts execution when HALT opcode is encountered
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         assert!(!vm.halted);
         vm.execute(&Opcode::Halt);
         assert!(vm.halted);

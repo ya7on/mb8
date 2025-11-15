@@ -33,7 +33,7 @@ mod tests {
     #[test]
     fn test_opcode_sub() {
         // VM subtracts two registers and stores the result in a third register
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 5);
         vm.registers.write(Register::R1, 3);
         vm.execute(&Opcode::Sub {
@@ -46,7 +46,7 @@ mod tests {
     #[test]
     fn test_opcode_sub_clear_flags() {
         // VM clear the flags register before executing SUB instruction
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::F, 0xFF);
         vm.registers.write(Register::R0, 2);
         vm.registers.write(Register::R1, 1);
@@ -61,7 +61,7 @@ mod tests {
     #[test]
     fn test_opcode_sub_zero() {
         // VM clear the flags register before executing SUB instruction
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::F, 0xFF);
         vm.registers.write(Register::R0, 1);
         vm.registers.write(Register::R1, 1);
@@ -76,7 +76,7 @@ mod tests {
     #[test]
     fn test_opcode_sub_overflow() {
         // VM handles subtraction overflow by wrapping around and setting the carry flag
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 1);
         vm.registers.write(Register::R1, 2);
         vm.execute(&Opcode::Sub {

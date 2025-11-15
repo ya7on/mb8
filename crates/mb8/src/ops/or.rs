@@ -30,7 +30,7 @@ mod tests {
     #[test]
     fn test_opcode_or() {
         // VM executes OR operation
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 0b1100_1010);
         vm.registers.write(Register::R1, 0b1111_0000);
         vm.execute(&Opcode::Or {

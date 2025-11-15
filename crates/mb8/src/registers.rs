@@ -49,6 +49,7 @@ impl Registers {
     }
 
     /// Read a value from a register.
+    #[must_use]
     pub fn read(&self, register: Register) -> u16 {
         match register {
             Register::R0 => self.general_purpose[0] as u16,

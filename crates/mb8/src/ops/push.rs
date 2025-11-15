@@ -26,7 +26,7 @@ mod tests {
     #[test]
     fn test_opcode_push() {
         // VM pushes a value onto the stack
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 0x45);
         vm.execute(&Opcode::Push { src: Register::R0 });
         assert_eq!(vm.registers.read(Register::SP), 1);
@@ -36,7 +36,7 @@ mod tests {
     #[test]
     fn test_opcode_push_stack_overflow() {
         // VM halts when the stack overflows
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::SP, STACK_SIZE - 1);
         vm.registers.write(Register::R0, 0x45);
         vm.execute(&Opcode::Push { src: Register::R0 });

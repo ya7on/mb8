@@ -6,7 +6,7 @@ use crate::{
 };
 
 /// MB8 Virtual Machine
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct VirtualMachine {
     pub mem: Memory,
     pub registers: Registers,
@@ -14,14 +14,6 @@ pub struct VirtualMachine {
 }
 
 impl VirtualMachine {
-    pub fn new() -> Self {
-        Self {
-            mem: Memory::default(),
-            registers: Registers::default(),
-            halted: false,
-        }
-    }
-
     /// Load memory into the virtual machine.
     pub fn load_rom(&mut self, data: &[u8]) {
         for (i, &byte) in data.iter().enumerate() {
@@ -98,7 +90,7 @@ mod tests {
 
     #[test]
     fn test_vm() {
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.load_rom(&[0x00, 0x00, 0x01, 0x00]);
         vm.run();
         assert_eq!(vm.registers.read(Register::PC), 4);
@@ -106,7 +98,7 @@ mod tests {
 
     #[test]
     fn test_end_of_memory() {
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::PC, 4095);
         vm.step();
         assert!(vm.halted);
@@ -114,7 +106,7 @@ mod tests {
 
     #[test]
     fn test_invalid_opcode() {
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.load_rom(&[0xFF]);
         vm.step();
         assert!(vm.halted);

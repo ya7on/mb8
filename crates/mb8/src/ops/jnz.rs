@@ -23,7 +23,7 @@ mod tests {
     #[test]
     fn test_opcode_jnz() {
         // VM jumps to a specific address
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::PC, 0x100);
         vm.registers.write(Register::F, 0);
         vm.execute(&Opcode::Jnz { addr: 0x100 });
@@ -33,7 +33,7 @@ mod tests {
     #[test]
     fn test_opcode_jnz_zero() {
         // VM does not jump to a specific address
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::PC, 0x100);
         vm.registers.write(Register::F, flags::Z_FLAG as u16);
         vm.execute(&Opcode::Jnz { addr: 0x200 });

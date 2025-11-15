@@ -26,7 +26,7 @@ mod tests {
     #[test]
     fn test_opcode_ret() {
         // VM returns from a subroutine
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::PC, 0x100);
         vm.execute(&Opcode::Call { addr: 0x200 });
         assert_eq!(vm.registers.read(Register::SP), 2);
@@ -41,7 +41,7 @@ mod tests {
     #[test]
     fn test_opcode_ret_stack_underflow() {
         // VM returns from a subroutine
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.execute(&Opcode::Ret);
         assert_eq!(vm.registers.read(Register::SP), 0);
         assert_eq!(vm.registers.read(Register::PC), 0);

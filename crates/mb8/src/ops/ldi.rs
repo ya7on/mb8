@@ -17,7 +17,7 @@ mod tests {
     #[test]
     fn test_ldi() {
         // VM puts the value into the register
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.execute(&Opcode::Ldi {
             dst: Register::R0,
             value: 0x55,

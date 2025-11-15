@@ -1,5 +1,6 @@
 use super::MemoryRegion;
 
+#[derive(Debug)]
 pub struct GraphicBufferRegion<'a> {
     start: u16,
     end: u16,

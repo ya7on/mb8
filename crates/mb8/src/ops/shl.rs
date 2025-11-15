@@ -33,7 +33,7 @@ mod tests {
     #[test]
     fn test_opcode_shl() {
         // VM executes SHL operation
-        let mut vm = VirtualMachine::new();
+        let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 0b1011_1100);
         vm.registers.write(Register::R1, 2);
         vm.execute(&Opcode::Shl {
