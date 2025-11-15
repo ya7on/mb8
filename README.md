@@ -38,11 +38,12 @@ cargo run <file.bin>
 You can see examples of assembly code in the [`examples`](examples) directory.
 
 - [`bouncing.asm`](examples/bouncing.asm) - Bouncing example
+- [`logo.asm`](examples/logo.asm) - Logo example
 
 You can compile any of them and run them using the following commands:
 
 ```
-customasm ./examples/counter.asm && cargo run ./examples/counter.bin
+customasm ./examples/logo.asm && cargo run ./examples/logo.bin
 ```
 
 # Architecture
