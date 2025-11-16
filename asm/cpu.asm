@@ -62,5 +62,7 @@
     ST { src: register } => 0xB1 @ src @ 0x0
     INC_I { src: register } => 0xB2 @ src @ 0x0
     DEC_I { src: register } => 0xB3 @ src @ 0x0
+    LDG { dst: register } { bot: register } => 0xB4 @ dst @ bot
+    STG { src: register } { bot: register } => 0xB5 @ src @ bot
     DRAW { x: register } { y: register } { height: u4 } => 0xC @ x @ y @ height
 }
