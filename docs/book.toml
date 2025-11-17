@@ -13,5 +13,5 @@ build-dir = "book"
 default-theme = "light"
 preferred-dark-theme = "navy"
 curly-quotes = true
-git-repository-url = "https://github.com/ya7on/tutti"
-site-url = "/tutti/"
+git-repository-url = "https://github.com/ya7on/mb8"
+site-url = "/mb8/"
