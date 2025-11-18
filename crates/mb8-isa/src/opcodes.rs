@@ -72,25 +72,31 @@ pub enum Opcode {
     },
 
     /* Jump instructions */
-    /// Jump to address `addr`.
+    /// Absolute jump to address stored in registers `hi` and `lo` 0x{hi:02x}{lo:02x}.
     Jmp {
-        addr: u16,
+        hi: Register,
+        lo: Register,
     },
-    /// Jump to address `addr` if flag register has zero flag
-    Jz {
-        addr: u16,
+    /// Relative jump by signed offset.
+    /// PC = PC + offset
+    Jr {
+        offset: i8,
     },
-    /// Jump to address `addr` if flag register does not have zero flag
-    Jnz {
-        addr: u16,
+    /// Relative jump if zero flag is set.
+    Jzr {
+        offset: i8,
     },
-    /// Jump to address `addr` if flag register has carry flag
-    Jc {
-        addr: u16,
+    /// Relative jump if zero flag is not set.
+    Jnzr {
+        offset: i8,
     },
-    /// Jump to address `addr` if flag register does not have carry flag
-    Jnc {
-        addr: u16,
+    /// Relative jump if carry flag is set.
+    Jcr {
+        offset: i8,
+    },
+    /// Relative jump if carry flag is not set.
+    Jncr {
+        offset: i8,
     },
 
     /* Stack instructions */

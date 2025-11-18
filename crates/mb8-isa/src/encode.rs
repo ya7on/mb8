@@ -88,24 +88,29 @@ pub fn encode(opcode: &Opcode) -> u16 {
             let dst = encode_register(*dst);
             0x2000 | (dst as u16) << 4 | *value as u16
         }
-        Opcode::Jmp { addr } => 0x3000 | (*addr & 0xFFF),
-        Opcode::Jz { addr } => 0x4000 | (*addr & 0xFFF),
-        Opcode::Jnz { addr } => 0x5000 | (*addr & 0xFFF),
-        Opcode::Jc { addr } => 0x6000 | (addr & 0xFFF),
-        Opcode::Jnc { addr } => 0x7100 | (addr & 0xFFF),
+        Opcode::Jmp { hi, lo } => {
+            let hi = encode_register(*hi);
+            let lo = encode_register(*lo);
+            0x3000 | (hi as u16) << 4 | lo as u16
+        }
+        Opcode::Jr { offset } => 0x3100 | (*offset as u8) as u16,
+        Opcode::Jzr { offset } => 0x3200 | (*offset as u8) as u16,
+        Opcode::Jnzr { offset } => 0x3300 | (*offset as u8) as u16,
+        Opcode::Jcr { offset } => 0x3400 | (*offset as u8) as u16,
+        Opcode::Jncr { offset } => 0x3500 | (*offset as u8) as u16,
         Opcode::Call { hi, lo } => {
             let hi = encode_register(*hi);
             let lo = encode_register(*lo);
-            0x8000 | (hi as u16) << 4 | lo as u16
+            0x4000 | (hi as u16) << 4 | lo as u16
         }
-        Opcode::Ret => 0x9000,
+        Opcode::Ret => 0x4100,
         Opcode::Push { src } => {
             let src = encode_register(*src);
-            0x9100 | (src as u16) << 4
+            0x4200 | (src as u16) << 4
         }
         Opcode::Pop { dst } => {
             let dst = encode_register(*dst);
-            0x9200 | (dst as u16) << 4
+            0x4300 | (dst as u16) << 4
         }
     }
 }
@@ -257,27 +262,38 @@ mod tests {
 
     #[test]
     fn test_encode_jmp() {
-        assert_eq!(encode(&Opcode::Jmp { addr: 0x123 }), 0x3123);
+        assert_eq!(
+            encode(&Opcode::Jmp {
+                hi: Register::R1,
+                lo: Register::R2
+            }),
+            0x3012
+        );
     }
 
     #[test]
-    fn test_encode_jz() {
-        assert_eq!(encode(&Opcode::Jz { addr: 0x123 }), 0x4123);
+    fn test_encode_jr() {
+        assert_eq!(encode(&Opcode::Jr { offset: 0x23 }), 0x3123);
     }
 
     #[test]
-    fn test_encode_jnz() {
-        assert_eq!(encode(&Opcode::Jnz { addr: 0x123 }), 0x5123);
+    fn test_encode_jzr() {
+        assert_eq!(encode(&Opcode::Jzr { offset: 0x23 }), 0x3223);
     }
 
     #[test]
-    fn test_encode_jc() {
-        assert_eq!(encode(&Opcode::Jc { addr: 0x123 }), 0x6123);
+    fn test_encode_jnzr() {
+        assert_eq!(encode(&Opcode::Jnzr { offset: 0x23 }), 0x3323);
     }
 
     #[test]
-    fn test_encode_jnc() {
-        assert_eq!(encode(&Opcode::Jnc { addr: 0x123 }), 0x7123);
+    fn test_encode_jcr() {
+        assert_eq!(encode(&Opcode::Jcr { offset: 0x23 }), 0x3423);
+    }
+
+    #[test]
+    fn test_encode_jncr() {
+        assert_eq!(encode(&Opcode::Jncr { offset: 0x23 }), 0x3523);
     }
 
     #[test]
@@ -287,22 +303,22 @@ mod tests {
                 hi: Register::R1,
                 lo: Register::R2
             }),
-            0x8123
+            0x4012
         );
     }
 
     #[test]
     fn test_encode_ret() {
-        assert_eq!(encode(&Opcode::Ret), 0x9000);
+        assert_eq!(encode(&Opcode::Ret), 0x4100);
     }
 
     #[test]
     fn test_encode_push() {
-        assert_eq!(encode(&Opcode::Push { src: Register::R1 }), 0x9110);
+        assert_eq!(encode(&Opcode::Push { src: Register::R1 }), 0x4210);
     }
 
     #[test]
     fn test_encode_pop() {
-        assert_eq!(encode(&Opcode::Pop { dst: Register::R1 }), 0x9210);
+        assert_eq!(encode(&Opcode::Pop { dst: Register::R1 }), 0x4310);
     }
 }

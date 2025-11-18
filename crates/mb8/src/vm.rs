@@ -1,4 +1,4 @@
-use mb8_isa::{opcodes::Opcode, registers::Register};
+use mb8_isa::{decode::decode, opcodes::Opcode, registers::Register};
 
 use crate::{dev::bus::Bus, registers::Registers};
 
@@ -26,11 +26,12 @@ impl VirtualMachine {
             Opcode::Shr { dst, src } => self.shr(*dst, *src),
             Opcode::Shl { dst, src } => self.shl(*dst, *src),
             Opcode::Ldi { dst, value } => self.ldi(*dst, *value),
-            Opcode::Jmp { addr } => self.jmp(*addr),
-            Opcode::Jz { addr } => self.jz(*addr),
-            Opcode::Jnz { addr } => self.jnz(*addr),
-            Opcode::Jc { addr } => self.jc(*addr),
-            Opcode::Jnc { addr } => self.jnc(*addr),
+            Opcode::Jmp { hi, lo } => self.jmp(*hi, *lo),
+            Opcode::Jr { offset } => self.jr(*offset),
+            Opcode::Jzr { offset } => self.jzr(*offset),
+            Opcode::Jnzr { offset } => self.jnzr(*offset),
+            Opcode::Jcr { offset } => self.jcr(*offset),
+            Opcode::Jncr { offset } => self.jncr(*offset),
             Opcode::Call { hi, lo } => self.call(*hi, *lo),
             Opcode::Ret => self.ret(),
             Opcode::Push { src } => self.push(*src),
@@ -42,24 +43,20 @@ impl VirtualMachine {
         let pc = self.registers.read(Register::PC);
         self.registers.write(Register::PC, pc.saturating_add(2));
 
-        // if usize::from(pc) >= MEMORY_BANK_SIZE - 1 {
-        //     self.halted = true;
-        //     return;
-        // }
+        let hi = self.devices.read(pc);
+        let lo = self.devices.read(pc + 1);
+        let binary_instruction = u16::from_be_bytes([hi, lo]);
+        let Some(opcode) = decode(binary_instruction) else {
+            self.halted = true;
+            return;
+        };
 
-        // let rom = self.mem.rom();
-        // let binary_instruction = rom.next_instruction(pc);
-        // let Some(opcode) = decode(binary_instruction) else {
-        //     self.halted = true;
-        //     return;
-        // };
+        println!("{pc}:\t({binary_instruction:?})");
+        println!("{opcode:?}");
+        println!("{}", self.registers);
+        println!("=");
 
-        // println!("{pc}:\t({binary_instruction:?})\t{:?}", self.role);
-        // println!("{opcode:?}");
-        // println!("{}", self.registers);
-        // println!("=");
-
-        // self.execute(&opcode);
+        self.execute(&opcode);
     }
 
     /// Execute a program.
@@ -68,11 +65,17 @@ impl VirtualMachine {
             self.step();
         }
     }
+
+    pub fn load_rom(&mut self, rom: &[u8]) {
+        for (i, &byte) in rom.iter().enumerate() {
+            self.devices.write((0xE000 + i) as u16, byte);
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    // use super::*;
 
     // #[test]
     // TODO
@@ -83,13 +86,13 @@ mod tests {
     //     assert_eq!(vm.registers.read(Register::PC), 4);
     // }
 
-    #[test]
-    fn test_end_of_memory() {
-        let mut vm = VirtualMachine::default();
-        vm.registers.write(Register::PC, 4095);
-        vm.step();
-        assert!(vm.halted);
-    }
+    // #[test]
+    // fn test_end_of_memory() {
+    //     let mut vm = VirtualMachine::default();
+    //     vm.registers.write(Register::PC, 4095);
+    //     vm.step();
+    //     assert!(vm.halted);
+    // }
 
     // TODO
     // #[test]

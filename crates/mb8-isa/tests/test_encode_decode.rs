@@ -98,27 +98,35 @@ fn test_round_trip() {
         assert_eq!(decode(bin), Some(opcode));
     }
     {
-        let opcode = Opcode::Jmp { addr: 0x123 };
+        let opcode = Opcode::Jmp {
+            hi: Register::R1,
+            lo: Register::R2,
+        };
         let bin = encode(&opcode);
         assert_eq!(decode(bin), Some(opcode));
     }
     {
-        let opcode = Opcode::Jz { addr: 0x123 };
+        let opcode = Opcode::Jr { offset: 0x12 };
         let bin = encode(&opcode);
         assert_eq!(decode(bin), Some(opcode));
     }
     {
-        let opcode = Opcode::Jnz { addr: 0x123 };
+        let opcode = Opcode::Jzr { offset: 0x12 };
         let bin = encode(&opcode);
         assert_eq!(decode(bin), Some(opcode));
     }
     {
-        let opcode = Opcode::Jc { addr: 0x123 };
+        let opcode = Opcode::Jnzr { offset: 0x12 };
         let bin = encode(&opcode);
         assert_eq!(decode(bin), Some(opcode));
     }
     {
-        let opcode = Opcode::Jnc { addr: 0x123 };
+        let opcode = Opcode::Jcr { offset: 0x12 };
+        let bin = encode(&opcode);
+        assert_eq!(decode(bin), Some(opcode));
+    }
+    {
+        let opcode = Opcode::Jncr { offset: 0x12 };
         let bin = encode(&opcode);
         assert_eq!(decode(bin), Some(opcode));
     }

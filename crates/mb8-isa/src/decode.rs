@@ -94,38 +94,43 @@ pub fn decode(instruction: u16) -> Option<Opcode> {
             dst: decode_register(a)?,
             value: (b << 4 | c) as u8,
         }),
-        0x3 => Some(Opcode::Jmp {
-            addr: (a << 8) | (b << 4) | c,
-        }),
-        0x4 => Some(Opcode::Jz {
-            addr: (a << 8) | (b << 4) | c,
-        }),
-        0x5 => Some(Opcode::Jnz {
-            addr: (a << 8) | (b << 4) | c,
-        }),
-        0x6 => Some(Opcode::Jc {
-            addr: (a << 8) | (b << 4) | c,
-        }),
-        0x7 => Some(Opcode::Jnc {
-            addr: (a << 8) | (b << 4) | c,
-        }),
-        0x8 => Some(Opcode::Call {
-            hi: decode_register(a)?,
-            lo: decode_register(b)?,
-        }),
-        0x9 => {
-            // Stack operations
-            match a {
-                0x0 => Some(Opcode::Ret),
-                0x1 => Some(Opcode::Push {
-                    src: decode_register(b)?,
-                }),
-                0x2 => Some(Opcode::Pop {
-                    dst: decode_register(b)?,
-                }),
-                _ => None,
-            }
-        }
+        0x3 => match a {
+            0x0 => Some(Opcode::Jmp {
+                hi: decode_register(b)?,
+                lo: decode_register(c)?,
+            }),
+            0x1 => Some(Opcode::Jr {
+                offset: (b << 4 | c) as u8 as i8,
+            }),
+            0x2 => Some(Opcode::Jzr {
+                offset: (b << 4 | c) as u8 as i8,
+            }),
+            0x3 => Some(Opcode::Jnzr {
+                offset: (b << 4 | c) as u8 as i8,
+            }),
+            0x4 => Some(Opcode::Jcr {
+                offset: (b << 4 | c) as u8 as i8,
+            }),
+            0x5 => Some(Opcode::Jncr {
+                offset: (b << 4 | c) as u8 as i8,
+            }),
+            _ => None,
+        },
+
+        0x4 => match a {
+            0x0 => Some(Opcode::Call {
+                hi: decode_register(b)?,
+                lo: decode_register(c)?,
+            }),
+            0x1 => Some(Opcode::Ret),
+            0x2 => Some(Opcode::Push {
+                src: decode_register(b)?,
+            }),
+            0x3 => Some(Opcode::Pop {
+                dst: decode_register(b)?,
+            }),
+            _ => None,
+        },
         _ => None,
     }
 }
@@ -283,33 +288,44 @@ mod tests {
 
     #[test]
     fn test_parse_jmp() {
-        assert_eq!(decode(0x3123), Some(Opcode::Jmp { addr: 0x123 }));
+        assert_eq!(
+            decode(0x3012),
+            Some(Opcode::Jmp {
+                hi: Register::R1,
+                lo: Register::R2
+            })
+        );
     }
 
     #[test]
-    fn test_parse_jz() {
-        assert_eq!(decode(0x4123), Some(Opcode::Jz { addr: 0x123 }));
+    fn test_parse_jr() {
+        assert_eq!(decode(0x3123), Some(Opcode::Jr { offset: 0x23 }));
     }
 
     #[test]
-    fn test_parse_jnz() {
-        assert_eq!(decode(0x5123), Some(Opcode::Jnz { addr: 0x123 }));
+    fn test_parse_jzr() {
+        assert_eq!(decode(0x3223), Some(Opcode::Jzr { offset: 0x23 }));
     }
 
     #[test]
-    fn test_parse_jc() {
-        assert_eq!(decode(0x6123), Some(Opcode::Jc { addr: 0x123 }));
+    fn test_parse_jnzr() {
+        assert_eq!(decode(0x3323), Some(Opcode::Jnzr { offset: 0x23 }));
     }
 
     #[test]
-    fn test_parse_jnc() {
-        assert_eq!(decode(0x7123), Some(Opcode::Jnc { addr: 0x123 }));
+    fn test_parse_jcr() {
+        assert_eq!(decode(0x3423), Some(Opcode::Jcr { offset: 0x23 }));
+    }
+
+    #[test]
+    fn test_parse_jncr() {
+        assert_eq!(decode(0x3523), Some(Opcode::Jncr { offset: 0x23 }));
     }
 
     #[test]
     fn test_parse_call() {
         assert_eq!(
-            decode(0x8123),
+            decode(0x4012),
             Some(Opcode::Call {
                 hi: Register::R1,
                 lo: Register::R2
@@ -319,16 +335,16 @@ mod tests {
 
     #[test]
     fn test_parse_ret() {
-        assert_eq!(decode(0x9000), Some(Opcode::Ret));
+        assert_eq!(decode(0x4100), Some(Opcode::Ret));
     }
 
     #[test]
     fn test_parse_push() {
-        assert_eq!(decode(0x9110), Some(Opcode::Push { src: Register::R1 }));
+        assert_eq!(decode(0x4210), Some(Opcode::Push { src: Register::R1 }));
     }
 
     #[test]
     fn test_parse_pop() {
-        assert_eq!(decode(0x9210), Some(Opcode::Pop { dst: Register::R1 }));
+        assert_eq!(decode(0x4310), Some(Opcode::Pop { dst: Register::R1 }));
     }
 }

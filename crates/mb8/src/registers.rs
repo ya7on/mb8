@@ -19,7 +19,7 @@ impl Default for Registers {
     fn default() -> Self {
         Self {
             general_purpose: [0; GENERAL_PURPOSE_REGISTERS_COUNT],
-            program_counter: 0,
+            program_counter: 0xE000,
             stack_pointer: STACK_TOP as u16,
             flag: 0,
         }

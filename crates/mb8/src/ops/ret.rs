@@ -51,7 +51,7 @@ mod tests {
         let mut vm = VirtualMachine::default();
         vm.execute(&Opcode::Ret);
         assert_eq!(vm.registers.read(Register::SP), 0xBFFF);
-        assert_eq!(vm.registers.read(Register::PC), 0);
+        assert_eq!(vm.registers.read(Register::PC), 0xE000);
         assert!(vm.halted);
     }
 }
