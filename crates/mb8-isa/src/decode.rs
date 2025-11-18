@@ -21,7 +21,6 @@ pub fn decode_register(reg: u16) -> Option<Register> {
         0x5 => Some(Register::R5),
         0x6 => Some(Register::R6),
         0x7 => Some(Register::R7),
-        0xC => Some(Register::I),
         0xD => Some(Register::SP),
         0xE => Some(Register::PC),
         0xF => Some(Register::F),
@@ -46,10 +45,6 @@ pub fn decode(instruction: u16) -> Option<Opcode> {
                 0x2 => match b {
                     0x0 => Some(Opcode::Sys {
                         syscall: Syscall::Putc,
-                        src: decode_register(c)?,
-                    }),
-                    0x1 => Some(Opcode::Sys {
-                        syscall: Syscall::Yield,
                         src: decode_register(c)?,
                     }),
                     _ => None,
@@ -130,40 +125,6 @@ pub fn decode(instruction: u16) -> Option<Opcode> {
                 _ => None,
             }
         }
-        0xA => Some(Opcode::LdiI {
-            value: (a << 8) | (b << 4) | c,
-        }),
-        0xB => {
-            // Memory operations
-            match a {
-                0x0 => Some(Opcode::Ld {
-                    dst: decode_register(b)?,
-                }),
-                0x1 => Some(Opcode::St {
-                    src: decode_register(b)?,
-                }),
-                0x2 => Some(Opcode::IncI {
-                    src: decode_register(b)?,
-                }),
-                0x3 => Some(Opcode::DecI {
-                    src: decode_register(b)?,
-                }),
-                0x4 => Some(Opcode::Ldg {
-                    dst: decode_register(b)?,
-                    bot: decode_register(c)?,
-                }),
-                0x5 => Some(Opcode::Stg {
-                    src: decode_register(b)?,
-                    bot: decode_register(c)?,
-                }),
-                _ => None,
-            }
-        }
-        0xC => Some(Opcode::Draw {
-            x: decode_register(a)?,
-            y: decode_register(b)?,
-            height: c as u8,
-        }),
         _ => None,
     }
 }
@@ -215,17 +176,6 @@ mod tests {
             decode(0x0201),
             Some(Opcode::Sys {
                 syscall: Syscall::Putc,
-                src: Register::R1,
-            })
-        );
-    }
-
-    #[test]
-    fn test_parse_syscall_yield() {
-        assert_eq!(
-            decode(0x0211),
-            Some(Opcode::Sys {
-                syscall: Syscall::Yield,
                 src: Register::R1,
             })
         );
@@ -373,64 +323,5 @@ mod tests {
     #[test]
     fn test_parse_pop() {
         assert_eq!(decode(0x9210), Some(Opcode::Pop { dst: Register::R1 }));
-    }
-
-    #[test]
-    fn test_parse_ldi_i() {
-        assert_eq!(decode(0xA123), Some(Opcode::LdiI { value: 0x123 }));
-    }
-
-    #[test]
-    fn test_parse_ld() {
-        assert_eq!(decode(0xB010), Some(Opcode::Ld { dst: Register::R1 }));
-    }
-
-    #[test]
-    fn test_parse_st() {
-        assert_eq!(decode(0xB110), Some(Opcode::St { src: Register::R1 }));
-    }
-
-    #[test]
-    fn test_parse_inc_i() {
-        assert_eq!(decode(0xB210), Some(Opcode::IncI { src: Register::R1 }));
-    }
-
-    #[test]
-    fn test_parse_dec_i() {
-        assert_eq!(decode(0xB310), Some(Opcode::DecI { src: Register::R1 }));
-    }
-
-    #[test]
-    fn test_parse_ldg() {
-        assert_eq!(
-            decode(0xB412),
-            Some(Opcode::Ldg {
-                dst: Register::R1,
-                bot: Register::R2
-            })
-        );
-    }
-
-    #[test]
-    fn test_parse_stg() {
-        assert_eq!(
-            decode(0xB512),
-            Some(Opcode::Stg {
-                src: Register::R1,
-                bot: Register::R2
-            })
-        );
-    }
-
-    #[test]
-    fn test_parse_draw() {
-        assert_eq!(
-            decode(0xC123),
-            Some(Opcode::Draw {
-                x: Register::R1,
-                y: Register::R2,
-                height: 3,
-            })
-        );
     }
 }

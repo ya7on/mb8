@@ -7,7 +7,6 @@ use crate::registers::Register;
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Syscall {
     Putc,
-    Yield,
 }
 
 /// Full list of MB8 opcodes used in VM.
@@ -108,45 +107,5 @@ pub enum Opcode {
     /// Pop value from stack into register `dst`.
     Pop {
         dst: Register,
-    },
-
-    /* Memory operations */
-    /// Set memory index register `I` to `value`.
-    LdiI {
-        value: u16,
-    },
-    /// Load value from memory address stored in `I` register to `dst` register.
-    Ld {
-        dst: Register,
-    },
-    /// Store value in memory address stored in `I` register from `src` register.
-    St {
-        src: Register,
-    },
-    /// Increment memory address stored in `I` register by value stored in `src` register.
-    IncI {
-        src: Register,
-    },
-    /// Decrement memory address stored in `I` register by value stored in `src` register.
-    DecI {
-        src: Register,
-    },
-    /// Load value from global (shared) memory address stored in `I` register to `dst` register.
-    Ldg {
-        dst: Register,
-        bot: Register,
-    },
-    /// Store value in global (shared) memory address stored in `I` register from `src` register.
-    Stg {
-        src: Register,
-        bot: Register,
-    },
-
-    /* Draw sprite */
-    /// Draw sprite at position (x, y) with height `height`.
-    Draw {
-        x: Register,
-        y: Register,
-        height: u8,
     },
 }

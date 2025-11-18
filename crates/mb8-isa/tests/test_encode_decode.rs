@@ -26,14 +26,6 @@ fn test_round_trip() {
         assert_eq!(decode(bin), Some(opcode));
     }
     {
-        let opcode = Opcode::Sys {
-            syscall: Syscall::Yield,
-            src: Register::R1,
-        };
-        let bin = encode(&opcode);
-        assert_eq!(decode(bin), Some(opcode));
-    }
-    {
         let opcode = Opcode::Mov {
             dst: Register::R0,
             src: Register::R1,
@@ -147,56 +139,6 @@ fn test_round_trip() {
     }
     {
         let opcode = Opcode::Pop { dst: Register::R1 };
-        let bin = encode(&opcode);
-        assert_eq!(decode(bin), Some(opcode));
-    }
-    {
-        let opcode = Opcode::LdiI { value: 0x123 };
-        let bin = encode(&opcode);
-        assert_eq!(decode(bin), Some(opcode));
-    }
-    {
-        let opcode = Opcode::Ld { dst: Register::R1 };
-        let bin = encode(&opcode);
-        assert_eq!(decode(bin), Some(opcode));
-    }
-    {
-        let opcode = Opcode::St { src: Register::R1 };
-        let bin = encode(&opcode);
-        assert_eq!(decode(bin), Some(opcode));
-    }
-    {
-        let opcode = Opcode::IncI { src: Register::R1 };
-        let bin = encode(&opcode);
-        assert_eq!(decode(bin), Some(opcode));
-    }
-    {
-        let opcode = Opcode::DecI { src: Register::R1 };
-        let bin = encode(&opcode);
-        assert_eq!(decode(bin), Some(opcode));
-    }
-    {
-        let opcode = Opcode::Ldg {
-            dst: Register::R1,
-            bot: Register::R2,
-        };
-        let bin = encode(&opcode);
-        assert_eq!(decode(bin), Some(opcode));
-    }
-    {
-        let opcode = Opcode::Stg {
-            src: Register::R1,
-            bot: Register::R2,
-        };
-        let bin = encode(&opcode);
-        assert_eq!(decode(bin), Some(opcode));
-    }
-    {
-        let opcode = Opcode::Draw {
-            x: Register::R1,
-            y: Register::R2,
-            height: 3,
-        };
         let bin = encode(&opcode);
         assert_eq!(decode(bin), Some(opcode));
     }

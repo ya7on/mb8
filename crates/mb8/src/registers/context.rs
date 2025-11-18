@@ -4,8 +4,6 @@ use mb8_isa::{registers::Register, GENERAL_PURPOSE_REGISTERS_COUNT};
 pub struct RegistersContext {
     /// General purpose registers.
     pub general_purpose: [u8; GENERAL_PURPOSE_REGISTERS_COUNT],
-    /// Index register.
-    pub index_register: u16,
     /// Program counter register.
     pub program_counter: u16,
     /// Stack pointer register.
@@ -26,7 +24,6 @@ impl RegistersContext {
             Register::R5 => self.general_purpose[5] = value as u8,
             Register::R6 => self.general_purpose[6] = value as u8,
             Register::R7 => self.general_purpose[7] = value as u8,
-            Register::I => self.index_register = value,
             Register::F => self.flag = value as u8,
             Register::PC => self.program_counter = value,
             Register::SP => self.stack_pointer = value as u8,
@@ -45,7 +42,6 @@ impl RegistersContext {
             Register::R5 => self.general_purpose[5] as u16,
             Register::R6 => self.general_purpose[6] as u16,
             Register::R7 => self.general_purpose[7] as u16,
-            Register::I => self.index_register,
             Register::F => self.flag as u16,
             Register::PC => self.program_counter,
             Register::SP => self.stack_pointer as u16,

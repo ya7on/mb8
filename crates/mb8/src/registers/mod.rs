@@ -58,7 +58,6 @@ impl Display for Registers {
         write!(f, "R5={}\t", self.read(Register::R5))?;
         write!(f, "R6={}\t", self.read(Register::R6))?;
         write!(f, "R7={}\t", self.read(Register::R7))?;
-        write!(f, "I={}\t", self.read(Register::I))?;
         write!(f, "F={}\t", self.read(Register::F))?;
         write!(f, "PC={}\t", self.read(Register::PC))?;
         write!(f, "SP={}", self.read(Register::SP))

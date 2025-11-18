@@ -81,14 +81,6 @@ impl VirtualMachine {
             Opcode::Ret => self.ret(),
             Opcode::Push { src } => self.push(*src),
             Opcode::Pop { dst } => self.pop(*dst),
-            Opcode::LdiI { value } => self.ldi_i(*value),
-            Opcode::Ld { dst } => self.ld(*dst),
-            Opcode::St { src } => self.st(*src),
-            Opcode::IncI { src } => self.inc_i(*src),
-            Opcode::DecI { src } => self.dec_i(*src),
-            Opcode::Ldg { dst, bot } => self.ldg(*dst, *bot),
-            Opcode::Stg { src, bot } => self.stg(*src, *bot),
-            Opcode::Draw { x, y, height } => self.draw(*x, *y, *height),
         }
     }
 
@@ -109,10 +101,10 @@ impl VirtualMachine {
             return;
         };
 
-        println!("{pc}:\t({binary_instruction:?})\t{:?}", self.role);
-        println!("{opcode:?}");
-        println!("{}", self.registers);
-        println!("=");
+        // println!("{pc}:\t({binary_instruction:?})\t{:?}", self.role);
+        // println!("{opcode:?}");
+        // println!("{}", self.registers);
+        // println!("=");
 
         self.execute(&opcode);
     }

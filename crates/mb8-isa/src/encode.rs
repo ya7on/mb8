@@ -15,7 +15,6 @@ pub fn encode_register(register: Register) -> u8 {
         Register::R5 => 0x5,
         Register::R6 => 0x6,
         Register::R7 => 0x7,
-        Register::I => 0xC,
         Register::SP => 0xD,
         Register::PC => 0xE,
         Register::F => 0xF,
@@ -41,7 +40,6 @@ pub fn encode(opcode: &Opcode) -> u16 {
         Opcode::Sys { syscall, src } => {
             let syscall = match syscall {
                 Syscall::Putc => 0x0,
-                Syscall::Yield => 0x1,
             };
             let src = encode_register(*src);
             0x0200 | (syscall) << 4 | src as u16
@@ -105,38 +103,6 @@ pub fn encode(opcode: &Opcode) -> u16 {
             let dst = encode_register(*dst);
             0x9200 | (dst as u16) << 4
         }
-        Opcode::LdiI { value } => 0xA000 | (*value & 0xFFF),
-        Opcode::Ld { dst } => {
-            let dst = encode_register(*dst);
-            0xB000 | (dst as u16) << 4
-        }
-        Opcode::St { src } => {
-            let src = encode_register(*src);
-            0xB100 | (src as u16) << 4
-        }
-        Opcode::IncI { src } => {
-            let src = encode_register(*src);
-            0xB200 | (src as u16) << 4
-        }
-        Opcode::DecI { src } => {
-            let src = encode_register(*src);
-            0xB300 | (src as u16) << 4
-        }
-        Opcode::Ldg { dst, bot } => {
-            let dst = encode_register(*dst);
-            let bot = encode_register(*bot);
-            0xB400 | (dst as u16) << 4 | (bot as u16)
-        }
-        Opcode::Stg { src, bot } => {
-            let src = encode_register(*src);
-            let bot = encode_register(*bot);
-            0xB500 | (src as u16) << 4 | (bot as u16)
-        }
-        Opcode::Draw { x, y, height } => {
-            let x = encode_register(*x);
-            let y = encode_register(*y);
-            0xC000 | (x as u16) << 8 | (y as u16) << 4 | (*height & 0xF) as u16
-        }
     }
 }
 
@@ -183,17 +149,6 @@ mod tests {
                 src: Register::R1
             }),
             0x0201
-        );
-    }
-
-    #[test]
-    fn test_encode_syscall_yield() {
-        assert_eq!(
-            encode(&Opcode::Sys {
-                syscall: Syscall::Yield,
-                src: Register::R1
-            }),
-            0x0211
         );
     }
 
@@ -339,64 +294,5 @@ mod tests {
     #[test]
     fn test_encode_pop() {
         assert_eq!(encode(&Opcode::Pop { dst: Register::R1 }), 0x9210);
-    }
-
-    #[test]
-    fn test_encode_ldi_i() {
-        assert_eq!(encode(&Opcode::LdiI { value: 0x123 }), 0xA123);
-    }
-
-    #[test]
-    fn test_encode_ld() {
-        assert_eq!(encode(&Opcode::Ld { dst: Register::R1 }), 0xB010);
-    }
-
-    #[test]
-    fn test_encode_st() {
-        assert_eq!(encode(&Opcode::St { src: Register::R1 }), 0xB110);
-    }
-
-    #[test]
-    fn test_encode_inc_i() {
-        assert_eq!(encode(&Opcode::IncI { src: Register::R1 }), 0xB210);
-    }
-
-    #[test]
-    fn test_encode_dec_i() {
-        assert_eq!(encode(&Opcode::DecI { src: Register::R1 }), 0xB310);
-    }
-
-    #[test]
-    fn test_encode_ldg() {
-        assert_eq!(
-            encode(&Opcode::Ldg {
-                dst: Register::R1,
-                bot: Register::R2,
-            }),
-            0xB412
-        );
-    }
-
-    #[test]
-    fn test_encode_stg() {
-        assert_eq!(
-            encode(&Opcode::Stg {
-                src: Register::R1,
-                bot: Register::R2
-            }),
-            0xB512
-        );
-    }
-
-    #[test]
-    fn test_encode_draw() {
-        assert_eq!(
-            encode(&Opcode::Draw {
-                x: Register::R1,
-                y: Register::R2,
-                height: 0x3
-            }),
-            0xC123
-        );
     }
 }
