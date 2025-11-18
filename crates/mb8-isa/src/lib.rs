@@ -3,15 +3,13 @@ pub mod encode;
 pub mod opcodes;
 pub mod registers;
 
-/// MB8 Machine memory bank size
-pub const MEMORY_BANK_SIZE: usize = 4096;
-/// MB8 Machine stack size
-pub const STACK_SIZE: u16 = 256;
-/// MB8 Machine mailbox size
-pub const MAILBOX_SIZE: usize = 256;
-/// MB8 Machine graphic buffer size
-pub const GRAPHIC_BUFFER_SIZE: usize = 256;
+/// Represents the size of the RAM in bytes.
+pub const RAM_SIZE: usize = 0xC000;
+/// Represents the top of the stack in bytes.
+pub const STACK_TOP: usize = 0xBFFF;
+/// Represents the bottom of the stack in bytes.
+pub const STACK_BOTTOM: usize = 0xBF00;
+/// Represents the size of the ROM in bytes.
+pub const ROM_SIZE: usize = 0x1000;
 /// Represents the general purpose registers count of the CPU.
 pub const GENERAL_PURPOSE_REGISTERS_COUNT: usize = 8;
-/// Represents the maximum number of bots allowed in the game.
-pub const BOTS_LIMIT: usize = 4;

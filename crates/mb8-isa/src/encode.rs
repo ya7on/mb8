@@ -93,7 +93,11 @@ pub fn encode(opcode: &Opcode) -> u16 {
         Opcode::Jnz { addr } => 0x5000 | (*addr & 0xFFF),
         Opcode::Jc { addr } => 0x6000 | (addr & 0xFFF),
         Opcode::Jnc { addr } => 0x7100 | (addr & 0xFFF),
-        Opcode::Call { addr } => 0x8000 | (*addr & 0xFFF),
+        Opcode::Call { hi, lo } => {
+            let hi = encode_register(*hi);
+            let lo = encode_register(*lo);
+            0x8000 | (hi as u16) << 4 | lo as u16
+        }
         Opcode::Ret => 0x9000,
         Opcode::Push { src } => {
             let src = encode_register(*src);
@@ -278,7 +282,13 @@ mod tests {
 
     #[test]
     fn test_encode_call() {
-        assert_eq!(encode(&Opcode::Call { addr: 0x123 }), 0x8123);
+        assert_eq!(
+            encode(&Opcode::Call {
+                hi: Register::R1,
+                lo: Register::R2
+            }),
+            0x8123
+        );
     }
 
     #[test]

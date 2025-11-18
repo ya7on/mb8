@@ -4,22 +4,24 @@ use crate::vm::VirtualMachine;
 
 impl VirtualMachine {
     pub fn ret(&mut self) {
-        let stack_pointer = self.registers.read(Register::SP);
-        let mut stack = self.mem.stack();
-        let Ok((addr, stack_pointer)) = stack.pop_u16(stack_pointer) else {
+        let mut stack_pointer = self.registers.read(Register::SP);
+        if stack_pointer + 2 > 0xBFFF {
             self.halted = true;
             return;
-        };
+        }
+        stack_pointer += 1;
+        let hi = self.devices.read(stack_pointer);
+        stack_pointer += 1;
+        let lo = self.devices.read(stack_pointer);
         self.registers.write(Register::SP, stack_pointer);
-        self.registers.write(Register::PC, addr);
+        self.registers
+            .write(Register::PC, u16::from_be_bytes([hi, lo]));
     }
 }
 
 #[cfg(test)]
 mod tests {
     use mb8_isa::opcodes::Opcode;
-
-    use crate::mem::regions::MemoryRegion;
 
     use super::*;
 
@@ -28,13 +30,18 @@ mod tests {
         // VM returns from a subroutine
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::PC, 0x100);
-        vm.execute(&Opcode::Call { addr: 0x200 });
-        assert_eq!(vm.registers.read(Register::SP), 2);
+        vm.registers.write(Register::R0, 0x02);
+        vm.registers.write(Register::R1, 0x00);
+        vm.execute(&Opcode::Call {
+            hi: Register::R0,
+            lo: Register::R1,
+        });
+        assert_eq!(vm.registers.read(Register::SP), 0xBFFF - 2);
         assert_eq!(vm.registers.read(Register::PC), 0x200);
-        assert_eq!(vm.mem.stack().read(0), 0x01);
-        assert_eq!(vm.mem.stack().read(1), 0x00);
+        assert_eq!(vm.devices.read(0xBFFF - 1), 0x01);
+        assert_eq!(vm.devices.read(0xBFFF), 0x00);
         vm.execute(&Opcode::Ret);
-        assert_eq!(vm.registers.read(Register::SP), 0);
+        assert_eq!(vm.registers.read(Register::SP), 0xBFFF);
         assert_eq!(vm.registers.read(Register::PC), 0x100);
     }
 
@@ -43,7 +50,7 @@ mod tests {
         // VM returns from a subroutine
         let mut vm = VirtualMachine::default();
         vm.execute(&Opcode::Ret);
-        assert_eq!(vm.registers.read(Register::SP), 0);
+        assert_eq!(vm.registers.read(Register::SP), 0xBFFF);
         assert_eq!(vm.registers.read(Register::PC), 0);
         assert!(vm.halted);
     }

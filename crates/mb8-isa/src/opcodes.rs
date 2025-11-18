@@ -96,7 +96,8 @@ pub enum Opcode {
     /* Stack instructions */
     /// Call subroutine at address `addr`.
     Call {
-        addr: u16,
+        hi: Register,
+        lo: Register,
     },
     /// Return from subroutine.
     Ret,

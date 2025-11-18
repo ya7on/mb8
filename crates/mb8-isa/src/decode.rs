@@ -110,7 +110,8 @@ pub fn decode(instruction: u16) -> Option<Opcode> {
             addr: (a << 8) | (b << 4) | c,
         }),
         0x8 => Some(Opcode::Call {
-            addr: (a << 8) | (b << 4) | c,
+            hi: decode_register(a)?,
+            lo: decode_register(b)?,
         }),
         0x9 => {
             // Stack operations
@@ -307,7 +308,13 @@ mod tests {
 
     #[test]
     fn test_parse_call() {
-        assert_eq!(decode(0x8123), Some(Opcode::Call { addr: 0x123 }));
+        assert_eq!(
+            decode(0x8123),
+            Some(Opcode::Call {
+                hi: Register::R1,
+                lo: Register::R2
+            })
+        );
     }
 
     #[test]

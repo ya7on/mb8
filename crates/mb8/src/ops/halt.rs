@@ -1,13 +1,8 @@
-use crate::vm::{Role, VirtualMachine};
+use crate::vm::VirtualMachine;
 
 impl VirtualMachine {
     pub fn halt(&mut self) {
-        if let Role::Judge = self.role {
-            self.halted = true;
-        } else {
-            self.registers.clear();
-            self.switch_context(Role::Judge);
-        }
+        self.halted = true;
     }
 }
 

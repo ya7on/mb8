@@ -123,7 +123,10 @@ fn test_round_trip() {
         assert_eq!(decode(bin), Some(opcode));
     }
     {
-        let opcode = Opcode::Call { addr: 0x123 };
+        let opcode = Opcode::Call {
+            hi: Register::R1,
+            lo: Register::R2,
+        };
         let bin = encode(&opcode);
         assert_eq!(decode(bin), Some(opcode));
     }

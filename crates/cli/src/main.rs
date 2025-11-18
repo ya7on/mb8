@@ -35,7 +35,7 @@ fn run_vm(file: PathBuf, bot: Option<PathBuf>) {
         }
         i = 0;
 
-        let gfx = vm.mem.host().graphic_buffer();
+        let gfx = vm.devices.host().graphic_buffer();
 
         for y in 0..32 {
             for x in 0..64 {
