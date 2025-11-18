@@ -13,7 +13,6 @@ impl VirtualMachine {
 
         if stack_pointer - 1 <= STACK_BOTTOM as u16 {
             self.halted = true;
-            return;
         }
     }
 }
