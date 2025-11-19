@@ -1,9 +1,7 @@
 [book]
 title = "MB8 Documentation"
-author = "ya7on"
 description = "8bit MicroBot Documentation"
 language = "en"
-multilingual = false
 src = "."
 
 [build]
@@ -12,6 +10,5 @@ build-dir = "book"
 [output.html]
 default-theme = "light"
 preferred-dark-theme = "navy"
-curly-quotes = true
 git-repository-url = "https://github.com/ya7on/mb8"
 site-url = "/mb8/"
