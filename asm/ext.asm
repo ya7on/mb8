@@ -10,14 +10,6 @@
         LDI {reg} 0
     }
 
-    ; Relative jump to address PC + offset
-    JMPR { offset: u16 } => {
-        addr = offset + $ + 2
-        asm {
-            JMP {addr}
-        }
-    }
-
     ; Increment register value by a given immediate value
     ; WARNING: This macro may modify the stack pointer.
     INC { reg: register } { val: u8 } => asm {

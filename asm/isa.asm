@@ -41,4 +41,6 @@
     RET => 0x4100
     PUSH { src: register } => 0x42 @ src @ 0x0
     POP { dst: register } => 0x43 @ dst @ 0x0
+    LD { dst: register } { hi: register } { lo: register } => 0x5 @ dst @ hi @ lo
+    ST { dst: register } { hi: register } { lo: register } => 0x6 @ dst @ hi @ lo
 }

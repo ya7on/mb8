@@ -27,6 +27,9 @@
   - [RET](#ret)
   - [PUSH](#push)
   - [POP](#pop)
+- Memory instructions
+  - [LD](#ld)
+  - [ST](#st)
 
 # System instructions
 
@@ -340,8 +343,6 @@ rD = imm8
 
 **Description**: Load an 8-bit immediate into **rD**.
 
----
-
 # Jump instructions
 
 ## JMP
@@ -598,5 +599,65 @@ POP rD
 **Flags**: None.
 
 **Description**: Load a byte from the stack to **rD** and increment `SP`.
+
+---
+
+# Memory instructions
+
+## LD
+
+**Syntax**:
+```asm
+LD rD rH rL
+```
+
+**Operation**:
+```
+rD = MEM[(rH << 8) | rL]
+```
+
+**Args**:
+- **rD** — destination register.
+- **rH**/**rL** — registers holding the high/low bytes of the source address.
+
+**Encoding**:
+```
+0101 DDDD HHHH LLLL
+```
+
+**Hex**: `0x5DHL`
+
+**Flags**: None.
+
+**Description**: Read one byte from RAM at the 16-bit address formed by **rH**/**rL** and place it in **rD**.
+
+---
+
+## ST
+
+**Syntax**:
+```asm
+ST rS rH rL
+```
+
+**Operation**:
+```
+MEM[(rH << 8) | rL] = rS
+```
+
+**Args**:
+- **rS** — source register.
+- **rH**/**rL** — registers holding the high/low bytes of the destination address.
+
+**Encoding**:
+```
+0110 SSSS HHHH LLLL
+```
+
+**Hex**: `0x6SHL`
+
+**Flags**: None.
+
+**Description**: Write one byte from **rS** to RAM at the 16-bit address composed from **rH**/**rL**.
 
 ---

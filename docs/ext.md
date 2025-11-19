@@ -3,7 +3,6 @@
 Assembler-only helpers from `asm/ext.asm`. They rewrite into core opcodes and often use `R7` plus the stack as scratch.
 
 - [ZERO](#zero)
-- [JMPR](#jmpr)
 - [INC](#inc)
 - [DEC](#dec)
 - [NOT](#not)
@@ -30,25 +29,6 @@ LDI rD 0
 **Scratch**: none  
 **Flags**: none  
 **Description**: Clear a register.
-
----
-
-## JMPR
-
-**Syntax**:
-```asm
-JMPR offset
-```
-
-**Expands to**:
-```asm
-addr = offset + $ + 2
-JMP addr
-```
-
-**Scratch**: none  
-**Flags**: none  
-**Description**: Relative jump from the current location.
 
 ---
 
