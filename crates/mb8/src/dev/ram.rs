@@ -3,11 +3,11 @@ use mb8_isa::RAM_SIZE;
 use super::{utils::empty_memory, Device};
 
 #[derive(Debug)]
-pub struct Ram {
+pub struct RAM {
     data: Box<[u8; RAM_SIZE]>,
 }
 
-impl Default for Ram {
+impl Default for RAM {
     fn default() -> Self {
         Self {
             data: empty_memory(),
@@ -15,7 +15,7 @@ impl Default for Ram {
     }
 }
 
-impl Device for Ram {
+impl Device for RAM {
     fn read(&self, addr: u16) -> u8 {
         self.data[addr as usize]
     }

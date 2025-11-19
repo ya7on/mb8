@@ -1,9 +1,10 @@
-use super::{ram::Ram, rom::Rom, Device};
+use super::{gpu::GPU, ram::RAM, rom::ROM, Device};
 
 #[derive(Debug, Default)]
 pub struct Bus {
-    rom: Rom,
-    ram: Ram,
+    rom: ROM,
+    ram: RAM,
+    gpu: GPU,
 }
 
 impl Bus {
@@ -13,7 +14,8 @@ impl Bus {
             0x0000..=0xBFFF => self.ram.read(addr),
             0xC000..=0xDFFF => unimplemented!(),
             0xE000..=0xEFFF => self.rom.read(addr - 0xE000),
-            0xF000..=0xFFFF => unimplemented!(),
+            0xF000..=0xF0FF => self.gpu.read(addr - 0xF000),
+            0xF100..=0xFFFF => unimplemented!(),
         }
     }
 
@@ -22,7 +24,8 @@ impl Bus {
             0x0000..=0xBFFF => self.ram.write(addr, value),
             0xC000..=0xDFFF => unimplemented!(),
             0xE000..=0xEFFF => self.rom.write(addr - 0xE000, value),
-            0xF000..=0xFFFF => unimplemented!(),
+            0xF000..=0xF0FF => self.gpu.write(addr - 0xF000, value),
+            0xF100..=0xFFFF => unimplemented!(),
         }
     }
 }
