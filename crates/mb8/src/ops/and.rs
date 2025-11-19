@@ -28,7 +28,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_opcode_and() {
+    fn computes_bitwise_and() {
         // VM executes AND operation
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 0b1100_1010);
@@ -38,5 +38,29 @@ mod tests {
             src: Register::R1,
         });
         assert_eq!(vm.registers.read(Register::R0), 0b1100_0000);
+    }
+
+    #[test]
+    fn sets_zero_flag_on_and() {
+        let mut vm = VirtualMachine::default();
+        vm.registers.write(Register::R0, 0x0F);
+        vm.registers.write(Register::R1, 0xF0);
+        vm.execute(&Opcode::And {
+            dst: Register::R0,
+            src: Register::R1,
+        });
+        assert_eq!(vm.registers.read(Register::F), flags::Z_FLAG as u16);
+    }
+
+    #[test]
+    fn sets_negative_flag_on_and() {
+        let mut vm = VirtualMachine::default();
+        vm.registers.write(Register::R0, 0xF0);
+        vm.registers.write(Register::R1, 0x80);
+        vm.execute(&Opcode::And {
+            dst: Register::R0,
+            src: Register::R1,
+        });
+        assert_eq!(vm.registers.read(Register::F), flags::N_FLAG as u16);
     }
 }

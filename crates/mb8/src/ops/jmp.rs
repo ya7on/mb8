@@ -18,7 +18,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_opcode_jmp() {
+    fn jumps_to_absolute_address() {
         // VM jumps to a specific address
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::PC, 0x100);

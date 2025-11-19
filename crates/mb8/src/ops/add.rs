@@ -31,7 +31,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_opcode_add() {
+    fn performs_addition() {
         // VM adds two registers and stores the result in a third register
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 5);
@@ -44,7 +44,7 @@ mod tests {
     }
 
     #[test]
-    fn test_opcode_add_clear_flags() {
+    fn resets_flags_before_add() {
         // VM clear the flags register before executing ADD instruction
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::F, 0xFF);
@@ -59,7 +59,7 @@ mod tests {
     }
 
     #[test]
-    fn test_opcode_add_zero() {
+    fn sets_zero_flag_after_add() {
         // VM clear the flags register before executing ADD instruction
         let mut vm = VirtualMachine::default();
         vm.execute(&Opcode::Add {
@@ -71,7 +71,7 @@ mod tests {
     }
 
     #[test]
-    fn test_opcode_add_overflow() {
+    fn wraps_and_sets_carry_on_add() {
         // VM handles addition overflow by wrapping around and setting the carry flag
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 255);
@@ -85,5 +85,29 @@ mod tests {
             vm.registers.read(Register::F),
             (flags::C_FLAG | flags::N_FLAG) as u16
         );
+    }
+
+    #[test]
+    fn sets_carry_flag_on_addition() {
+        let mut vm = VirtualMachine::default();
+        vm.registers.write(Register::R0, 0xF0);
+        vm.registers.write(Register::R1, 0x20);
+        vm.execute(&Opcode::Add {
+            dst: Register::R0,
+            src: Register::R1,
+        });
+        assert_eq!(vm.registers.read(Register::F), flags::C_FLAG as u16);
+    }
+
+    #[test]
+    fn sets_negative_flag_on_addition() {
+        let mut vm = VirtualMachine::default();
+        vm.registers.write(Register::R0, 0x40);
+        vm.registers.write(Register::R1, 0x40);
+        vm.execute(&Opcode::Add {
+            dst: Register::R0,
+            src: Register::R1,
+        });
+        assert_eq!(vm.registers.read(Register::F), flags::N_FLAG as u16);
     }
 }

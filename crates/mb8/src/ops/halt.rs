@@ -13,7 +13,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_opcode_halt() {
+    fn halts_execution() {
         // VM halts execution when HALT opcode is encountered
         let mut vm = VirtualMachine::default();
         assert!(!vm.halted);

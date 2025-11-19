@@ -31,7 +31,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_opcode_sub() {
+    fn performs_subtraction() {
         // VM subtracts two registers and stores the result in a third register
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 5);
@@ -44,7 +44,7 @@ mod tests {
     }
 
     #[test]
-    fn test_opcode_sub_clear_flags() {
+    fn clears_flags_before_sub() {
         // VM clear the flags register before executing SUB instruction
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::F, 0xFF);
@@ -59,7 +59,7 @@ mod tests {
     }
 
     #[test]
-    fn test_opcode_sub_zero() {
+    fn sets_zero_flag_after_sub() {
         // VM clear the flags register before executing SUB instruction
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::F, 0xFF);
@@ -74,7 +74,7 @@ mod tests {
     }
 
     #[test]
-    fn test_opcode_sub_overflow() {
+    fn wraps_and_sets_carry_on_sub() {
         // VM handles subtraction overflow by wrapping around and setting the carry flag
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 1);
@@ -88,5 +88,41 @@ mod tests {
             vm.registers.read(Register::F),
             (flags::N_FLAG | flags::C_FLAG) as u16
         );
+    }
+
+    #[test]
+    fn sets_zero_flag_on_subtraction() {
+        let mut vm = VirtualMachine::default();
+        vm.registers.write(Register::R0, 0x2A);
+        vm.registers.write(Register::R1, 0x2A);
+        vm.execute(&Opcode::Sub {
+            dst: Register::R0,
+            src: Register::R1,
+        });
+        assert_eq!(vm.registers.read(Register::F), flags::Z_FLAG as u16);
+    }
+
+    #[test]
+    fn sets_carry_flag_on_subtraction() {
+        let mut vm = VirtualMachine::default();
+        vm.registers.write(Register::R0, 55);
+        vm.registers.write(Register::R1, 200);
+        vm.execute(&Opcode::Sub {
+            dst: Register::R0,
+            src: Register::R1,
+        });
+        assert_eq!(vm.registers.read(Register::F), flags::C_FLAG as u16);
+    }
+
+    #[test]
+    fn sets_negative_flag_on_subtraction() {
+        let mut vm = VirtualMachine::default();
+        vm.registers.write(Register::R0, 0x90);
+        vm.registers.write(Register::R1, 0x10);
+        vm.execute(&Opcode::Sub {
+            dst: Register::R0,
+            src: Register::R1,
+        });
+        assert_eq!(vm.registers.read(Register::F), flags::N_FLAG as u16);
     }
 }

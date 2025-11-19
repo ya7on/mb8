@@ -34,7 +34,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_opcode_call() {
+    fn pushes_return_and_jumps() {
         // VM calls a subroutine at a given address
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::PC, 0x9876);

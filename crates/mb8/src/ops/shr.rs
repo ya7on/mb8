@@ -31,7 +31,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_opcode_shr() {
+    fn shifts_right() {
         // VM executes SHR operation
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 0b1111_0011);
@@ -41,5 +41,41 @@ mod tests {
             src: Register::R1,
         });
         assert_eq!(vm.registers.read(Register::R0), 0b0011_1100);
+    }
+
+    #[test]
+    fn sets_zero_flag_on_shift_right() {
+        let mut vm = VirtualMachine::default();
+        vm.registers.write(Register::R0, 0);
+        vm.registers.write(Register::R1, 4);
+        vm.execute(&Opcode::Shr {
+            dst: Register::R0,
+            src: Register::R1,
+        });
+        assert_eq!(vm.registers.read(Register::F), flags::Z_FLAG as u16);
+    }
+
+    #[test]
+    fn keeps_carry_flag_cleared_on_shift_right() {
+        let mut vm = VirtualMachine::default();
+        vm.registers.write(Register::R0, 0xFF);
+        vm.registers.write(Register::R1, 1);
+        vm.execute(&Opcode::Shr {
+            dst: Register::R0,
+            src: Register::R1,
+        });
+        assert_eq!(vm.registers.read(Register::F) & flags::C_FLAG as u16, 0);
+    }
+
+    #[test]
+    fn sets_negative_flag_on_shift_right_noop() {
+        let mut vm = VirtualMachine::default();
+        vm.registers.write(Register::R0, 0x80);
+        vm.registers.write(Register::R1, 0);
+        vm.execute(&Opcode::Shr {
+            dst: Register::R0,
+            src: Register::R1,
+        });
+        assert_eq!(vm.registers.read(Register::F), flags::N_FLAG as u16);
     }
 }

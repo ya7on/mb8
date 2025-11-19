@@ -22,7 +22,7 @@ impl VirtualMachine {
 mod tests {
 
     #[test]
-    fn test_opcode_sys_putc() {
+    fn prints_putchar_output() {
         // VM prints the value of the source register
     }
 }

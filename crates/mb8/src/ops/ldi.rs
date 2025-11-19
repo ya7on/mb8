@@ -15,7 +15,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_ldi() {
+    fn loads_immediate_value() {
         // VM puts the value into the register
         let mut vm = VirtualMachine::default();
         vm.execute(&Opcode::Ldi {

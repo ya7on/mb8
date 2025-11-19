@@ -23,7 +23,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_opcode_pop() {
+    fn pops_value_from_stack() {
         // VM pops a value from the stack
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::SP, 0xBFFF - 1);
@@ -34,7 +34,7 @@ mod tests {
     }
 
     #[test]
-    fn test_opcode_pop_stack_underflow() {
+    fn halts_on_stack_underflow() {
         // VM halts when the stack underflows
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::SP, 0xBFFF);

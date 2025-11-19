@@ -14,7 +14,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_opcode_nop() {
+    fn executes_nop() {
         // VM does nothing on NOP
         let mut vm = VirtualMachine::default();
         vm.execute(&Opcode::Nop);

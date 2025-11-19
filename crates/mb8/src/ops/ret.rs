@@ -26,7 +26,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_opcode_ret() {
+    fn restores_pc_from_stack() {
         // VM returns from a subroutine
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::PC, 0x100);
@@ -46,7 +46,7 @@ mod tests {
     }
 
     #[test]
-    fn test_opcode_ret_stack_underflow() {
+    fn halts_on_ret_underflow() {
         // VM returns from a subroutine
         let mut vm = VirtualMachine::default();
         vm.execute(&Opcode::Ret);

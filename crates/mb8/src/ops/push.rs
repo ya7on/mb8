@@ -24,7 +24,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_opcode_push() {
+    fn pushes_byte_onto_stack() {
         // VM pushes a value onto the stack
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 0x45);
@@ -34,7 +34,7 @@ mod tests {
     }
 
     #[test]
-    fn test_opcode_push_stack_overflow() {
+    fn halts_on_stack_overflow() {
         // VM halts when the stack overflows
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::SP, 0xBF00);

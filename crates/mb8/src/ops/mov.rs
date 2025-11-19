@@ -16,7 +16,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_opcode_mov() {
+    fn moves_register_value() {
         // VM moves registers values from source register to destination register
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 42);
