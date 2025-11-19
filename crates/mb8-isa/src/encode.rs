@@ -112,6 +112,18 @@ pub fn encode(opcode: &Opcode) -> u16 {
             let dst = encode_register(*dst);
             0x4300 | (dst as u16) << 4
         }
+        Opcode::Ld { dst, hi, lo } => {
+            let dst = encode_register(*dst);
+            let hi = encode_register(*hi);
+            let lo = encode_register(*lo);
+            0x5000 | (dst as u16) << 8 | (hi as u16) << 4 | lo as u16
+        }
+        Opcode::St { src, hi, lo } => {
+            let src = encode_register(*src);
+            let hi = encode_register(*hi);
+            let lo = encode_register(*lo);
+            0x6000 | (src as u16) << 8 | (hi as u16) << 4 | lo as u16
+        }
     }
 }
 
@@ -320,5 +332,29 @@ mod tests {
     #[test]
     fn test_encode_pop() {
         assert_eq!(encode(&Opcode::Pop { dst: Register::R1 }), 0x4310);
+    }
+
+    #[test]
+    fn test_encode_ld() {
+        assert_eq!(
+            encode(&Opcode::Ld {
+                dst: Register::R1,
+                hi: Register::R2,
+                lo: Register::R3
+            }),
+            0x5123
+        );
+    }
+
+    #[test]
+    fn test_encode_st() {
+        assert_eq!(
+            encode(&Opcode::St {
+                src: Register::R1,
+                hi: Register::R2,
+                lo: Register::R3
+            }),
+            0x6123
+        );
     }
 }

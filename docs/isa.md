@@ -4,7 +4,6 @@
   - [NOP](#nop)
   - [HALT](#halt)
   - [PUTC](#putc)
-  - [YIELD](#yield)
 - Register-register instructions
   - [MOV](#mov)
   - [ADD](#add)
@@ -18,26 +17,17 @@
   - [LDI](#ldi)
 - Jump instructions
   - [JMP](#jmp)
-  - [JZ](#jz)
-  - [JNZ](#jnz)
-  - [JC](#jc)
-  - [JNC](#jnc)
+  - [JR](#jr)
+  - [JZR](#jzr)
+  - [JNZR](#jnzr)
+  - [JCR](#jcr)
+  - [JNCR](#jncr)
 - Stack instructions
   - [CALL](#call)
   - [RET](#ret)
   - [PUSH](#push)
   - [POP](#pop)
-- Memory instructions
-  - [LDI_I](#ldi_i)
-  - [LD](#ld)
-  - [ST](#st)
-  - [INC_I](#inc_i)
-  - [DEC_I](#dec_i)
-  - [LDG](#ldg)
-  - [STG](#stg)
-- Draw instructions
-  - [DRAW](#draw)
-  
+
 # System instructions
 
 ## NOP
@@ -58,12 +48,7 @@ NOP
 
 **Flags**: None
 
-**Description**: No operation
-
-**Example**:
-```asm
-NOP     ; No operation
-```
+**Description**: Do nothing for one instruction cycle.
 
 ---
 
@@ -71,28 +56,21 @@ NOP     ; No operation
 
 **Syntax**:
 ```asm
-HALT [X]
+HALT
 ```
 
-**Args**:
-- **X** - exit_code (optional)
+**Args**: None
 
 **Encoding**:
 ```
-0000 0001 XXXX XXXX
+0000 0001 0000 0000
 ```
 
-**Hex**: `0x01XX`
+**Hex**: `0x0100`
 
 **Flags**: None
 
-**Description**: Stop the execution of the program
-
-**Example**:
-```asm
-HALT 0x1    ; Exit with code 1
-HALT        ; This will never be executed because it is unreachable
-```
+**Description**: Stop the VM. Execution does not resume until a reset happens.
 
 ---
 
@@ -104,7 +82,7 @@ PUTC rS
 ```
 
 **Args**:
-- **rS** - register which contains the character to be printed
+- **rS** — register that holds the byte to print.
 
 **Encoding**:
 ```
@@ -115,43 +93,9 @@ PUTC rS
 
 **Flags**: None
 
-**Description**: Put character in register **rS** to the standard output
-
-**Example**:
-```asm
-LDI R1 "A"  ; Put character 'A' in register R1
-PUTC R1     ; Print character 'A'
-```
+**Description**: Write the value stored in **rS** to the console device.
 
 ---
-
-## YIELD
-
-**Syntax**:
-```asm
-YIELD rD
-```
-
-**Args**:
-- **rD** - register which contains the bot ID
-
-**Encoding**:
-```
-0000 0011 0000 DDDD
-```
-
-**Hex**: `0x030D`
-
-**Flags**: None
-
-**Description**: Give control to the bot with ID **rD**
-
-**Example**:
-```asm
-LDI R1 0x1  ; Set bot ID to 1
-YIELD R1    ; Give control to the bot with ID 1
-HALT        ; This will be executed after the bot with ID 1 has finished executing
-```
 
 # Register-register instructions
 
@@ -168,8 +112,8 @@ rD = rS
 ```
 
 **Args**:
-- **rD** - destination register
-- **rS** - source register
+- **rD** — destination register.
+- **rS** — source register.
 
 **Encoding**:
 ```
@@ -180,13 +124,7 @@ rD = rS
 
 **Flags**: None
 
-**Description**: Move the value from register **rS** to register **rD**
-
-**Example**:
-```asm
-LDI R1 0x10     ; Load value 0x10 into register R1
-MOV R2 R1       ; R2 = 0x10
-```
+**Description**: Copy the value from **rS** into **rD**.
 
 ---
 
@@ -203,8 +141,8 @@ rD = rD + rS
 ```
 
 **Args**:
-- **rD** - destination register
-- **rS** - source register
+- **rD** — destination register.
+- **rS** — source register.
 
 **Encoding**:
 ```
@@ -213,16 +151,9 @@ rD = rD + rS
 
 **Hex**: `0x11DS`
 
-**Flags**: Sets Z on zero, C on overflow (wrap past 0xFF), N mirrors bit 7 of the result
+**Flags**: Updates `Z` and `C`.
 
-**Description**: Put the sum of the values in registers **rD** and **rS** into register **rD**
-
-**Example**:
-```asm
-LDI R1 0x2
-LDI R2 0x3
-ADD R1 R2       ; R1 = 0x5
-```
+**Description**: Add **rS** to **rD**.
 
 ---
 
@@ -239,8 +170,8 @@ rD = rD - rS
 ```
 
 **Args**:
-- **rD** - destination register
-- **rS** - source register
+- **rD** — destination register.
+- **rS** — source register.
 
 **Encoding**:
 ```
@@ -249,16 +180,9 @@ rD = rD - rS
 
 **Hex**: `0x12DS`
 
-**Flags**: Sets Z on zero, C on borrow/overflow, N mirrors bit 7 of the result
+**Flags**: Updates `Z` and `C`.
 
-**Description**: Put the difference of the values in registers **rD** and **rS** into register **rD**
-
-**Example**:
-```asm
-LDI R1 0x3
-LDI R2 0x1
-SUB R1 R2       ; R1 = 0x2
-```
+**Description**: Subtract **rS** from **rD**.
 
 ---
 
@@ -274,10 +198,6 @@ AND rD rS
 rD = rD & rS
 ```
 
-**Args**:
-- **rD** - destination register
-- **rS** - source register
-
 **Encoding**:
 ```
 0001 0011 DDDD SSSS
@@ -285,16 +205,9 @@ rD = rD & rS
 
 **Hex**: `0x13DS`
 
-**Flags**: Sets Z on zero; N mirrors bit 7; clears C
+**Flags**: Updates `Z`.
 
-**Description**: Put the bitwise AND of the values in registers **rD** and **rS** into register **rD**
-
-**Example**:
-```asm
-LDI R1 0b1111_1111
-LDI R2 0b0000_1111
-AND R1 R2       ; R1 = 0b0000_1111
-```
+**Description**: Bitwise AND.
 
 ---
 
@@ -310,10 +223,6 @@ OR rD rS
 rD = rD | rS
 ```
 
-**Args**:
-- **rD** - destination register
-- **rS** - source register
-
 **Encoding**:
 ```
 0001 0100 DDDD SSSS
@@ -321,16 +230,9 @@ rD = rD | rS
 
 **Hex**: `0x14DS`
 
-**Flags**: Sets Z on zero; N mirrors bit 7; clears C
+**Flags**: Updates `Z`.
 
-**Description**: Put the bitwise OR of the values in registers **rD** and **rS** into register **rD**
-
-**Example**:
-```asm
-LDI R1 0b1111_0000
-LDI R2 0b0000_1111
-OR R1 R2       ; R1 = 0b1111_1111
-```
+**Description**: Bitwise OR.
 
 ---
 
@@ -346,10 +248,6 @@ XOR rD rS
 rD = rD ^ rS
 ```
 
-**Args**:
-- **rD** - destination register
-- **rS** - source register
-
 **Encoding**:
 ```
 0001 0101 DDDD SSSS
@@ -357,16 +255,9 @@ rD = rD ^ rS
 
 **Hex**: `0x15DS`
 
-**Flags**: Sets Z on zero; N mirrors bit 7; clears C
+**Flags**: Updates `Z`.
 
-**Description**: Put the bitwise XOR of the values in registers **rD** and **rS** into register **rD**
-
-**Example**:
-```asm
-LDI R1 0b1111_0000
-LDI R2 0b1111_1111
-XOR R1 R2       ; R1 = 0b0000_1111
-```
+**Description**: Bitwise XOR.
 
 ---
 
@@ -382,10 +273,6 @@ SHR rD rS
 rD = rD >> rS
 ```
 
-**Args**:
-- **rD** - destination register
-- **rS** - source register
-
 **Encoding**:
 ```
 0001 0110 DDDD SSSS
@@ -393,16 +280,9 @@ rD = rD >> rS
 
 **Hex**: `0x16DS`
 
-**Flags**: Sets Z on zero, C when bits are shifted out (result > 0xFF), N mirrors bit 7
+**Flags**: Updates `Z` and `C`.
 
-**Description**: Put the bitwise right shift of the value in register **rD** by the value in register **rS** into register **rD**
-
-**Example**:
-```asm
-LDI R1 0b1111_0000
-LDI R2 0x4
-SHR R1 R2       ; R1 = 0b0000_1111
-```
+**Description**: Logical right shift by the amount in **rS**.
 
 ---
 
@@ -418,10 +298,6 @@ SHL rD rS
 rD = rD << rS
 ```
 
-**Args**:
-- **rD** - destination register
-- **rS** - source register
-
 **Encoding**:
 ```
 0001 0111 DDDD SSSS
@@ -429,16 +305,11 @@ rD = rD << rS
 
 **Hex**: `0x17DS`
 
-**Flags**: Sets Z on zero, C when bits are shifted out (result > 0xFF), N mirrors bit 7
+**Flags**: Updates `Z` and `C`.
 
-**Description**: Put the bitwise left shift of the value in register **rD** by the value in register **rS** into register **rD**
+**Description**: Logical left shift by the amount in **rS**.
 
-**Example**:
-```asm
-LDI R1 0b0000_1111
-LDI R2 0x4
-SHL R1 R2       ; R1 = 0b1111_0000
-```
+---
 
 # Register-immediate instructions
 
@@ -446,37 +317,30 @@ SHL R1 R2       ; R1 = 0b1111_0000
 
 **Syntax**:
 ```asm
-LDI rD V
+LDI rD imm8
 ```
 
 **Operation**:
 ```
-rD = X
+rD = imm8
 ```
 
 **Args**:
-- **rD** - destination register
-- **X** - immediate value
+- **rD** — destination register.
+- **imm8** — unsigned 8-bit immediate value.
 
 **Encoding**:
 ```
 0010 DDDD XXXX XXXX
 ```
 
-**Hex**: `0x2DXX`
+**Hex**: `0x20DX`
 
-**Flags**: None
+**Flags**: None.
 
-**Description**: Load the immediate value **X** into register **rD**
+**Description**: Load an 8-bit immediate into **rD**.
 
-**Example**:
-```asm
-; You can store decimal, hexadecimal, binary or string values into registers
-LDI R1 0b0000_1111
-LDI R2 0x0A
-LDI R3 5
-LDI R4 "H"
-```
+---
 
 # Jump instructions
 
@@ -484,205 +348,158 @@ LDI R4 "H"
 
 **Syntax**:
 ```asm
-JMP XXX
+JMP rH rL
 ```
 
 **Operation**:
 ```
-PC = XXX
+PC = (rH << 8) | rL
 ```
 
 **Args**:
-- **XXX** - address to jump to
+- **rH** — register containing the high byte of the absolute address.
+- **rL** — register containing the low byte of the absolute address.
 
 **Encoding**:
 ```
-0011 XXXX XXXX XXXX
+0011 0000 HHHH LLLL
 ```
 
-**Hex**: `0x3XXX`
+**Hex**: `0x30HL`
 
-**Flags**: None
+**Flags**: None.
 
-**Description**: Jump to the address **XXX**
-
-**Example**:
-```asm
-; You can jump to specific addresses
-JMP 0x100
-
-; Or you can jump to labels
-JMP label
-
-label:
-```
+**Description**: Absolute jump using two registers to form a 16-bit address.
 
 ---
 
-## JZ
+## JR
 
 **Syntax**:
 ```asm
-JZ XXX
+JR off8
 ```
 
 **Operation**:
 ```
-if ZF == 1 then PC = XXX
+PC = PC + sign_extend(off8)
 ```
 
 **Args**:
-- **XXX** - address to jump to
+- **off8** — signed 8-bit offset.
 
 **Encoding**:
 ```
-0100 XXXX XXXX XXXX
+0011 0001 OOOO OOOO
 ```
 
-**Hex**: `0x4XXX`
+**Hex**: `0x31OO`
 
-**Flags**: None
+**Flags**: None.
 
-**Description**: Jump to the address **XXX** if zero flag is set
-
-**Example**:
-```asm
-LDI R1 2
-LDI R2 2
-SUB R1 R2   ; R1 = 0, Z flag is set
-JZ label    ; Jump will be executed because Z flag is set
-
-label:
-```
+**Description**: Relative jump that always branches by the signed offset.
 
 ---
 
-## JNZ
+## JZR
 
 **Syntax**:
 ```asm
-JNZ XXX
+JZR off8
 ```
 
 **Operation**:
 ```
-if ZF == 0 then PC = XXX
+if Z == 1 { PC = PC + sign_extend(off8) }
 ```
-
-**Args**:
-- **XXX** - address to jump to
 
 **Encoding**:
 ```
-0101 XXXX XXXX XXXX
+0011 0010 OOOO OOOO
 ```
 
-**Hex**: `0x5XXX`
+**Hex**: `0x32OO`
 
-**Flags**: None
+**Flags**: Reads `Z`.
 
-**Description**: Jump to the address **XXX** if zero flag is not set
-
-**Example**:
-```asm
-LDI R1 2
-LDI R2 2
-SUB R1 R2   ; R1 = 0, Z flag is set
-JNZ label   ; Jump will not be executed because Z flag is set
-
-LDI R1 3
-LDI R2 2
-SUB R1 R2   ; R1 = 1, Z flag is not set
-JNZ label   ; Jump will be executed because Z flag is not set
-
-label:
-```
+**Description**: Relative jump taken only when the zero flag is set.
 
 ---
 
-## JC
+## JNZR
 
 **Syntax**:
 ```asm
-JC XXX
+JNZR off8
 ```
 
 **Operation**:
 ```
-if CF == 1 then PC = XXX
+if Z == 0 { PC = PC + sign_extend(off8) }
 ```
-
-**Args**:
-- **XXX** - address to jump to
 
 **Encoding**:
 ```
-0110 XXXX XXXX XXXX
+0011 0011 OOOO OOOO
 ```
 
-**Hex**: `0x6XXX`
+**Hex**: `0x33OO`
 
-**Flags**: None
+**Flags**: Reads `Z`.
 
-**Description**: Jump to the address **XXX** if carry flag is set
-
-**Example**:
-```asm
-LDI R1 255
-LDI R2 2
-ADD R1 R2   ; Register overflow occurred, Carry flag is set
-JC label    ; Jump will be executed because Carry flag is set
-
-LDI R1 3
-LDI R2 2
-SUB R1 R2   ; R1 = 1, Z flag is not set
-JC label    ; Jump will not be executed because Carry flag is not set
-
-label:
-```
+**Description**: Relative jump taken only when the zero flag is clear.
 
 ---
 
-## JNC
+## JCR
 
 **Syntax**:
 ```asm
-JNC XXX
+JCR off8
 ```
 
 **Operation**:
 ```
-if CF == 0 then PC = XXX
+if C == 1 { PC = PC + sign_extend(off8) }
 ```
-
-**Args**:
-- **XXX** - address to jump to
 
 **Encoding**:
 ```
-0111 XXXX XXXX XXXX
+0011 0100 OOOO OOOO
 ```
 
-**Hex**: `0x7XXX`
+**Hex**: `0x34OO`
 
-**Flags**: None
+**Flags**: Reads `C`.
 
-**Description**: Jump to the address **XXX** if carry flag is not set
+**Description**: Relative jump taken only when the carry flag is set.
 
-**Example**:
+---
+
+## JNCR
+
+**Syntax**:
 ```asm
-LDI R1 255
-LDI R2 2
-ADD R1 R2   ; Register overflow occurred, Carry flag is set
-JNC label   ; Jump will not be executed because Carry flag is set
-
-LDI R1 3
-LDI R2 2
-SUB R1 R2   ; R1 = 1, Z flag is not set
-JNC label   ; Jump will be executed because Carry flag is not set
-
-label:
+JNCR off8
 ```
+
+**Operation**:
+```
+if C == 0 { PC = PC + sign_extend(off8) }
+```
+
+**Encoding**:
+```
+0011 0101 OOOO OOOO
+```
+
+**Hex**: `0x35OO`
+
+**Flags**: Reads `C`.
+
+**Description**: Relative jump taken only when the carry flag is clear.
+
+---
 
 # Stack instructions
 
@@ -690,36 +507,29 @@ label:
 
 **Syntax**:
 ```asm
-CALL XXX
+CALL rH rL
 ```
 
 **Operation**:
 ```
-push PC
-PC = XXX
+push(PC)
+PC = (rH << 8) | rL
 ```
 
 **Args**:
-- **XXX** - address to call
+- **rH** — high byte register.
+- **rL** — low byte register.
 
 **Encoding**:
 ```
-1000 XXXX XXXX XXXX
+0100 0000 HHHH LLLL
 ```
 
-**Hex**: `0x8XXX`
+**Hex**: `0x40HL`
 
-**Flags**: None
+**Flags**: None.
 
-**Description**: Call the subroutine at the address **XXX**
-
-**Example**:
-```asm
-CALL label  ; Call the subroutine at label
-
-label:
-    NOP
-```
+**Description**: Push the current `PC` onto the stack and jump to the absolute address formed by **rH**/**rL**.
 
 ---
 
@@ -730,32 +540,18 @@ label:
 RET
 ```
 
-**Operation**:
-```
-PC = pop()
-```
-
 **Args**: None
 
 **Encoding**:
 ```
-1001 0000 0000 0000
+0100 0001 0000 0000
 ```
 
-**Hex**: `0x9000`
+**Hex**: `0x4100`
 
-**Flags**: None
+**Flags**: None.
 
-**Description**: Return from the subroutine
-
-**Example**:
-```asm
-CALL label  ; Call the subroutine at label
-HALT
-
-label:
-    RET     ; Return from the subroutine
-```
+**Description**: Pop the return address from the stack and jump to it.
 
 ---
 
@@ -766,30 +562,19 @@ label:
 PUSH rS
 ```
 
-**Operation**:
-```
-push rS
-```
-
 **Args**:
-- **rS** - register to push
+- **rS** — register to push.
 
 **Encoding**:
 ```
-1001 0001 SSSS 0000
+0100 0010 0000 SSSS
 ```
 
-**Hex**: `0x91S0`
+**Hex**: `0x420S`
 
-**Flags**: None
+**Flags**: None.
 
-**Description**: Push the value of register **rS** onto the stack
-
-**Example**:
-```asm
-LDI R1 255
-PUSH R1   ; Push the value of R1 onto the stack
-```
+**Description**: Decrement `SP`, store **rS** on the stack.
 
 ---
 
@@ -800,312 +585,18 @@ PUSH R1   ; Push the value of R1 onto the stack
 POP rD
 ```
 
-**Operation**:
-```
-rD = pop()
-```
-
 **Args**:
-- **rD** - register to pop into
+- **rD** — destination register.
 
 **Encoding**:
 ```
-1001 0010 DDDD 0000
+0100 0011 0000 DDDD
 ```
 
-**Hex**: `0x92D0`
+**Hex**: `0x430D`
 
-**Flags**: None
+**Flags**: None.
 
-**Description**: Pop the value from the stack into register **rD**
-
-**Example**:
-```asm
-LDI R1 255
-PUSH R1   ; Push the value of R1 onto the stack
-POP R2    ; Pop the value from the stack into R2
-```
-
-# Memory instructions
-
-## LDI_I
-
-**Syntax**:
-```asm
-LDI_I XXX
-```
-
-**Operation**:
-```
-I = XXX
-```
-
-**Args**:
-- **XXXX** - immediate value to load into I register
-
-**Encoding**:
-```
-1010 XXXX XXXX XXXX
-```
-
-**Hex**: `0xAXXX`
-
-**Flags**: None
-
-**Description**: Load the immediate value **XXX** into the I register
-
-**Example**:
-```asm
-LDI_I 0x123     ; I = 0x123
-```
+**Description**: Load a byte from the stack to **rD** and increment `SP`.
 
 ---
-
-## LD
-
-**Syntax**:
-```asm
-LD rD
-```
-
-**Operation**:
-```
-rD = mem[I]
-```
-
-**Args**:
-- **rD** - register to load into
-
-**Encoding**:
-```
-1011 0000 DDDD 0000
-```
-
-**Hex**: `0xB0D0`
-
-**Flags**: None
-
-**Description**: Load the value at memory address **I** into register **rD**
-
-**Example**:
-```asm
-LDI_I 0x123     ; I = 0x123
-LD R1           ; R1 = mem[0x123]
-```
-
----
-
-## ST
-
-**Syntax**:
-```asm
-ST rS
-```
-
-**Operation**:
-```
-mem[I] = rS
-```
-
-**Args**:
-- **rS** - register to store from
-
-**Encoding**:
-```
-1011 0001 SSSS 0000
-```
-
-**Hex**: `0xB1S0`
-
-**Flags**: None
-
-**Description**: Store the value of register **rS** into memory address **I**
-
-**Example**:
-```asm
-LDI_I 0x123     ; I = 0x123
-LDI R1 0x11     ; R1 = 0x11
-ST R1           ; mem[0x123] = R1 = 0x11
-```
-
----
-
-## INC_I
-
-**Syntax**:
-```asm
-INC_I rS
-```
-
-**Operation**:
-```
-I = I + rS
-```
-
-**Args**:
-- **rS** - register to add to I
-
-**Encoding**:
-```
-1011 0010 SSSS 0000
-```
-
-**Hex**: `0xB2S0`
-
-**Flags**: None
-
-**Description**: Increment the value of **I** by the value of register **rS**
-
-**Example**:
-```asm
-LDI_I 0x123     ; I = 0x123
-LDI R1 0x2      ; R1 = 0x2
-INC_I R1        ; I = I + R1 = 0x123 + 0x2 = 0x125
-```
-
----
-
-## DEC_I
-
-**Syntax**:
-```asm
-DEC_I rS
-```
-
-**Operation**:
-```
-I = I - rS
-```
-
-**Args**:
-- **rS** - register to subtract from I
-
-**Encoding**:
-```
-1011 0011 SSSS 0000
-```
-
-**Hex**: `0xB3S0`
-
-**Flags**: None
-
-**Description**: Decrement the value of **I** by the value of register **rS**
-
-**Example**:
-```asm
-LDI_I 0x123     ; I = 0x123
-LDI R1 0x2      ; R1 = 0x2
-DEC_I R1        ; I = I - R1 = 0x123 - 0x2 = 0x121
-```
-
----
-
-## LDG
-
-**Syntax**:
-```asm
-LDG rD rB
-```
-
-**Operation**:
-```
-rD = bots[rB].shared_memory[I]
-```
-
-**Args**:
-- **rD** - destination register to store the value from shared memory
-- **rB** - register containing the bot ID
-
-**Encoding**:
-```
-1011 0100 DDDD BBBB
-```
-
-**Hex**: `0xB4SB`
-
-**Flags**: None
-
-**Description**: Load the value of the shared memory of bot **rB** at address **I** into register **rD**
-
-**Example**:
-```asm
-LDI_I 0x10      ; I = 0x10
-LDI R1 0x11     ; R1 = 0x11
-LDG R1 R2       ; R1 = bots[R2].shared_memory[0x10] = 0x11
-```
-
----
-
-## STG
-
-**Syntax**:
-```asm
-STG rS rB
-```
-
-**Operation**:
-```
-bots[rB].shared_memory[I] = rS
-```
-
-**Args**:
-- **rS** - source register containing the value to store
-- **rB** - register containing the bot ID
-
-**Encoding**:
-```
-1011 0101 SSSS BBBB
-```
-
-**Hex**: `0xB5SB`
-
-**Flags**: None
-
-**Description**: Store the value of register **rS** into the shared memory of bot **rB** at address **I**
-
-**Example**:
-```asm
-LDI_I 0x10      ; I = 0x10
-LDI R1 0x11     ; R1 = 0x11
-STG R1 R2       ; bots[R2].shared_memory[0x10] = R1 = 0x11
-```
-
-# Draw instructions
-
-## DRAW
-
-**Syntax**:
-```asm
-DRAW rX rY H
-```
-
-**Operation**:
-```
-load_sprite_data(I)
-draw_sprite(rX, rY, H)
-```
-
-**Args**:
-- **rX** - x-coordinate register
-- **rY** - y-coordinate register
-- **H** - height value, count of rows to draw
-
-**Encoding**:
-```
-1100 XXXX YYYY HHHH
-```
-
-**Hex**: `0xCXYH`
-
-**Flags**: None
-
-**Description**: Draw sprite at position (rX, rY) with height H. Sprite data is stored in memory at address I.
-
-**Example**:
-```asm
-; If sprite is stored in RAM at address 0x123
-LDI_I 0x123     ; I = 0x123
-LDI R1 0x10     ; R1 = 0x10
-LDI R2 0x20     ; R2 = 0x20
-DRAW R1 R2 0x4  ; Draw sprite at position (0x10, 0x20) with height 4
-```

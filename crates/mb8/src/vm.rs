@@ -26,6 +26,7 @@ impl VirtualMachine {
             Opcode::Shr { dst, src } => self.shr(*dst, *src),
             Opcode::Shl { dst, src } => self.shl(*dst, *src),
             Opcode::Ldi { dst, value } => self.ldi(*dst, *value),
+            Opcode::Ld { dst, hi, lo } => self.ld(*dst, *hi, *lo),
             Opcode::Jmp { hi, lo } => self.jmp(*hi, *lo),
             Opcode::Jr { offset } => self.jr(*offset),
             Opcode::Jzr { offset } => self.jzr(*offset),
@@ -36,6 +37,7 @@ impl VirtualMachine {
             Opcode::Ret => self.ret(),
             Opcode::Push { src } => self.push(*src),
             Opcode::Pop { dst } => self.pop(*dst),
+            Opcode::St { src, hi, lo } => self.st(*src, *hi, *lo),
         }
     }
 

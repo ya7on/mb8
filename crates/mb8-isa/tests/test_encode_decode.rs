@@ -153,4 +153,22 @@ fn test_round_trip() {
         let bin = encode(&opcode);
         assert_eq!(decode(bin), Some(opcode));
     }
+    {
+        let opcode = Opcode::Ld {
+            dst: Register::R1,
+            hi: Register::R2,
+            lo: Register::R3,
+        };
+        let bin = encode(&opcode);
+        assert_eq!(decode(bin), Some(opcode));
+    }
+    {
+        let opcode = Opcode::St {
+            src: Register::R1,
+            hi: Register::R2,
+            lo: Register::R3,
+        };
+        let bin = encode(&opcode);
+        assert_eq!(decode(bin), Some(opcode));
+    }
 }

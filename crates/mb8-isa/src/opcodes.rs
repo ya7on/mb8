@@ -115,4 +115,18 @@ pub enum Opcode {
     Pop {
         dst: Register,
     },
+
+    /* Memory instructions */
+    /// Load byte from memory address in `hi` and `lo` registers into register `dst`.
+    Ld {
+        dst: Register,
+        hi: Register,
+        lo: Register,
+    },
+    /// Store byte from register `src` into memory address in `hi` and `lo` registers.
+    St {
+        src: Register,
+        hi: Register,
+        lo: Register,
+    },
 }

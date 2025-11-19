@@ -16,12 +16,6 @@ Small and simple; each VM context (judge or bot) gets its own copies.
         <td>8 bits</td>
     </tr>
     <tr>
-        <td>I</td>
-        <td>0x0C</td>
-        <td>Index register for LD / ST / INC_I / DEC_I / DRAW</td>
-        <td>12 bits</td>
-    </tr>
-    <tr>
         <td>SP</td>
         <td>0x0D</td>
         <td>Stack pointer; PUSH / POP move it upward</td>
@@ -43,5 +37,5 @@ Small and simple; each VM context (judge or bot) gets its own copies.
 
 Notes:
 - `F` is overwritten by arithmetic/logic/shift ops. Jumps read it, but most other ops leave it untouched.
-- Context switches keep register sets separate: judge and each bot maintain their own registers (`PC`, `SP`, `I`, `R0-R7`).
-- Masks `0x08 - 0x0B` are reserved for future expansion.
+- Context switches keep register sets separate: judge and each bot maintain their own registers (`PC`, `SP`, `R0-R7`).
+- Masks `0x08 - 0x0C` are reserved for future expansion.

@@ -7,7 +7,8 @@ pub struct Bus {
 }
 
 impl Bus {
-    #[must_use] pub fn read(&self, addr: u16) -> u8 {
+    #[must_use]
+    pub fn read(&self, addr: u16) -> u8 {
         match addr {
             0x0000..=0xBFFF => self.ram.read(addr),
             0xC000..=0xDFFF => unimplemented!(),
