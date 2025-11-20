@@ -1,21 +1,25 @@
 use super::{utils::empty_memory, Device};
 
 pub mod registers {
-    pub const TTY_ROWS: u8 = 16;
-    pub const TTY_COLS: u8 = 32;
-    pub const TTY_CELLS: u16 = TTY_ROWS as u16 * TTY_COLS as u16;
+    pub const TTY_ROWS: u8 = 25;
+    pub const TTY_COLS: u8 = 40;
+    pub const TTY_CELLS: usize = TTY_ROWS as usize * TTY_COLS as usize;
 
     pub const GPU_MODE_OFF: u8 = 0x00;
     pub const GPU_MODE_TTY: u8 = 0x01;
 
-    pub const GPU_MODE: u16 = 0x0000;
-
+    pub const GPU_REG_MODE: u16 = 0x0000;
     /// TTY mode registers
-    pub const TTY_MODE: u16 = 0x0001;
+    pub const GPU_REG_TTY: u16 = 0x0001;
+
+    pub const VRAM_CURSOR_X: usize = 0x0000;
+    pub const VRAM_CURSOR_Y: usize = 0x0001;
+    pub const VRAM_TTY_START: usize = 0x0002;
+    pub const VRAM_TTY_END: usize = VRAM_TTY_START + TTY_CELLS;
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
-pub enum Mode {
+enum Mode {
     #[default]
     Off,
     Tty,
@@ -41,48 +45,66 @@ impl From<Mode> for u8 {
 }
 
 #[derive(Debug)]
-pub struct Tty {
-    buffer: Box<[u8; registers::TTY_CELLS as usize]>,
-    cursor: (u8, u8),
+pub struct GPU {
+    mode: Mode,
+    vram: Box<[u8; registers::TTY_CELLS + 2]>,
 }
 
-impl Default for Tty {
+impl Default for GPU {
     fn default() -> Self {
         Self {
-            buffer: empty_memory(),
-            cursor: (0, 0),
+            mode: Mode::Off,
+            vram: empty_memory(),
         }
     }
 }
 
-#[derive(Debug, Default)]
-pub struct GPU {
-    pub mode: Mode,
-    pub tty: Tty,
+impl GPU {
+    #[must_use]
+    pub fn tty_buffer(&self) -> &[u8] {
+        &self.vram[registers::VRAM_TTY_START..registers::VRAM_TTY_END]
+    }
 }
 
 impl Device for GPU {
     fn read(&self, addr: u16) -> u8 {
         match addr {
-            registers::GPU_MODE => self.mode.into(),
+            registers::GPU_REG_MODE => self.mode.into(),
             _ => unimplemented!(),
         }
     }
 
     fn write(&mut self, addr: u16, value: u8) {
         match addr {
-            registers::GPU_MODE => self.mode = value.into(),
-            registers::TTY_MODE if self.mode == Mode::Tty => {
-                self.tty.buffer[self.tty.cursor.0 as usize * registers::TTY_COLS as usize
-                    + self.tty.cursor.1 as usize] = value;
-                self.tty.cursor.1 += 1;
-                if self.tty.cursor.1 >= registers::TTY_COLS {
-                    self.tty.cursor.1 = 0;
-                    self.tty.cursor.0 += 1;
-                    if self.tty.cursor.0 >= registers::TTY_ROWS {
-                        self.tty.cursor.0 = 0;
+            registers::GPU_REG_MODE => self.mode = value.into(),
+            registers::GPU_REG_TTY if self.mode == Mode::Tty => {
+                let (mut cursor_x, mut cursor_y) = (
+                    self.vram[registers::VRAM_CURSOR_X],
+                    self.vram[registers::VRAM_CURSOR_Y],
+                );
+                let symbol_index =
+                    cursor_y as usize * registers::TTY_COLS as usize + cursor_x as usize;
+                let tty_buf = &mut self.vram[registers::VRAM_TTY_START..registers::VRAM_TTY_END];
+
+                if value as char == '\n' {
+                    cursor_x = 0;
+                    cursor_y += 1;
+                } else {
+                    tty_buf[symbol_index] = value;
+
+                    cursor_x += 1;
+                    if cursor_x >= registers::TTY_COLS {
+                        cursor_x = 0;
+                        cursor_y += 1;
                     }
                 }
+
+                if cursor_y >= registers::TTY_ROWS {
+                    cursor_y = 0;
+                }
+
+                self.vram[registers::VRAM_CURSOR_X] = cursor_x;
+                self.vram[registers::VRAM_CURSOR_Y] = cursor_y;
             }
             _ => unimplemented!(),
         }

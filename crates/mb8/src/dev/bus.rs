@@ -9,6 +9,11 @@ pub struct Bus {
 
 impl Bus {
     #[must_use]
+    pub fn gpu(&self) -> &GPU {
+        &self.gpu
+    }
+
+    #[must_use]
     pub fn read(&self, addr: u16) -> u8 {
         match addr {
             0x0000..=0xBFFF => self.ram.read(addr),
