@@ -5,6 +5,36 @@
 
 #ruledef mb8_isa_ext
 {
+    LDI { rh: register } { rl: register } { addr: u16 } => {
+        hi = addr >> 8;
+        lo = addr & 0xFF;
+
+        asm {
+            LDI {rh} {hi}
+            LDI {rl} {lo}
+        }
+    }
+
+    CALL { addr: u16 } => {
+        hi = addr >> 8;
+        lo = addr & 0xFF;
+        asm {
+            LDI R6 {hi}
+            LDI R7 {lo}
+            CALL R6 R7
+        }
+    }
+
+    JR { addr: u16 } => {
+        offset = addr - $ - 2
+        0x31 @ offset`8
+    }
+
+    JZR { addr: u16 } => {
+        offset = addr - $ - 2
+        0x32 @ offset`8
+    }
+
     ; Clear register value
     ZERO { reg: register } => asm {
         LDI {reg} 0

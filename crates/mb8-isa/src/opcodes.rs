@@ -17,6 +17,7 @@ pub enum Opcode {
     Nop,
     /// Halt the VM.
     Halt,
+    // TODO: Remove
     /// System call.
     Sys {
         syscall: Syscall,

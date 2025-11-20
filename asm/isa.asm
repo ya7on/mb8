@@ -18,10 +18,6 @@
     NOP  => 0x0000
     HALT => 0x0100
     HALT { code: u8 } => 0x01 @ code
-    SYS { subcode: u4 } { reg: register } => 0x02 @ subcode @ reg
-    PUTC { src: register } => 0x020 @ src
-    YIELD => 0x0210
-    YIELD { src: register } => 0x021 @ src
     MOV { dst: register } { src: register } => 0x10 @ dst @ src
     ADD { dst: register } { src: register } => 0x11 @ dst @ src
     SUB { dst: register } { src: register } => 0x12 @ dst @ src
