@@ -9,8 +9,7 @@
 
 MicroBot-8bit is a simple, 8-bit virtual machine.
 
-<img width="752" height="460" alt="Logo" src="https://github.com/user-attachments/assets/972c07bb-a62e-4b11-b184-28fd43031586" />
-
+<img width="752" height="620" alt="Shell" src="https://github.com/user-attachments/assets/ca54e6c4-da30-4d46-94ef-6aabdbacee51" />
 
 # Running
 
