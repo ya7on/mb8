@@ -29,6 +29,23 @@ reset:
     LDI R1 ">"
     CALL K_SYSCALL_ENTRY
 
+.input:
+    ; Wait for keypress
+    LDI R0 SYS_WAIT_FOR_KEY
+    CALL K_SYSCALL_ENTRY
+
+    LDI R0 SYS_READ_KEY
+    CALL K_SYSCALL_ENTRY
+
+    MOV R1 R0
+    LDI R0 SYS_WRITE
+    CALL K_SYSCALL_ENTRY
+
+    JR .input
+
+.quit:
+    HALT
+
 .loop:
     JR .loop
 

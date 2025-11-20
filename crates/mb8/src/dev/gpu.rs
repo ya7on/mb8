@@ -67,7 +67,7 @@ impl GPU {
 }
 
 impl Device for GPU {
-    fn read(&self, addr: u16) -> u8 {
+    fn read(&mut self, addr: u16) -> u8 {
         match addr {
             registers::GPU_REG_MODE => self.mode.into(),
             _ => unimplemented!(),
