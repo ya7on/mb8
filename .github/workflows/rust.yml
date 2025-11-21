@@ -26,6 +26,10 @@ jobs:
         with:
           path: ~/.cargo/bin
           key: ${{ runner.os }}-cargo-tools-v1
+      - name: Install customasm
+        run: cargo install customasm --locked
+      - name: Compile asm
+        run: make
       # - name: Install cargo-binstall
       #   if: steps.cache-cargo-tools.outputs.cache-hit != 'true'
       #   run: cargo install cargo-binstall --locked

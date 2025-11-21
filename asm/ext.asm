@@ -5,6 +5,8 @@
 
 #once
 
+#include "isa.asm"
+
 #ruledef mb8_isa_ext
 {
     LDI { rh: register } { rl: register } { addr: u16 } => {
@@ -24,6 +26,16 @@
             LDI R6 {hi}
             LDI R7 {lo}
             CALL R6 R7
+        }
+    }
+
+    JMP { addr: u16 } => {
+        hi = addr >> 8;
+        lo = addr & 0xFF;
+        asm {
+            LDI R6 {hi}
+            LDI R7 {lo}
+            JMP R6 R7
         }
     }
 
