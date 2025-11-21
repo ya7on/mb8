@@ -1,3 +1,5 @@
+#once
+
 #include "isa.asm"
 
 #bankdef ram
