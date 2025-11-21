@@ -3,12 +3,6 @@
 
 use crate::registers::Register;
 
-/// Syscall opcodes.
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum Syscall {
-    Putc,
-}
-
 /// Full list of MB8 opcodes used in VM.
 #[derive(Debug, PartialEq)]
 pub enum Opcode {
@@ -17,12 +11,8 @@ pub enum Opcode {
     Nop,
     /// Halt the VM.
     Halt,
-    // TODO: Remove
     /// System call.
-    Sys {
-        syscall: Syscall,
-        src: Register,
-    },
+    Sys,
 
     /* reg-reg opcodes */
     /// Move value from one register to another.

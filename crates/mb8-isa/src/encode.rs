@@ -1,7 +1,4 @@
-use crate::{
-    opcodes::{Opcode, Syscall},
-    registers::Register,
-};
+use crate::{opcodes::Opcode, registers::Register};
 
 /// Encode a Register into a 4-bit value.
 #[must_use]
@@ -37,13 +34,7 @@ pub fn encode(opcode: &Opcode) -> u16 {
     match opcode {
         Opcode::Nop => 0x0000,
         Opcode::Halt => 0x0100,
-        Opcode::Sys { syscall, src } => {
-            let syscall = match syscall {
-                Syscall::Putc => 0x0,
-            };
-            let src = encode_register(*src);
-            0x0200 | (syscall) << 4 | src as u16
-        }
+        Opcode::Sys => 0x0200,
         Opcode::Mov { dst, src } => {
             let dst = encode_register(*dst);
             let src = encode_register(*src);
@@ -163,14 +154,8 @@ mod tests {
     }
 
     #[test]
-    fn test_encode_syscall_putc() {
-        assert_eq!(
-            encode(&Opcode::Sys {
-                syscall: Syscall::Putc,
-                src: Register::R1
-            }),
-            0x0201
-        );
+    fn test_encode_syscall() {
+        assert_eq!(encode(&Opcode::Sys), 0x0200);
     }
 
     #[test]

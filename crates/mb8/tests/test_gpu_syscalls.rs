@@ -2,7 +2,7 @@ use mb8::vm::VirtualMachine;
 
 #[test]
 fn test_sys_gpu_mode() {
-    let bin = include_bytes!("../../../kernel/tests/test_gpu_mode.bin");
+    let bin = include_bytes!("../../../kernel/tests/test_sys_gpu_mode.bin");
     let mut vm = VirtualMachine::default();
     vm.load_rom(bin);
     vm.run();

@@ -28,6 +28,17 @@ impl Default for Disk {
     }
 }
 
+impl Disk {
+    pub fn set(&mut self, img: Box<[u8; 65536]>) {
+        self.img = img;
+    }
+
+    #[must_use]
+    pub fn dump(&self) -> &[u8] {
+        self.img.as_slice()
+    }
+}
+
 impl Device for Disk {
     fn read(&mut self, addr: u16) -> u8 {
         match addr {

@@ -20,31 +20,57 @@ K_SYSCALL_ENTRY:
 
 syscall_table:
     CMPI R0 SYS_GPU_MODE
-    JZR sys_gpu_mode
+    JNZR .sys_tty_write
+    JMP sys_gpu_mode
+.sys_tty_write:
     CMPI R0 SYS_WRITE
-    JZR sys_tty_write
+    JNZR .sys_tty_writeln
+    JMP sys_tty_write
+.sys_tty_writeln:
     CMPI R0 SYS_WRITELN
-    JZR sys_tty_writeln
+    JNZR .sys_wait_for_key
+    JMP sys_tty_writeln
+.sys_wait_for_key:
     CMPI R0 SYS_WAIT_FOR_KEY
-    JZR sys_wait_for_key
+    JNZR .sys_read_key
+    JMP sys_wait_for_key
+.sys_read_key:
     CMPI R0 SYS_READ_KEY
-    JZR sys_read_key
+    JNZR .sys_disk_set_block
+    JMP sys_read_key
+.sys_disk_set_block:
     CMPI R0 SYS_DISK_SET_BLOCK
-    JZR sys_disk_set_block
+    JNZR .sys_disk_read_block
+    JMP sys_disk_set_block
+.sys_disk_read_block:
     CMPI R0 SYS_DISK_READ_BLOCK
-    JZR sys_disk_read_block
+    JNZR .sys_disk_write_block
+    JMP sys_disk_read_block
+.sys_disk_write_block:
     CMPI R0 SYS_DISK_WRITE_BLOCK
-    JZR sys_disk_write_block
+    JNZR .sys_fs_list
+    JMP sys_disk_write_block
+.sys_fs_list:
     CMPI R0 SYS_FS_LIST
-    JZR sys_fs_list
+    JNZR .sys_fs_find
+    JMP sys_fs_list
+.sys_fs_find:
     CMPI R0 SYS_FS_FIND
-    JZR sys_fs_find
+    JNZR .sys_fs_read
+    JMP sys_fs_find
+.sys_fs_read:
     CMPI R0 SYS_FS_READ
-    JZR sys_fs_read
+    JNZR .sys_fs_write
+    JMP sys_fs_read
+.sys_fs_write:
     CMPI R0 SYS_FS_WRITE
-    JZR sys_fs_write
+    JNZR .sys_fs_delete
+    JMP sys_fs_write
+.sys_fs_delete:
     CMPI R0 SYS_FS_DELETE
-    JZR sys_fs_delete
+    JNZR .not_found
+    JMP sys_fs_delete
+.not_found:
     RET
 
 ; Sets the GPU mode

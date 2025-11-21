@@ -1,9 +1,4 @@
-use mb8_isa::{
-    decode::decode,
-    encode::encode,
-    opcodes::{Opcode, Syscall},
-    registers::Register,
-};
+use mb8_isa::{decode::decode, encode::encode, opcodes::Opcode, registers::Register};
 
 #[test]
 fn test_round_trip() {
@@ -18,10 +13,7 @@ fn test_round_trip() {
         assert_eq!(decode(bin), Some(opcode));
     }
     {
-        let opcode = Opcode::Sys {
-            syscall: Syscall::Putc,
-            src: Register::R1,
-        };
+        let opcode = Opcode::Sys;
         let bin = encode(&opcode);
         assert_eq!(decode(bin), Some(opcode));
     }

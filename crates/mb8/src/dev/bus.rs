@@ -19,6 +19,10 @@ impl Bus {
         &mut self.keyboard
     }
 
+    pub fn disk(&mut self) -> &mut Disk {
+        &mut self.disk
+    }
+
     #[must_use]
     pub fn read(&mut self, addr: u16) -> u8 {
         match addr {
