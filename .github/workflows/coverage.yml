@@ -25,6 +25,11 @@ jobs:
 
       - uses: taiki-e/install-action@cargo-llvm-cov
 
+      - name: Install customasm
+        run: cargo install customasm --locked
+      - name: Compile asm
+        run: make
+
       - name: Collect coverage (tests)
         run: |
           cargo llvm-cov --workspace --locked --verbose --lcov --output-path lcov.info
