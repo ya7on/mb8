@@ -67,14 +67,6 @@
         POP R7
     }
 
-    ; Compare two registers and set flags accordingly
-    ; WARNING: This macro may modify the stack pointer.
-    CMP { reg1: register } { reg2: register } => asm {
-        PUSH {reg1}
-        SUB {reg1} {reg2}
-        POP {reg1}
-    }
-
     ; Compare register value with an immediate value and set flags accordingly
     ; WARNING: This macro may modify the stack pointer.
     CMPI { reg: register } { val: u8 } => asm {

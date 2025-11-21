@@ -26,6 +26,7 @@
     XOR { dst: register } { src: register } => 0x15 @ dst @ src
     SHR { dst: register } { src: register } => 0x16 @ dst @ src
     SHL { dst: register } { src: register } => 0x17 @ dst @ src
+    CMP { dst: register } { src: register } => 0x18 @ dst @ src
     LDI { dst: register } { value: u8 } => 0x2 @ dst @ value
     JMP { hi: register } { lo: register } => 0x30 @ hi @ lo
     JR { offset: u8 } => 0x31 @ offset
