@@ -1,4 +1,4 @@
-use super::{gpu::GPU, keyboard::Keyboard, ram::RAM, rom::ROM, Device};
+use super::{disk::Disk, gpu::GPU, keyboard::Keyboard, ram::RAM, rom::ROM, Device};
 
 #[derive(Debug, Default)]
 pub struct Bus {
@@ -6,6 +6,7 @@ pub struct Bus {
     ram: RAM,
     gpu: GPU,
     keyboard: Keyboard,
+    disk: Disk,
 }
 
 impl Bus {
@@ -26,7 +27,8 @@ impl Bus {
             0xE000..=0xEFFF => self.rom.read(addr - 0xE000),
             0xF000..=0xF0FF => self.gpu.read(addr - 0xF000),
             0xF100..=0xF1FF => self.keyboard.read(addr - 0xF100),
-            0xF200..=0xFFFF => unimplemented!(),
+            0xF200..=0xF3FF => self.disk.read(addr - 0xF200),
+            0xF400..=0xFFFF => unimplemented!(),
         }
     }
 
@@ -37,7 +39,8 @@ impl Bus {
             0xE000..=0xEFFF => self.rom.write(addr - 0xE000, value),
             0xF000..=0xF0FF => self.gpu.write(addr - 0xF000, value),
             0xF100..=0xF1FF => self.keyboard.write(addr - 0xF100, value),
-            0xF200..=0xFFFF => unimplemented!(),
+            0xF200..=0xF3FF => self.disk.write(addr - 0xF200, value),
+            0xF400..=0xFFFF => unimplemented!(),
         }
     }
 }

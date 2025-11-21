@@ -1,4 +1,5 @@
 pub mod bus;
+pub mod disk;
 pub mod gpu;
 pub mod keyboard;
 pub mod ram;
