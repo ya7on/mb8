@@ -53,9 +53,9 @@ impl VirtualMachine {
             return;
         };
 
-        println!("{pc}:\t({binary_instruction:?})");
+        println!("{pc:X}:\t({binary_instruction:?})");
         println!("{opcode:?}");
-        // println!("{}", self.registers);
+        println!("{}", self.registers);
         // println!("=");
 
         self.execute(&opcode);

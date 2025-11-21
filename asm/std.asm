@@ -22,21 +22,25 @@
         end:
     }
 
-    STRCMP { i: register } { j: register } { dsthi: register } { dstlo: register } { srchi: register } { srclo: register } => asm {
-        LD {i} {dsthi} {dstlo}
-        LD {j} {srchi} {srclo}
+    STRCMP { i: register } { j: register } { srchi: register } { srclo: register } { dsthi: register } { dstlo: register } => asm {
+        loop:
+        LD {i} {srchi} {srclo}
+        LD {j} {dsthi} {dstlo}
 
-        CMPI {i} "\0"
-        JZR .end_of_str
         CMP {i} {j}
-        JNZR .error
+        JNZR error
 
-        end_of_str:
         CMPI {j} "\0"
-        JZR .success
+        JZR success
+
+        INC16 {srchi} {srclo}
+        INC16 {dsthi} {dstlo}
+
+        JMP loop
+
         error:
         LDI {i} 1
-        JR .end
+        JR end
         success:
         LDI {i} 0
         end:
