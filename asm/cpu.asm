@@ -8,11 +8,4 @@
     #fill
 }
 
-#bankdef rom
-{
-    #addr 0xE000
-    #size 0x1000
-    #outp 0
-    #fill
-}
 
