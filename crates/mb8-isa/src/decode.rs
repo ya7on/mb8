@@ -288,7 +288,7 @@ mod tests {
             })
         );
     }
-    
+
     #[test]
     fn test_parse_cmp() {
         assert_eq!(

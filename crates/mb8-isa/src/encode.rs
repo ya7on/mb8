@@ -265,7 +265,7 @@ mod tests {
             0x1701
         );
     }
-    
+
     #[test]
     fn test_encode_cmp() {
         assert_eq!(
