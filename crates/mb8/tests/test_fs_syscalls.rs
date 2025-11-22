@@ -33,6 +33,8 @@ fn test_sys_fs_find() {
     vm.run();
 
     assert_eq!(vm.registers.read(Register::R0), 0);
+    assert_eq!(vm.registers.read(Register::R1), 2);
+    assert_eq!(vm.registers.read(Register::R2), 1);
 }
 
 #[test]
@@ -53,9 +55,25 @@ fn test_sys_fs_find_not_exist() {
 }
 
 #[test]
-#[ignore = "TODO"]
 fn test_sys_fs_read() {
-    todo!()
+    let bin = include_bytes!("../../../kernel/tests/test_sys_fs_read.bin");
+    let mut img = vec![0; 65536].into_boxed_slice();
+    img[0] = 1; // status
+    img[1] = 2; // start block
+    img[2] = 2; // size
+    img[3..8].copy_from_slice(b"file\0");
+    img[256 * 2..256 * 4].copy_from_slice(&[1; 256 * 2]);
+
+    let mut vm = VirtualMachine::default();
+    vm.devices.disk().set(img.try_into().unwrap());
+    vm.load_rom(bin);
+    vm.run();
+
+    assert_eq!(vm.registers.read(Register::R0), 0);
+
+    for i in 0..256 * 2 {
+        assert_eq!(vm.devices.read(i), 1, "{:?}", i);
+    }
 }
 
 #[test]

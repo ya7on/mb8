@@ -252,6 +252,8 @@ sys_fs_list:
 ;
 ; Output
 ; R0 - status (0 = success, 1 = not found)
+; R1 - block index
+; R2 - size
 sys_fs_find:
     ; Get 0 block
     MOV R3 R1
@@ -327,7 +329,53 @@ sys_fs_find:
     POP R1
     RET
 
+; Finds a file in the FS
+;
+; Input
+; R1: High address of the filename to find
+; R2: Low address of the filename to find
+; R3: High address of the buffer to write to
+; R4: Low address of the buffer to write to
+;
+; Output
+; R0 - status (0 = success, 1 = not found)
 sys_fs_read:
+    PUSH R3
+    PUSH R4
+    CALL sys_fs_find
+    POP R4
+    POP R3
+    CMPI R0 0x00
+    JNZR .not_found
+    JMP .copy
+.not_found:
+    RET
+.copy:
+    CALL sys_disk_set_block
+    CALL sys_disk_read_block
+
+    LDI R6 0xF2
+    LDI R0 0x02
+    LDI R5 0x00
+.copy_byte:
+    LD R0 R6 R0
+    ST R0 R3 R4
+
+    INC16 R6 R0
+    INC16 R3 R4
+    DEC R5
+
+    CMPI R5 0x00
+    JNZR .copy_byte
+
+    DEC R2
+    INC R1
+
+    CMPI R2 0x00
+    JZR .eof
+    JMP .copy
+.eof:
+    LDI R0 0x00
     RET
 
 sys_fs_write:
