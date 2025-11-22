@@ -345,38 +345,47 @@ sys_fs_read:
     CALL sys_fs_find
     POP R4
     POP R3
+
     CMPI R0 0x00
     JNZR .not_found
-    JMP .copy
-.not_found:
-    RET
-.copy:
+.copy_block:
     CALL sys_disk_set_block
     CALL sys_disk_read_block
 
     LDI R6 0xF2
-    LDI R0 0x02
-    LDI R5 0x00
+    LDI R5 0x02
+
+    LDI R0 0x00
 .copy_byte:
-    LD R0 R6 R0
-    ST R0 R3 R4
+    LD  R7 R6 R5
+    ST  R7 R3 R4
 
-    INC16 R6 R0
-    INC16 R3 R4
-    DEC R5
-
+    INC R5
     CMPI R5 0x00
+    JNZR .no_carry_buf
+    INC R6
+.no_carry_buf:
+    INC R4
+    CMPI R4 0x00
+    JNZR .no_carry_dst
+    INC R3
+.no_carry_dst:
+    INC R0
+    CMPI R0 0x00
     JNZR .copy_byte
 
     DEC R2
-    INC R1
-
     CMPI R2 0x00
     JZR .eof
-    JMP .copy
+
+    INC R1
+    JR  .copy_block
 .eof:
     LDI R0 0x00
     RET
+.not_found:
+    RET
+
 
 sys_fs_write:
     RET

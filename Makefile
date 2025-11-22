@@ -1,3 +1,5 @@
+.PHONY: kernel tests all
+
 all: kernel tests
 
 kernel:
