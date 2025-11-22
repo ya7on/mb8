@@ -267,23 +267,35 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>) {
 
     let mut buf = vec![0u32; 320 * 200];
 
+    let mut frame = 0;
     while !vm.halted && window.is_open() {
+        frame += 1;
         for key in window.get_keys_pressed(KeyRepeat::No) {
             let Some(char) =
                 map_key_to_char(key, window.is_key_pressed(Key::LeftShift, KeyRepeat::Yes))
             else {
                 continue;
             };
+            frame = 256;
             vm.devices.keyboard().key_pressed(char);
         }
 
         vm.step();
 
-        let tty = vm.devices.gpu().tty_buffer();
-        render_tty(tty, buf.as_mut_slice());
+        let gpu = vm.devices.gpu();
+        if gpu.redraw() {
+            frame = 0;
+            let tty = gpu.tty_buffer();
+            render_tty(tty, buf.as_mut_slice());
 
-        if window.update_with_buffer(&buf, 320, 200).is_err() {
-            return;
+            if window.update_with_buffer(&buf, 320, 200).is_err() {
+                return;
+            }
+        }
+
+        if frame >= 256 {
+            frame = 0;
+            window.update();
         }
     }
 }

@@ -48,6 +48,7 @@ impl From<Mode> for u8 {
 pub struct GPU {
     mode: Mode,
     vram: Box<[u8; registers::TTY_CELLS + 2]>,
+    redraw: bool,
 }
 
 impl Default for GPU {
@@ -55,6 +56,7 @@ impl Default for GPU {
         Self {
             mode: Mode::Off,
             vram: empty_memory(),
+            redraw: false,
         }
     }
 }
@@ -63,6 +65,15 @@ impl GPU {
     #[must_use]
     pub fn tty_buffer(&self) -> &[u8] {
         &self.vram[registers::VRAM_TTY_START..registers::VRAM_TTY_END]
+    }
+
+    pub fn redraw(&mut self) -> bool {
+        if self.redraw {
+            self.redraw = false;
+            true
+        } else {
+            false
+        }
     }
 }
 
@@ -78,6 +89,7 @@ impl Device for GPU {
         match addr {
             registers::GPU_REG_MODE => self.mode = value.into(),
             registers::GPU_REG_TTY if self.mode == Mode::Tty => {
+                self.redraw = true;
                 let (mut cursor_x, mut cursor_y) = (
                     self.vram[registers::VRAM_CURSOR_X],
                     self.vram[registers::VRAM_CURSOR_Y],

@@ -11,8 +11,8 @@ pub struct Bus {
 
 impl Bus {
     #[must_use]
-    pub fn gpu(&self) -> &GPU {
-        &self.gpu
+    pub fn gpu(&mut self) -> &mut GPU {
+        &mut self.gpu
     }
 
     pub fn keyboard(&mut self) -> &mut Keyboard {

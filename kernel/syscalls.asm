@@ -16,6 +16,7 @@ SYS_FS_READ = 0x0B
 SYS_FS_WRITE = 0x0C
 SYS_FS_DELETE = 0x0D
 
+#addr 0xE500
 K_SYSCALL_ENTRY:
 
 syscall_table:
@@ -384,6 +385,7 @@ sys_fs_read:
     LDI R0 0x00
     RET
 .not_found:
+    LDI R0 0x01
     RET
 
 sys_fs_write:
