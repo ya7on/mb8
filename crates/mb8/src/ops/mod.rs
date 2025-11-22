@@ -1,6 +1,7 @@
 mod add;
 mod and;
 mod call;
+mod cmp;
 mod halt;
 mod jcr;
 mod jmp;

@@ -3,10 +3,12 @@ use mb8_isa::registers::{flags, Register};
 use crate::vm::VirtualMachine;
 
 impl VirtualMachine {
-    pub fn sub(&mut self, dst: Register, src: Register) {
+    pub fn cmp(&mut self, dst: Register, src: Register) {
         let a = self.registers.read(dst) as u8;
         let b = self.registers.read(src) as u8;
         let (result, overflow) = a.overflowing_sub(b);
+
+        print!("value {}", result);
 
         let mut f_register = 0;
         if result == 0 {
@@ -29,7 +31,8 @@ mod tests {
 
     use super::*;
 
-    #[test]
+    //Not sure this really does anything since compare doesnt actually get stored in a reg.
+    /*#[test]
     fn performs_compare() {
         // VM Compares two registers and stores the result in a third register
         let mut vm = VirtualMachine::default();
@@ -40,16 +43,16 @@ mod tests {
             src: Register::R1,
         });
         assert_eq!(vm.registers.read(Register::R0), 2);
-    }
+    }*/
 
     #[test]
-    fn clears_flags_before_sub() {
+    fn clears_flags_before_cmp() {
         // VM clear the flags register before executing SUB instruction
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::F, 0xFF);
         vm.registers.write(Register::R0, 2);
         vm.registers.write(Register::R1, 1);
-        vm.execute(&Opcode::Sub {
+        vm.execute(&Opcode::Cmp {
             dst: Register::R0,
             src: Register::R1,
         });
@@ -58,31 +61,29 @@ mod tests {
     }
 
     #[test]
-    fn sets_zero_flag_after_sub() {
-        // VM clear the flags register before executing SUB instruction
+    fn sets_zero_flag_after_cmp() {
+        // VM clear the flags register before executing CMP instruction
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::F, 0xFF);
         vm.registers.write(Register::R0, 1);
         vm.registers.write(Register::R1, 1);
-        vm.execute(&Opcode::Sub {
+        vm.execute(&Opcode::Cmp {
             dst: Register::R0,
             src: Register::R1,
         });
-        assert_eq!(vm.registers.read(Register::R0), 0);
         assert_eq!(vm.registers.read(Register::F), flags::Z_FLAG as u16);
     }
 
     #[test]
-    fn wraps_and_sets_carry_on_sub() {
-        // VM handles subtraction overflow by wrapping around and setting the carry flag
+    fn wraps_and_sets_carry_on_cmp() {
+        // VM handles compare overflow by wrapping around and setting the carry flag
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 1);
         vm.registers.write(Register::R1, 2);
-        vm.execute(&Opcode::Sub {
+        vm.execute(&Opcode::Cmp {
             dst: Register::R0,
             src: Register::R1,
         });
-        assert_eq!(vm.registers.read(Register::R0), 255);
         assert_eq!(
             vm.registers.read(Register::F),
             (flags::N_FLAG | flags::C_FLAG) as u16
@@ -90,11 +91,11 @@ mod tests {
     }
 
     #[test]
-    fn sets_zero_flag_on_subtraction() {
+    fn sets_zero_flag_on_compare() {
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 0x2A);
         vm.registers.write(Register::R1, 0x2A);
-        vm.execute(&Opcode::Sub {
+        vm.execute(&Opcode::Cmp {
             dst: Register::R0,
             src: Register::R1,
         });
@@ -102,11 +103,11 @@ mod tests {
     }
 
     #[test]
-    fn sets_carry_flag_on_subtraction() {
+    fn sets_carry_flag_on_compare() {
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 55);
         vm.registers.write(Register::R1, 200);
-        vm.execute(&Opcode::Sub {
+        vm.execute(&Opcode::Cmp {
             dst: Register::R0,
             src: Register::R1,
         });
@@ -114,11 +115,11 @@ mod tests {
     }
 
     #[test]
-    fn sets_negative_flag_on_subtraction() {
+    fn sets_negative_flag_on_compare() {
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 0x90);
         vm.registers.write(Register::R1, 0x10);
-        vm.execute(&Opcode::Sub {
+        vm.execute(&Opcode::Cmp {
             dst: Register::R0,
             src: Register::R1,
         });

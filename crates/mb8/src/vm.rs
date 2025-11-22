@@ -25,6 +25,7 @@ impl VirtualMachine {
             Opcode::Xor { dst, src } => self.xor(*dst, *src),
             Opcode::Shr { dst, src } => self.shr(*dst, *src),
             Opcode::Shl { dst, src } => self.shl(*dst, *src),
+            Opcode::Cmp { dst, src } => self.cmp(*dst, *src),
             Opcode::Ldi { dst, value } => self.ldi(*dst, *value),
             Opcode::Ld { dst, hi, lo } => self.ld(*dst, *hi, *lo),
             Opcode::Jmp { hi, lo } => self.jmp(*hi, *lo),
