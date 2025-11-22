@@ -30,11 +30,11 @@
     SHL { dst: register } { src: register } => 0x17 @ dst @ src
     LDI { dst: register } { value: u8 } => 0x2 @ dst @ value
     JMP { hi: register } { lo: register } => 0x30 @ hi @ lo
-    JR { offset: u8 } => 0x31 @ offset
-    JZR { offset: u8 } => 0x32 @ offset
-    JNZR { offset: u8 } => 0x33 @ offset
-    JCR { offset: u8 } => 0x34 @ offset
-    JNCR { offset: u8 } => 0x35 @ offset
+    JR { offset: i8 } => 0x31 @ offset
+    JZR { offset: i8 } => 0x32 @ offset
+    JNZR { offset: i8 } => 0x33 @ offset
+    JCR { offset: i8 } => 0x34 @ offset
+    JNCR { offset: i8 } => 0x35 @ offset
     CALL { hi: register } { lo: register } => 0x40 @ hi @ lo
     RET => 0x4100
     PUSH { src: register } => 0x42 @ src @ 0x0

@@ -244,7 +244,87 @@ sys_fs_list:
     MEMCPY R1 R7 R5 R6 R3 R4
     RET
 
+; Finds a file in the FS
+;
+; Input
+; R1: High address of the filename to find
+; R2: Low address of the filename to find
+;
+; Output
+; R0 - status (0 = success, 1 = not found)
 sys_fs_find:
+    ; Get 0 block
+    MOV R3 R1
+    MOV R4 R2
+
+    LDI R1 0x00
+    CALL sys_disk_set_block
+    CALL sys_disk_read_block
+
+    MOV R1 R3
+    MOV R2 R4
+
+    ; Locals
+    ; R1:R2 - args
+    ; R3 - file index
+    ; R4:R5 buffer ptr
+    ; R6 - byte
+
+    LDI R3 0x00 ; file index
+    LDI R4 0xF2 ; buffer ptr high
+    LDI R5 0x02 ; buffer ptr low
+.file:
+    CMPI R3 0x10
+    JNZR .load_byte
+    JMP .not_found
+
+.load_byte:
+    LD R6 R4 R5
+    CMPI R6 0x00
+    JNZR .metadata
+    JMP .next_file
+
+.metadata:
+    INC16 R4 R5 ; start_block
+    LD R0 R4 R5
+    PUSH R0
+    INC16 R4 R5 ; size
+    LD R0 R4 R5
+    PUSH R0
+    INC16 R4 R5 ; filename
+
+    PUSH R1
+    PUSH R2
+    PUSH R4
+    PUSH R5
+    STRCMP R0 R6 R1 R2 R4 R5
+    POP R5
+    POP R4
+    POP R2
+    POP R1
+    CMPI R0 0x00
+    JZR .success
+    POP R0
+    POP R0
+.next_file:
+    INC R3
+    LDI R7 0x10
+    MUL R6 R7 R3
+    LDI R4 0xF2 ; buffer ptr high
+    LDI R5 0x02 ; buffer ptr low
+.iter:
+    INC16 R4 R5
+    DEC R6
+    CMPI R6 0x00
+    JNZR .iter
+    JMP .file
+.not_found:
+    LDI R0 0x01
+    RET
+.success:
+    LDI R0 0x00
+    POP R2
+    POP R1
     RET
 
 sys_fs_read:

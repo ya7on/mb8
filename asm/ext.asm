@@ -41,16 +41,22 @@
 
     JR { addr: u16 } => {
         offset = addr - $ - 2
+        assert(offset <= 127)
+        assert(offset >= -128)
         0x31 @ offset`8
     }
 
     JZR { addr: u16 } => {
         offset = addr - $ - 2
+        assert(offset <= 127)
+        assert(offset >= -128)
         0x32 @ offset`8
     }
 
     JNZR { addr: u16 } => {
         offset = addr - $ - 2
+        assert(offset <= 127)
+        assert(offset >= -128)
         0x33 @ offset`8
     }
 
@@ -142,4 +148,16 @@
         MOV {reg1} {reg2}
         POP {reg2}
     }
+
+    MUL { dst: register } { a: register } { b: register } => asm {
+        ZERO {dst}
+        PUSH {b}
+        iter:
+            ADD {dst} {a}
+            DEC {b}
+            CMPI {b} 0
+            JNZR iter
+        POP {b}
+    }
+
 }
