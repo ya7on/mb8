@@ -8,8 +8,6 @@ impl VirtualMachine {
         let b = self.registers.read(src) as u8;
         let (result, overflow) = a.overflowing_sub(b);
 
-        print!("value {}", result);
-
         let mut f_register = 0;
         if result == 0 {
             f_register |= flags::Z_FLAG;
@@ -31,8 +29,7 @@ mod tests {
 
     use super::*;
 
-    //Not sure this really does anything since compare doesnt actually get stored in a reg.
-    /*#[test]
+    #[test]
     fn performs_compare() {
         // VM Compares two registers and stores the result in a third register
         let mut vm = VirtualMachine::default();
@@ -42,8 +39,8 @@ mod tests {
             dst: Register::R0,
             src: Register::R1,
         });
-        assert_eq!(vm.registers.read(Register::R0), 2);
-    }*/
+        assert_eq!(vm.registers.read(Register::R0), 5);
+    }
 
     #[test]
     fn clears_flags_before_cmp() {
