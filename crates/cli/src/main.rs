@@ -263,7 +263,11 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>) {
         files += 1;
     }
 
-    vm.devices.disk().set(fs.try_into().unwrap());
+    let Ok(fs) = fs.try_into() else {
+        eprintln!("Failed to convert file system");
+        return;
+    };
+    vm.devices.disk().set(fs);
 
     let mut buf = vec![0u32; 320 * 200];
 
