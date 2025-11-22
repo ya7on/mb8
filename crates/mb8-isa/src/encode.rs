@@ -75,6 +75,11 @@ pub fn encode(opcode: &Opcode) -> u16 {
             let src = encode_register(*src);
             0x1700 | (dst as u16) << 4 | src as u16
         }
+        Opcode::Cmp { dst, src } => {
+            let dst = encode_register(*dst);
+            let src = encode_register(*src);
+            0x1800 | (dst as u16) << 4 | src as u16
+        }
         Opcode::Ldi { dst, value } => {
             let dst = encode_register(*dst);
             0x2000 | (dst as u16) << 4 | *value as u16
@@ -243,6 +248,17 @@ mod tests {
                 src: Register::R1
             }),
             0x1701
+        );
+    }
+
+    #[test]
+    fn test_encode_cmp() {
+        assert_eq!(
+            encode(&Opcode::Cmp {
+                dst: Register::R0,
+                src: Register::R1
+            }),
+            0x1801
         );
     }
 

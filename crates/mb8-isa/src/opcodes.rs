@@ -56,6 +56,12 @@ pub enum Opcode {
         src: Register,
     },
 
+    /// Logical CMP `dst` and `src1` and store the result in `dst`.
+    Cmp {
+        dst: Register,
+        src: Register,
+    },
+
     /* Load */
     Ldi {
         dst: Register,

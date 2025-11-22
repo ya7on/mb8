@@ -78,6 +78,10 @@ pub fn decode(instruction: u16) -> Option<Opcode> {
                     dst: decode_register(b)?,
                     src: decode_register(c)?,
                 }),
+                0x8 => Some(Opcode::Cmp {
+                    dst: decode_register(b)?,
+                    src: decode_register(c)?,
+                }),
                 _ => None,
             }
         }
@@ -264,6 +268,17 @@ mod tests {
         assert_eq!(
             decode(0x1701),
             Some(Opcode::Shl {
+                dst: Register::R0,
+                src: Register::R1,
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_cmp() {
+        assert_eq!(
+            decode(0x1801),
+            Some(Opcode::Cmp {
                 dst: Register::R0,
                 src: Register::R1,
             })
