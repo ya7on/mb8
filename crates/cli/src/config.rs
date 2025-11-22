@@ -14,6 +14,9 @@ pub enum Commands {
     /// Run an executable file for the VM
     Run {
         /// Path to the executable file
-        file: PathBuf,
+        kernel: PathBuf,
+
+        /// Path to the user spaace
+        user: Vec<PathBuf>,
     },
 }

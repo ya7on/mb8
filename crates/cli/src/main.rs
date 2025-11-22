@@ -217,16 +217,53 @@ fn map_key_to_char(key: Key, shift: bool) -> Option<u8> {
     Some(ch)
 }
 
-fn run_vm(file: PathBuf) {
-    let Ok(source) = std::fs::read(file) else {
+fn run_vm(kernel: PathBuf, user: Vec<PathBuf>) {
+    let Ok(rom) = std::fs::read(kernel) else {
         return;
     };
     let mut vm = vm::VirtualMachine::default();
-    vm.load_rom(&source);
+    vm.load_rom(&rom);
 
     let Ok(mut window) = Window::new("MB8", 640, 480, WindowOptions::default()) else {
         return;
     };
+
+    // MakeFS
+    let mut fs = vec![0u8; 65536];
+    let mut blocks = 1;
+    let mut files = 0;
+    for path in user {
+        let Ok(data) = std::fs::read(&path) else {
+            continue;
+        };
+        let Ok(name) = path.file_name().ok_or("Failed to get file name") else {
+            continue;
+        };
+
+        let size = (data.len() / 256) + 1;
+
+        // Add to zero block
+        let zero_block_start = files * 16;
+        fs[zero_block_start] = 1;
+        fs[zero_block_start + 1] = blocks;
+        fs[zero_block_start + 2] = size as u8;
+
+        let chars = name.as_encoded_bytes();
+        // TODO: check if file name size is less than 8
+        for (i, c) in chars.iter().enumerate() {
+            fs[zero_block_start + 3 + i] = *c;
+        }
+
+        let block_start = blocks as usize * 256;
+        for (i, d) in data.iter().enumerate() {
+            fs[block_start + i] = *d;
+        }
+
+        blocks += size as u8;
+        files += 1;
+    }
+
+    vm.devices.disk().set(fs.try_into().unwrap());
 
     let mut buf = vec![0u32; 320 * 200];
 
@@ -255,8 +292,8 @@ fn main() {
     let cli = config::Cli::parse();
 
     match cli.command {
-        config::Commands::Run { file } => {
-            run_vm(file);
+        config::Commands::Run { kernel, user } => {
+            run_vm(kernel, user);
         }
     }
 }
