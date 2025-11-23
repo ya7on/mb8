@@ -298,7 +298,7 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>) {
             vm.step();
         }
 
-        if force_render || ticks % RENDER_INTERVAL == 0 {
+        if force_render || ticks.is_multiple_of(RENDER_INTERVAL) {
             let gpu = vm.devices.gpu();
             let tty = gpu.tty_buffer();
             render_tty(tty, buf.as_mut_slice());
