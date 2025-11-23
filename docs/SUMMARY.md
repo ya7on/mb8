@@ -7,6 +7,7 @@
 - [Instruction format](opcode.md)
 - [Core Instruction Set](isa.md)
 - [Pseudo-instructions](ext.md)
+- [Standard library](std.md)
+- [System calls](syscalls.md)
 - [Assembler syntax](asm.md)
-- [Judge / bot interaction](ipc.md)
 - [Examples](examples.md)

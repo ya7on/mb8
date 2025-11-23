@@ -9,6 +9,7 @@
 
 #ruledef mb8_isa_ext
 {
+    ; Load a 16-bit immediate into a register pair
     LDI { rh: register } { rl: register } { addr: u16 } => {
         hi = addr >> 8;
         lo = addr & 0xFF;
@@ -19,6 +20,7 @@
         }
     }
 
+    ; Call an absolute address
     CALL { addr: u16 } => {
         hi = addr >> 8;
         lo = addr & 0xFF;
@@ -29,6 +31,7 @@
         }
     }
 
+    ; Jump to an absolute address
     JMP { addr: u16 } => {
         hi = addr >> 8;
         lo = addr & 0xFF;
@@ -39,6 +42,7 @@
         }
     }
 
+    ; Jump to an absolute label using a relative offset
     JR { addr: u16 } => {
         offset = addr - $ - 2
         assert(offset <= 127)
@@ -46,6 +50,7 @@
         0x31 @ offset`8
     }
 
+    ; Jump if zero flag is set to an absolute label
     JZR { addr: u16 } => {
         offset = addr - $ - 2
         assert(offset <= 127)
@@ -53,6 +58,7 @@
         0x32 @ offset`8
     }
 
+    ; Jump if zero flag is not set to an absolute label
     JNZR { addr: u16 } => {
         offset = addr - $ - 2
         assert(offset <= 127)
@@ -65,7 +71,7 @@
         LDI {reg} 0
     }
 
-    ; Increment register value by a given immediate value
+    ; Increment register value by one
     ; WARNING: This macro may modify the stack pointer.
     INC { reg: register } => asm {
         PUSH R7
@@ -74,7 +80,7 @@
         POP R7
     }
 
-    ; Decrement register value by a given immediate value
+    ; Decrement register value by one
     ; WARNING: This macro may modify the stack pointer.
     DEC { reg: register } => asm {
         PUSH R7
@@ -141,6 +147,7 @@
         POP {reg2}
     }
 
+    ; Multiply register `a` by register `b` and store result in `dst`
     MUL { dst: register } { a: register } { b: register } => asm {
         ZERO {dst}
         PUSH {b}
@@ -151,5 +158,4 @@
             JNZR iter
         POP {b}
     }
-
 }

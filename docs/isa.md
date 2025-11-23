@@ -3,7 +3,7 @@
 - System instructions
   - [NOP](#nop)
   - [HALT](#halt)
-  - [PUTC](#putc)
+  - [SYS](#sys)
 - Register-register instructions
   - [MOV](#mov)
   - [ADD](#add)
@@ -13,6 +13,7 @@
   - [XOR](#xor)
   - [SHR](#shr)
   - [SHL](#shl)
+  - [CMP](#cmp)
 - Register-immediate instructions
   - [LDI](#ldi)
 - Jump instructions
@@ -77,26 +78,25 @@ HALT
 
 ---
 
-## PUTC
+## SYS
 
 **Syntax**:
 ```asm
-PUTC rS
+SYS
 ```
 
-**Args**:
-- **rS** — register that holds the byte to print.
+**Args**: None
 
 **Encoding**:
 ```
-0000 0010 0000 SSSS
+0000 0010 0000 0000
 ```
 
-**Hex**: `0x020S`
+**Hex**: `0x0200`
 
 **Flags**: None
 
-**Description**: Write the value stored in **rS** to the console device.
+**Description**: Enter the system call handler. Callers place the syscall ID in `R0` and jump to `0xE500` (see system calls doc) to execute OS services.
 
 ---
 
@@ -154,7 +154,7 @@ rD = rD + rS
 
 **Hex**: `0x11DS`
 
-**Flags**: Updates `Z` and `C`.
+**Flags**: Updates `Z`, `N`, `C`.
 
 **Description**: Add **rS** to **rD**.
 
@@ -183,7 +183,7 @@ rD = rD - rS
 
 **Hex**: `0x12DS`
 
-**Flags**: Updates `Z` and `C`.
+**Flags**: Updates `Z`, `N`, `C`.
 
 **Description**: Subtract **rS** from **rD**.
 
@@ -208,7 +208,7 @@ rD = rD & rS
 
 **Hex**: `0x13DS`
 
-**Flags**: Updates `Z`.
+**Flags**: Updates `Z`, `N`.
 
 **Description**: Bitwise AND.
 
@@ -233,7 +233,7 @@ rD = rD | rS
 
 **Hex**: `0x14DS`
 
-**Flags**: Updates `Z`.
+**Flags**: Updates `Z`, `N`.
 
 **Description**: Bitwise OR.
 
@@ -258,7 +258,7 @@ rD = rD ^ rS
 
 **Hex**: `0x15DS`
 
-**Flags**: Updates `Z`.
+**Flags**: Updates `Z`, `N`.
 
 **Description**: Bitwise XOR.
 
@@ -283,7 +283,7 @@ rD = rD >> rS
 
 **Hex**: `0x16DS`
 
-**Flags**: Updates `Z` and `C`.
+**Flags**: Updates `Z`, `N`; `C` is set only when the shifted result overflows 8 bits.
 
 **Description**: Logical right shift by the amount in **rS**.
 
@@ -308,11 +308,33 @@ rD = rD << rS
 
 **Hex**: `0x17DS`
 
-**Flags**: Updates `Z` and `C`.
+**Flags**: Updates `Z`, `N`, `C`.
 
 **Description**: Logical left shift by the amount in **rS**.
 
 ---
+
+## CMP
+
+**Syntax**:
+```asm
+CMP rD rS
+```
+
+**Operation**:
+```
+flags = rD - rS
+```
+
+**Encoding**:
+```
+0001 1000 DDDD SSSS
+```
+
+**Hex**: `0x18DS`
+
+**Flags**: Updates `Z`, `N`, `C`.  
+**Description**: Compare two registers and set flags as if subtracting **rS** from **rD**. Register values are not modified.
 
 # Register-immediate instructions
 
