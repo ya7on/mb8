@@ -8,6 +8,9 @@ use tty::render_tty;
 mod config;
 mod tty;
 
+const OPS_PER_FRAME: u32 = 1024;
+const RENDER_INTERVAL: u32 = 1000;
+
 #[allow(clippy::too_many_lines)]
 fn map_key_to_char(key: Key, shift: bool) -> Option<u8> {
     let ch = match key {
@@ -274,35 +277,36 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>) {
 
     let mut buf = vec![0u32; 320 * 200];
 
-    let mut frame = 0;
+    let mut ticks = RENDER_INTERVAL - 1;
+    let mut force_render = false;
     while !vm.halted && window.is_open() {
-        frame += 1;
+        ticks = ticks.wrapping_add(1);
         for key in window.get_keys_pressed(KeyRepeat::No) {
             let Some(char) =
                 map_key_to_char(key, window.is_key_pressed(Key::LeftShift, KeyRepeat::Yes))
             else {
                 continue;
             };
-            frame = 256;
+            force_render = true;
             vm.devices.keyboard().key_pressed(char);
         }
 
-        vm.step();
+        for _ in 0..OPS_PER_FRAME {
+            if vm.halted {
+                break;
+            }
+            vm.step();
+        }
 
-        let gpu = vm.devices.gpu();
-        if gpu.redraw() {
-            frame = 0;
+        if force_render || ticks.is_multiple_of(RENDER_INTERVAL) {
+            let gpu = vm.devices.gpu();
             let tty = gpu.tty_buffer();
             render_tty(tty, buf.as_mut_slice());
 
             if window.update_with_buffer(&buf, 320, 200).is_err() {
                 return;
             }
-        }
-
-        if frame >= 256 {
-            frame = 0;
-            window.update();
+            force_render = false;
         }
     }
 }
