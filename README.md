@@ -9,7 +9,7 @@
 
 MicroBot-8bit is an 8-bit microcomputer in the vein of the ZX Spectrum/Commodore 64, originally inspired by CHIP-8. It comes with a tiny CP/M-like OS layer, a GPU TTY, keyboard input, and a disk-backed filesystem stub.
 
-<img width="752" height="620" alt="Shell" src="https://github.com/user-attachments/assets/ca54e6c4-da30-4d46-94ef-6aabdbacee51" />
+<img width="752" height="620" alt="sh.bin" src="https://github.com/user-attachments/assets/99a3c7b2-007a-4187-a0b2-38f4b9bd97e2" />
 
 # Running
 
