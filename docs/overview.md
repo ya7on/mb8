@@ -14,7 +14,7 @@ make all
 ```
 2) Run the VM, passing the kernel entrypoint first and then any user-space programs:
 ```sh
-cargo run -- run ./kernel/main.bin ./user/sh.bin ./user/hw.bin
+cargo run -- run ./kernel/main.bin ./user/sh.bin ./user/hw.bin ./user/ls.bin
 ```
 
 The kernel image is loaded at `0xE000`, user programs are passed as extra binaries, and the OS provides basic CP/M-like services via syscalls.
