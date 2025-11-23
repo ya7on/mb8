@@ -15,6 +15,8 @@ SYS_FS_FIND = 0x0A
 SYS_FS_READ = 0x0B
 SYS_FS_WRITE = 0x0C
 SYS_FS_DELETE = 0x0D
+SYS_EXEC = 0x0E
+SYS_EXIT = 0x0F
 
 #addr 0xE500
 K_SYSCALL_ENTRY:
@@ -69,8 +71,16 @@ syscall_table:
     JMP sys_fs_write
 .sys_fs_delete:
     CMPI R0 SYS_FS_DELETE
-    JNZR .not_found
+    JNZR .sys_exec
     JMP sys_fs_delete
+.sys_exec:
+    CMPI R0 SYS_EXEC
+    JNZR .sys_exit
+    JMP sys_exec
+.sys_exit:
+    CMPI R0 SYS_EXIT
+    JNZR .not_found
+    JMP sys_exit
 .not_found:
     RET
 
@@ -392,4 +402,34 @@ sys_fs_write:
     RET
 
 sys_fs_delete:
+    RET
+
+; Executes a file in the FS
+;
+; Input
+; R1: High address of the filename to find
+; R2: Low address of the filename to find
+;
+; Output
+; R0 - status (0 = success, 1 = not found)
+sys_exec:
+    LDI R0 SYS_FS_READ
+    LDI R3 0x10
+    LDI R4 0x00
+    CALL K_SYSCALL_ENTRY
+    CMPI R0 0x00
+    JNZR .error
+
+    POP R0
+    POP R0
+
+    JMP 0x1000
+
+.error:
+    RET
+
+sys_exit:
+    POP R0
+    POP R0
+    JMP 0xE000
     RET

@@ -42,3 +42,10 @@ System calls live at `0xE500` (`kernel/syscalls.asm`). To invoke one, load the c
 
 - **0x0D — SYS_FS_DELETE**  
   Currently unimplemented placeholder.
+
+- **0x0E — SYS_EXEC**  
+  Input: `R1:R2` filename pointer. Loads the file into RAM at `0x1000` (user entry) and jumps to it.  
+  Output: `R0` status (`0` success, `1` not found).
+
+- **0x0F — SYS_EXIT**  
+  No inputs. Returns control to the kernel entrypoint at `0xE000` (used by user programs to quit).
