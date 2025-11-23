@@ -35,7 +35,7 @@ Targets:
 
 After building, run the VM with the kernel entrypoint first and then any user programs:
 ```
-cargo run -- run ./kernel/main.bin ./user/sh.bin
+cargo run -- run ./kernel/main.bin ./user/sh.bin ./user/hw.bin
 ```
 The first path is always the kernel; subsequent arguments are user-space binaries loaded by the OS.
 
@@ -43,7 +43,7 @@ The first path is always the kernel; subsequent arguments are user-space binarie
 
 User-space programs live under `user/`. For a minimal shell example, see `user/sh.asm`; build with `make user` and run with the kernel:
 ```
-cargo run -- run ./kernel/main.bin ./user/sh.bin
+cargo run -- run ./kernel/main.bin ./user/sh.bin ./user/hw.bin
 ```
 
 # Architecture

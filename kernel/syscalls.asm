@@ -431,5 +431,5 @@ sys_exec:
 sys_exit:
     POP R0
     POP R0
-    JMP 0xE000
+    JMP 0xE100
     RET
