@@ -210,6 +210,9 @@ fn map_key_to_char(key: Key, shift: bool) -> Option<u8> {
         Key::Backspace => 0x08,
         Key::Tab => 0x09,
         Key::Escape => 0x1B,
+        Key::Comma => b',',
+        Key::Period => b'.',
+        Key::Slash => b'/',
 
         _ => return None,
     };
