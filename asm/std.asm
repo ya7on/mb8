@@ -4,6 +4,7 @@
 
 #ruledef mb8_std
 {
+    ; Copy `len` bytes from `srchi:srclo` to `dsthi:dstlo` using index register `i`
     MEMCPY { i: register } { len: register } { srchi: register } { srclo: register } { dsthi: register } { dstlo: register } => asm {
         loop:
         PUSH {i}
@@ -22,6 +23,7 @@
         end:
     }
 
+    ; Compare two zero-terminated strings, returns 0 in `i` if equal, 1 otherwise
     STRCMP { i: register } { j: register } { srchi: register } { srclo: register } { dsthi: register } { dstlo: register } => asm {
         loop:
         LD {i} {srchi} {srclo}

@@ -2,9 +2,13 @@
 
 We assemble with [`customasm`](https://github.com/hlorenzi/customasm).
 
+## Writing a program for the VM
+- Always include `../asm/cpu.asm` first (see `user/sh.asm`). It defines the memory banks so your ROM segment assembles with a base address of `0x1000`.
+- When the program is launched, that ROM image is copied into RAM starting at `0x1000` and execution begins at your entry label.
+
 ## Includes
 - Always include `asm/cpu.asm` to get the core ISA and register definitions.
-- Optionally include `asm/ext.asm` to unlock pseudo-instructions like `INC`, `JMPR`, `CMP`, etc.
+- Optionally include `asm/ext.asm` to unlock pseudo-instructions like `INC`, `JMP addr`, `CMPI`, etc.
 
 ```asm
 #include "../asm/cpu.asm"
@@ -12,14 +16,13 @@ We assemble with [`customasm`](https://github.com/hlorenzi/customasm).
 ```
 
 ## Banks and layout
-- `#bank rom` — code bank (4 KiB). **All executable instructions must live here.**
-- `#bank ram` — data bank (4 KiB), laid out as stack, general RAM, and special region as described in the memory model.
-- `#addr <hex>` — set the write pointer inside the active bank. Useful to prefill RAM or place sprites.
+- Kernel: uses `#bank rom` (4 KiB at `0xE000`) for executable code — see `kernel/main.asm`.
+- User programs: include `cpu.asm` and you automatically get the RAM bank defined there; you typically do **not** write your own `#bank` directives.
+- `#addr <hex>` — set the write pointer inside the active bank. Handy to place data at a specific RAM offset.
 
 Example RAM data:
 ```asm
-#bank ram
-#addr 0x0100      ; place data in general RAM
+#addr 0x0100      ; place data in general RAM (RAM bank is already active)
 SPRITE:
     #d8 0b1111_0000
     #d8 0b1000_1000
@@ -27,7 +30,7 @@ SPRITE:
 
 Example ROM code:
 ```asm
-#bank rom
+#bank rom         ; only in the kernel image
 start:
     LDI R0 0x42
     HALT

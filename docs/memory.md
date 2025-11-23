@@ -1,28 +1,48 @@
 # Memory model
 
-The MB8 VM exposes a single 64 KiB address space per context. The bus (`crates/mb8/src/dev/bus.rs`) routes requests from the CPU to RAM, ROM, and MMIO regions according to the high bits of the address.
+The MB8 VM exposes a single 64 KiB address space. All reads and writes go through the bus (`crates/mb8/src/dev/bus.rs`), which forwards them to RAM, ROM, or an MMIO device based on the address range.
 
 ## Layout
 
 | Range | Size | Description |
 | --- | --- | --- |
-| `0x0000` – `0xBFFF` | 48 KiB | Read/write RAM. General data, stack, and temporary buffers live here. |
-| `0xC000` – `0xDFFF` | 8 KiB | Reserved MMIO window (devices WIP). Reads/writes are not routed yet. |
-| `0xE000` – `0xEFFF` | 4 KiB | ROM. Holds 16-bit instructions loaded from cartridges. Read-only at runtime. |
-| `0xF000` – `0xFFFF` | 4 KiB | Reserved MMIO window (future peripherals). |
+| `0x0000` – `0xBFFF` | 48 KiB | RAM |
+| `0xC000` – `0xDFFF` | 8 KiB | Reserved MMIO (not wired yet) |
+| `0xE000` – `0xEFFF` | 4 KiB | ROM |
+| `0xF000` – `0xF0FF` | 256 B | GPU registers |
+| `0xF100` – `0xF1FF` | 256 B | Keyboard registers |
+| `0xF200` – `0xF3FF` | 512 B | Disk registers and buffer |
+| `0xF400` – `0xFFFF` | 3072 B | Reserved MMIO (not wired yet) |
 
-## RAM details
+The bus rejects the reserved regions with `unimplemented!()`.
 
-- `RAM_SIZE` is `0xC000` bytes. Addressing is byte-based even though instructions are 16 bits.
-- The stack grows downward. `STACK_TOP = 0xBFFF` and `STACK_BOTTOM = 0xBF00`. Calls push the current `PC` byte-by-byte starting from `STACK_TOP`, and stack overflow halts the VM.
-- The rest of RAM (`0x0000` – `0xBEFF`) is free-form working memory for programs.
+## Bus
+- CPU memory accesses always call into the bus, which in turn calls the matching device `read`/`write`.
+- Devices own their buffers; the bus itself does not store data.
 
-## ROM
+## RAM (`crates/mb8/src/dev/ram.rs`)
+- Plain byte-addressable memory. Writes update the backing array; reads return what was last written.
+- `RAM_SIZE = 0xC000`. The stack grows downward (`STACK_TOP = 0xBFFF`, `STACK_BOTTOM = 0xBF00`).
 
-- Each VM instance has its own ROM buffer with `ROM_SIZE = 0x1000` bytes.
-- The `PC` reads 16-bit opcodes from ROM. Self-modifying code is impossible because ROM writes are ignored by the CPU.
-- Absolute control-flow instructions (`JMP`, `CALL`) combine two registers into a 16-bit ROM address.
+## ROM (`crates/mb8/src/dev/rom.rs`)
+- Backing store for program code (`ROM_SIZE = 0x1000`).
+- The device currently accepts writes from the bus, but programs should not rely on mutating ROM; this may be blocked in the future. ROM is meant to hold the kernel/boot image.
 
-## MMIO windows
+## GPU (`crates/mb8/src/dev/gpu.rs`)
+- Registers live at `0xF000` (offsets relative to that base):
+  - `0x0000` — mode register. `0x00` = off, `0x01` = TTY.
+  - `0x0001` — TTY data register. When mode is TTY, each write pushes a character to the screen and advances the cursor.
+- Reading `0x0000` returns the current mode. Other reads are currently unimplemented.
 
-The two MMIO ranges (`0xC000`–`0xDFFF` and `0xF000`–`0xFFFF`) are mapped by the bus but currently stubbed out. They reserve space for future devices such as timers, input, or IPC mailboxes. Reads/writes to these pages should be avoided until the corresponding devices are implemented.
+## Keyboard (`crates/mb8/src/dev/keyboard.rs`)
+- Registers at `0xF100` (offsets relative to that base):
+  - `0x00` — `STATUS`. Returns `1` when keys are queued, otherwise `0`.
+  - `0x01` — `DATA`. Reading pops the next key code from the queue; returns `0` when empty.
+- Writes are ignored.
+
+## Disk (`crates/mb8/src/dev/disk.rs`)
+- Registers at `0xF200` (offsets relative to that base):
+  - `0x0000` — `BLOCK` number to operate on.
+  - `0x0001` — `CMD` (`0x00` no-op, `0x01` read, `0x02` write).
+  - `0x0002`–`0x0102` — 256-byte disk buffer used for reads/writes.
+- `CMD` operations move data between the internal image and the buffer; buffer reads/writes go directly to the 256-byte window.

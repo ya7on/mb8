@@ -1,9 +1,20 @@
 # Overview
 
-MB8 is an 8-bit virtual machine and playground for writing games and bots on a tiny assembler. Think CHIP-8, but built for multiplayer simulations: everything runs in one VM, sharing state through registers and mailboxes. It feels like smart contracts for games—the logic and the bots all live in the same minimal ISA.
+MB8 is an 8-bit microcomputer in the spirit of the ZX Spectrum and Commodore 64, initially inspired by CHIP-8. It ships with a tiny CP/M-like operating system layer and a minimal assembly-first toolchain.
 
-Terminology:
-- **Judge** — the host program that defines the rules, renders graphics, and schedules bots.
-- **Bots** — player/agent programs that follow the judge’s rules. They run in separate contexts and talk via shared mailboxes.
+## What’s inside
+- 8-bit CPU with a compact ISA and pseudo-instructions for convenience.
+- Memory-mapped devices (RAM, ROM, GPU TTY, keyboard, disk) wired through a simple bus.
+- A small kernel plus user-space programs, all written in assembly.
 
-Check the following chapters for the machine layout, instruction set, and examples.
+## Running the project
+1) Build all assembly artifacts (kernel, user programs, tests):
+```sh
+make all
+```
+2) Run the VM, passing the kernel entrypoint first and then any user-space programs:
+```sh
+cargo run -- run ./kernel/main.bin ./user/sh.bin
+```
+
+The kernel image is loaded at `0xE000`, user programs are passed as extra binaries, and the OS provides basic CP/M-like services via syscalls.

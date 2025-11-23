@@ -1,10 +1,3 @@
 # Examples
 
-The `examples/` folder contains tiny, runnable programs:
-
-- `logo.asm` — draws the MB8 logo sprites stored in RAM and keeps scrolling.
-- `bouncing.asm` — moves a 1-pixel-wide sprite around the screen, showing basic control flow and the drawing opcode.
-- `turtle/rect.asm` - draws a rectangle using the turtle.
-- `turtle/loop.asm` - draws a fractal using the turtle.
-
-Assemble any of them with `customasm examples/<file>.asm` and run the resulting `.bin` with the CLI.
+User-space programs now live under `user/`. A good starting point is the shell at `user/sh.asm`: the kernel loads it into RAM at `0x1000` and jumps to it after boot. Build it with `make user` and run via `cargo run -- run ./kernel/main.bin ./user/sh.bin`.

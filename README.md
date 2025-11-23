@@ -7,7 +7,7 @@
 [![GitHub top language](https://img.shields.io/github/languages/top/ya7on/mb8)](https://github.com/ya7on/mb8)
 [![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/ya7on/mb8)](https://github.com/ya7on/mb8)
 
-MicroBot-8bit is a simple, 8-bit virtual machine.
+MicroBot-8bit is an 8-bit microcomputer in the vein of the ZX Spectrum/Commodore 64, originally inspired by CHIP-8. It comes with a tiny CP/M-like OS layer, a GPU TTY, keyboard input, and a disk-backed filesystem stub.
 
 <img width="752" height="620" alt="Shell" src="https://github.com/user-attachments/assets/ca54e6c4-da30-4d46-94ef-6aabdbacee51" />
 
@@ -15,41 +15,35 @@ MicroBot-8bit is a simple, 8-bit virtual machine.
 
 ## Compile assembly
 
-We are using the `customasm` tool to compile assembly code into MB8 machine instructions.
+We use [`customasm`](https://github.com/hlorenzi/customasm) to build all assembly sources.
 
-First, install the tool by running:
-
+Install once:
 ```
 cargo install customasm
 ```
 
-Then, compile an assembly file using the following command:
-
+Build everything (kernel, user-space programs, tests):
 ```
-customasm <file.asm>
+make all
 ```
-
-Compiled binary files have the extension `.bin`.
+Targets:
+- `make kernel` — build the kernel image (`kernel/main.bin`)
+- `make user` — build user-space programs under `user/`
+- `make tests` — build assembly tests under `kernel/tests`
 
 ## Run VM
 
-To run the compiled binary, use the following command:
-
+After building, run the VM with the kernel entrypoint first and then any user programs:
 ```
-cargo run -- run <file.bin>
+cargo run -- run ./kernel/main.bin ./user/sh.bin
 ```
+The first path is always the kernel; subsequent arguments are user-space binaries loaded by the OS.
 
 ## Assembly
 
-You can see examples of assembly code in the [`examples`](examples) directory.
-
-- [`bouncing.asm`](examples/bouncing.asm) - Bouncing example
-- [`logo.asm`](examples/logo.asm) - Logo example
-
-You can compile any of them and run them using the following commands:
-
+User-space programs live under `user/`. For a minimal shell example, see `user/sh.asm`; build with `make user` and run with the kernel:
 ```
-customasm ./examples/logo.asm && cargo run -- run ./examples/logo.bin
+cargo run -- run ./kernel/main.bin ./user/sh.bin
 ```
 
 # Architecture
