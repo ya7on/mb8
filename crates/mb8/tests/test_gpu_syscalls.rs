@@ -15,7 +15,7 @@ fn test_sys_write() {
     let mut vm = VirtualMachine::default();
     vm.load_rom(bin);
     vm.run();
-    let expected = ['1' as u8, '2' as u8, '3' as u8];
+    let expected = [b'1', b'2', b'3'];
     assert_eq!(vm.devices.gpu().tty_buffer()[0..3], expected);
 }
 

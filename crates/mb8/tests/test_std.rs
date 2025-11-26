@@ -14,7 +14,7 @@ fn test_std_memcpy() {
     vm.run();
 
     for i in 0..256 {
-        assert_eq!(vm.devices.read(0x150 + i), i as u8, "{:?}", i);
+        assert_eq!(vm.devices.read(0x150 + i), i as u8, "{i:?}");
     }
 }
 

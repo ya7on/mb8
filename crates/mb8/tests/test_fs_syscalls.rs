@@ -14,7 +14,7 @@ fn test_sys_fs_list() {
     vm.run();
 
     for i in 0..256 {
-        assert_eq!(vm.devices.read(0x0150 + i), i as u8, "{:?}", i);
+        assert_eq!(vm.devices.read(0x0150 + i), i as u8, "{i:?}");
     }
 }
 
@@ -72,7 +72,7 @@ fn test_sys_fs_read() {
     assert_eq!(vm.registers.read(Register::R0), 0);
 
     for i in 0..256 * 2 {
-        assert_eq!(vm.devices.read(i), 1, "{:?}", i);
+        assert_eq!(vm.devices.read(i), 1, "{i:?}");
     }
 }
 
