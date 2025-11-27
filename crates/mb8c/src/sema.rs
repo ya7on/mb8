@@ -37,7 +37,7 @@ static STRLABEL: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
 static STACKSIZE: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
-    mutex.lock().unwrap_or_else(|e| e.into_inner())
+    mutex.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
 fn next_str_label() -> usize {
@@ -136,7 +136,7 @@ fn check_lval(node: &Node) {
 }
 
 fn walk(mut node: Node, decay: bool) -> Node {
-    use self::NodeType::*;
+    use self::NodeType::{Num, Null, Break, Str, Ident, Vardef, If, Ternary, For, DoWhile, Dot, BinOp, PostInc, PostDec, Neg, Exclamation, Addr, Deref, Return, ExprStmt, Sizeof, Alignof, Call, CompStmt, VecStmt, StmtExpr};
     let op = node.op.clone();
     match op {
         Num(_) | Null | Break => (),
@@ -149,7 +149,7 @@ fn walk(mut node: Node, decay: bool) -> Node {
             let name = var.name.clone();
             push_global(var);
 
-            let mut ret = Node::new(NodeType::Gvar(name, "".into(), len));
+            let mut ret = Node::new(NodeType::Gvar(name, String::new(), len));
             ret.ty = node.ty;
             return maybe_decay(ret, decay);
         }
@@ -168,9 +168,8 @@ fn walk(mut node: Node, decay: bool) -> Node {
                         return maybe_decay(ret, decay);
                     }
                 }
-            } else {
-                panic!("undefined variable: {}", name);
             }
+            panic!("undefined variable: {name}");
         }
         Vardef(name, init_may, _) => {
             let mut stacksize = lock(&STACKSIZE);
@@ -230,9 +229,7 @@ fn walk(mut node: Node, decay: bool) -> Node {
             expr = Box::new(walk(*expr, true));
             let offset;
             if let Ctype::Struct(ref members) = expr.ty.ty {
-                if members.is_empty() {
-                    panic!("incomplete type");
-                }
+                assert!(!members.is_empty(), "incomplete type");
                 let m_may = members.iter().find(|m| {
                     if let NodeType::Vardef(ref m_name, _, _) = m.op {
                         if m_name != &name {
@@ -251,7 +248,7 @@ fn walk(mut node: Node, decay: bool) -> Node {
                         unreachable!()
                     }
                 } else {
-                    panic!("member missing: {}", name);
+                    panic!("member missing: {name}");
                 }
             } else {
                 panic!("struct expected before '.'");
@@ -261,7 +258,7 @@ fn walk(mut node: Node, decay: bool) -> Node {
             return maybe_decay(node, decay);
         }
         BinOp(token_type, mut lhs, mut rhs) => {
-            use self::TokenType::*;
+            use self::TokenType::{Plus, Minus, AddEQ, SubEQ, Equal, MulEQ, DivEQ, ModEQ, ShlEQ, ShrEQ, BitandEQ, XorEQ, BitorEQ};
             match token_type {
                 Plus | Minus => {
                     lhs = Box::new(walk(*lhs, true));
@@ -283,7 +280,7 @@ fn walk(mut node: Node, decay: bool) -> Node {
                 }
                 AddEQ | SubEQ => {
                     lhs = Box::new(walk(*lhs, false));
-                    check_lval(&*lhs);
+                    check_lval(&lhs);
                     rhs = Box::new(walk(*rhs, true));
 
                     if matches!(lhs.ty.ty, Ctype::Ptr(_)) {
@@ -294,7 +291,7 @@ fn walk(mut node: Node, decay: bool) -> Node {
                 }
                 Equal | MulEQ | DivEQ | ModEQ | ShlEQ | ShrEQ | BitandEQ | XorEQ | BitorEQ => {
                     lhs = Box::new(walk(*lhs, false));
-                    check_lval(&*lhs);
+                    check_lval(&lhs);
                     node.op = BinOp(token_type, lhs.clone(), Box::new(walk(*rhs, true)));
                     node.ty = lhs.ty;
                 }
@@ -328,7 +325,7 @@ fn walk(mut node: Node, decay: bool) -> Node {
         }
         Addr(mut expr) => {
             expr = Box::new(walk(*expr, true));
-            check_lval(&*expr);
+            check_lval(&expr);
             node.ty = Box::new(Type::ptr_to(expr.ty.clone()));
             node.op = Addr(expr);
         }
@@ -346,21 +343,21 @@ fn walk(mut node: Node, decay: bool) -> Node {
         ExprStmt(expr) => node.op = ExprStmt(Box::new(walk(*expr, true))),
         Sizeof(mut expr) => {
             expr = Box::new(walk(*expr, false));
-            node = Node::new_int(expr.ty.size as i32)
+            node = Node::new_int(expr.ty.size as i32);
         }
         Alignof(mut expr) => {
             expr = Box::new(walk(*expr, false));
-            node = Node::new_int(expr.ty.align as i32)
+            node = Node::new_int(expr.ty.align as i32);
         }
         Call(name, mut args) => {
             if let Some(var) = find_var(&name) {
                 if let Ctype::Func(returning) = var.ty.ty {
                     node.ty = returning;
                 } else {
-                    eprint!("bad function: {}", name);
+                    eprint!("bad function: {name}");
                 }
             } else {
-                eprint!("bad function: {}", name);
+                eprint!("bad function: {name}");
             }
 
             args = args.into_iter().map(|arg| walk(arg, true)).collect();
@@ -379,14 +376,14 @@ fn walk(mut node: Node, decay: bool) -> Node {
         }
         StmtExpr(body) => {
             node.op = StmtExpr(Box::new(walk(*body, true)));
-            node.ty = Box::new(Type::int_ty())
+            node.ty = Box::new(Type::int_ty());
         }
         _ => panic!("unknown node type"),
-    };
+    }
     node
 }
 
-pub fn sema(nodes: Vec<Node>) -> (Vec<Node>, Vec<Var>) {
+#[must_use] pub fn sema(nodes: Vec<Node>) -> (Vec<Node>, Vec<Var>) {
     let mut new_nodes = vec![];
 
     for mut node in nodes {
@@ -400,7 +397,7 @@ pub fn sema(nodes: Vec<Node>) -> (Vec<Node>, Vec<Var>) {
         let var;
         match &node.op {
             NodeType::Func(name, _, _, _) | NodeType::Decl(name) => {
-                var = Var::new_global(node.ty.clone(), name.clone(), "".into(), 0, false);
+                var = Var::new_global(node.ty.clone(), name.clone(), String::new(), 0, false);
                 lock(&ENV).vars.insert(name.clone(), var);
             }
             _ => unreachable!(),

@@ -23,7 +23,7 @@ static BREAK_LABEL: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
 static CODE: LazyLock<Mutex<Vec<IR>>> = LazyLock::new(|| Mutex::new(vec![]));
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
-    mutex.lock().unwrap_or_else(|e| e.into_inner())
+    mutex.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
 fn next_reg() -> usize {
@@ -167,7 +167,7 @@ impl From<NodeType> for IROp {
     fn from(node_type: NodeType) -> Self {
         match node_type {
             NodeType::BinOp(op, _, _) => Self::from(op),
-            e => panic!("cannot convert: {:?}", e),
+            e => panic!("cannot convert: {e:?}"),
         }
     }
 }
@@ -180,7 +180,7 @@ impl From<TokenType> for IROp {
             TokenType::Mul => IROp::Mul,
             TokenType::Div => IROp::Div,
             TokenType::LeftAngleBracket | TokenType::RightAngleBracket => IROp::LT,
-            e => panic!("cannot convert: {:?}", e),
+            e => panic!("cannot convert: {e:?}"),
         }
     }
 }
@@ -281,7 +281,7 @@ fn get_inc_scale(ty: &Type) -> usize {
 fn gen_pre_inc(ty: &Type, expr: Box<Node>, num: i32) -> i32 {
     let addr = gen_lval(expr);
     let val = next_reg();
-    load(ty, Some(val), addr.clone());
+    load(ty, Some(val), addr);
     add(
         IROp::AddImm,
         Some(val),
@@ -299,11 +299,11 @@ fn gen_post_inc(ty: &Type, expr: Box<Node>, num: i32) -> i32 {
         Some(val as usize),
         Some(num as usize * get_inc_scale(ty)),
     );
-    val as i32
+    val
 }
 
 fn to_assign_op(op: &TokenType) -> IROp {
-    use self::TokenType::*;
+    use self::TokenType::{MulEQ, DivEQ, ModEQ, AddEQ, SubEQ, ShlEQ, ShrEQ, BitandEQ, XorEQ, BitorEQ};
     match op {
         MulEQ => IROp::Mul,
         DivEQ => IROp::Div,
@@ -315,7 +315,7 @@ fn to_assign_op(op: &TokenType) -> IROp {
         BitandEQ => IROp::AND,
         XorEQ => IROp::XOR,
         BitorEQ => IROp::OR,
-        e => panic!("unexpected op: {:?}", e),
+        e => panic!("unexpected op: {e:?}"),
     }
 }
 
@@ -381,7 +381,7 @@ fn gen_expr(node: Box<Node>) -> Option<usize> {
             Some(r)
         }
         NodeType::BinOp(op, lhs, rhs) => {
-            use self::TokenType::*;
+            use self::TokenType::{Equal, Plus, Minus, Logand, Logor, MulEQ, DivEQ, ModEQ, AddEQ, SubEQ, ShlEQ, ShrEQ, BitandEQ, XorEQ, BitorEQ, EQ, NE, LE, And, VerticalBar, Hat, SHL, SHR, Mod, Comma};
             match op {
                 Equal => {
                     let rhs = gen_expr(rhs);
@@ -480,7 +480,7 @@ fn gen_expr(node: Box<Node>) -> Option<usize> {
 
 fn gen_stmt(node: Node) {
     match node.op {
-        NodeType::Null => return,
+        NodeType::Null => (),
         NodeType::Vardef(_, init_may, Scope::Local(offset)) => {
             if let Some(init) = init_may {
                 let rhs = gen_expr(init);
@@ -490,7 +490,6 @@ fn gen_stmt(node: Node) {
                 kill(lhs);
                 kill(rhs);
             }
-            return;
         }
         NodeType::If(cond, then, els_may) => {
             if let Some(els) = els_may {
@@ -550,9 +549,7 @@ fn gen_stmt(node: Node) {
         }
         NodeType::Break => {
             let break_label = current_break_label();
-            if break_label == 0 {
-                panic!("stray 'break' statement");
-            }
+            assert!((break_label != 0), "stray 'break' statement");
             jmp(Some(break_label));
         }
         NodeType::Return(expr) => {
@@ -577,11 +574,14 @@ fn gen_stmt(node: Node) {
                 gen_stmt(n);
             }
         }
-        e => panic!("unknown node: {:?}", e),
+        e => panic!("unknown node: {e:?}"),
     }
 }
 
-pub fn gen_ir(nodes: Vec<Node>) -> Vec<Function> {
+/// # Panics
+///
+/// Panics if the AST contains unsupported nodes.
+#[must_use] pub fn gen_ir(nodes: Vec<Node>) -> Vec<Function> {
     let mut v = vec![];
     for node in nodes {
         match node.op {

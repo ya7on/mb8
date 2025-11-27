@@ -8,7 +8,7 @@ const REGS: [&str; REGS_N] = ["R0", "R1", "R2", "R3", "R4", "R7", "R0"];
 static LABEL: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
-    mutex.lock().unwrap_or_else(|e| e.into_inner())
+    mutex.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
 macro_rules! emit {
@@ -44,17 +44,17 @@ fn emit_cmp_set_bool(lhs: usize, rhs: usize, cond: &'static str) {
     }
 
     emit!("LDI {} 0x01", reg_l);
-    println!(".Lend_cmp_{}:", id);
+    println!(".Lend_cmp_{id}:");
 }
 
 fn gen_fn_mb8(f: Function) {
-    use self::IROp::*;
+    use self::IROp::{Imm, Mov, Add, AddImm, Sub, SubImm, AND, OR, XOR, Neg, SHL, SHR, Mul, MulImm, Div, Mod, EQ, NE, LT, LE, Load, Store, StoreArg, Bprel, Label, LabelAddr, Return, Jmp, If, Unless, Call, Nop, Kill};
 
     let ret_label = {
         let mut g = lock(&LABEL);
         let id = *g;
         *g += 1;
-        format!(".Lret_{}", id)
+        format!(".Lret_{id}")
     };
 
     println!("{}:", f.name);
@@ -123,7 +123,7 @@ fn gen_fn_mb8(f: Function) {
 
             EQ => emit_cmp_set_bool(lhs, rhs, "eq"),
             NE => emit_cmp_set_bool(lhs, rhs, "ne"),
-            LT | LE => {}
+            LT | LE | Nop | Kill => {}
 
             Load(_size) => {
                 emit!("LDI R5 R6 0x0000");
@@ -145,7 +145,7 @@ fn gen_fn_mb8(f: Function) {
             }
 
             Label => {
-                println!(".L{}:", lhs);
+                println!(".L{lhs}:");
             }
 
             LabelAddr(ref _name) => {}
@@ -184,11 +184,10 @@ fn gen_fn_mb8(f: Function) {
                 emit!("MOV {} R0", REGS[lhs]);
             }
 
-            Nop | Kill => {}
         }
     }
 
-    println!("{}:", ret_label);
+    println!("{ret_label}:");
     emit!("RET");
 }
 
@@ -215,7 +214,7 @@ pub fn gen_mb8(globals: Vec<Var>, fns: Vec<Function>) {
                     print!(", ");
                 }
                 let b = bytes.get(i).copied().unwrap_or(0);
-                print!("0x{:02X}", b);
+                print!("0x{b:02X}");
             }
             println!();
         } else {

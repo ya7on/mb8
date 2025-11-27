@@ -23,7 +23,7 @@ int main() {     ; +-+                        int   []         2
 }                ; +-+                  return        []      +->primary
                                                                  0
 */
-pub fn parse(tokens: &Vec<Token>) -> Vec<Node> {
+#[must_use] pub fn parse(tokens: &Vec<Token>) -> Vec<Node> {
     let mut parser = Parser::new(tokens);
 
     let mut v = vec![];
@@ -99,18 +99,21 @@ pub struct Node {
 }
 
 impl Node {
-    pub fn new(op: NodeType) -> Self {
+    #[must_use] pub fn new(op: NodeType) -> Self {
         Self {
             op,
             ty: Box::new(Type::default()),
         }
     }
 
-    pub fn new_int(val: i32) -> Self {
+    #[must_use] pub fn new_int(val: i32) -> Self {
         Node::new(NodeType::Num(val))
     }
 
-    pub fn scale_ptr(node: Box<Node>, ty: &Type) -> Self {
+    /// # Panics
+    ///
+    /// Panics if `ty` is not a pointer type.
+    #[must_use] pub fn scale_ptr(node: Box<Node>, ty: &Type) -> Self {
         match ty.ty {
             Ctype::Ptr(ref ptr_to) => {
                 Node::new_binop(TokenType::Mul, *node, Node::new_int(ptr_to.size as i32))
@@ -119,24 +122,21 @@ impl Node {
         }
     }
 
-    pub fn new_binop(ty: TokenType, lhs: Node, rhs: Node) -> Self {
+    #[must_use] pub fn new_binop(ty: TokenType, lhs: Node, rhs: Node) -> Self {
         Node::new(NodeType::BinOp(ty, Box::new(lhs), Box::new(rhs)))
     }
 
-    pub fn new_num(val: i32) -> Self {
+    #[must_use] pub fn new_num(val: i32) -> Self {
         Node::new(NodeType::Num(val))
     }
 
-    pub fn is_null(&self) -> bool {
-        match self.op {
-            NodeType::Null => true,
-            _ => false,
-        }
+    #[must_use] pub fn is_null(&self) -> bool {
+        matches!(self.op, NodeType::Null)
     }
 }
 
 impl Type {
-    pub fn new(ty: Ctype, size: usize) -> Self {
+    #[must_use] pub fn new(ty: Ctype, size: usize) -> Self {
         Type {
             ty,
             size,
@@ -144,23 +144,23 @@ impl Type {
         }
     }
 
-    pub fn void_ty() -> Self {
+    #[must_use] pub fn void_ty() -> Self {
         Type::new(Ctype::Void, 0)
     }
 
-    pub fn char_ty() -> Self {
+    #[must_use] pub fn char_ty() -> Self {
         Type::new(Ctype::Char, 1)
     }
 
-    pub fn int_ty() -> Self {
+    #[must_use] pub fn int_ty() -> Self {
         Type::new(Ctype::Int, 2)
     }
 
-    pub fn ptr_to(base: Box<Type>) -> Self {
+    #[must_use] pub fn ptr_to(base: Box<Type>) -> Self {
         Type::new(Ctype::Ptr(base), 2)
     }
 
-    pub fn ary_of(base: Box<Type>, len: usize) -> Self {
+    #[must_use] pub fn ary_of(base: Box<Type>, len: usize) -> Self {
         let align = base.align;
         let size = base.size * len;
         let mut ty = Type::new(Ctype::Ary(base, len), size);
@@ -177,7 +177,7 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(tokens: &'a Vec<Token>) -> Self {
+    #[must_use] pub fn new(tokens: &'a Vec<Token>) -> Self {
         Parser {
             tokens,
             pos: 0,
@@ -218,7 +218,7 @@ impl<'a> Parser<'a> {
     fn expect(&mut self, ty: TokenType) {
         let t = &self.tokens[self.pos];
         if t.ty != ty {
-            t.bad_token(&format!("{:?} expected", ty));
+            t.bad_token(&format!("{ty:?} expected"));
         }
         self.pos += 1;
     }
@@ -233,7 +233,7 @@ impl<'a> Parser<'a> {
     }
 
     fn is_typename(&self, t: &Token) -> bool {
-        use self::TokenType::*;
+        use self::TokenType::{Int, Char, Void, Struct};
         if let TokenType::Ident(ref name) = t.ty {
             return self.find_typedef(name).is_some();
         }
@@ -275,10 +275,9 @@ impl<'a> Parser<'a> {
             TokenType::Ident(ref name) => {
                 if let Some(ty) = self.find_typedef(name) {
                     return Some(ty.clone());
-                } else {
-                    self.pos -= 1;
-                    return None;
                 }
+                self.pos -= 1;
+                None
             }
             TokenType::Int => Some(Type::int_ty()),
             TokenType::Char => Some(Type::char_ty()),
@@ -288,20 +287,20 @@ impl<'a> Parser<'a> {
                 let t = &self.tokens[self.pos];
                 if let TokenType::Ident(ref name) = t.ty {
                     self.pos += 1;
-                    tag_may = Some(name.clone())
+                    tag_may = Some(name.clone());
                 }
 
                 let mut members = vec![];
                 if self.consume(TokenType::LeftBrace) {
                     while !self.consume(TokenType::RightBrace) {
-                        members.push(self.declaration())
+                        members.push(self.declaration());
                     }
                 }
 
                 let mut ty_may: Option<Type> = None;
                 if let Some(ref tag) = tag_may {
                     if members.is_empty() {
-                        ty_may = self.find_tag(&tag);
+                        ty_may = self.find_tag(tag);
                     }
                 }
                 let mut ty = ty_may.unwrap_or(Type::new(Ctype::Struct(vec![]), 10));
@@ -491,7 +490,7 @@ impl<'a> Parser<'a> {
             } else if self.consume(TokenType::RightAngleBracket) {
                 lhs = Node::new_binop(TokenType::LeftAngleBracket, self.shift(), lhs);
             } else if self.consume(TokenType::LE) {
-                lhs = Node::new_binop(TokenType::LE, lhs, self.shift())
+                lhs = Node::new_binop(TokenType::LE, lhs, self.shift());
             } else if self.consume(TokenType::GE) {
                 lhs = Node::new_binop(TokenType::LE, self.shift(), lhs);
             } else {
@@ -569,7 +568,7 @@ impl<'a> Parser<'a> {
     }
 
     fn assign_op(ty: &TokenType) -> Option<&TokenType> {
-        use self::TokenType::*;
+        use self::TokenType::{Equal, MulEQ, DivEQ, ModEQ, AddEQ, SubEQ, ShlEQ, ShrEQ, BitandEQ, XorEQ, BitorEQ};
         match ty {
             Equal | MulEQ | DivEQ | ModEQ | AddEQ | SubEQ | ShlEQ | ShrEQ | BitandEQ | XorEQ
             | BitorEQ => Some(ty),
@@ -749,9 +748,8 @@ impl<'a> Parser<'a> {
                 if let NodeType::Vardef(name, _, _) = node.op {
                     self.env.typedefs.insert(name, *node.ty);
                     return Node::new(NodeType::Null);
-                } else {
-                    unreachable!();
                 }
+                unreachable!();
             }
             TokenType::If => {
                 let mut els = None;
@@ -776,19 +774,19 @@ impl<'a> Parser<'a> {
                 };
 
                 let cond;
-                if !self.consume(TokenType::Semicolon) {
+                if self.consume(TokenType::Semicolon) {
+                    cond = Box::new(Node::new(NodeType::Null));
+                } else {
                     cond = Box::new(self.expr());
                     self.expect(TokenType::Semicolon);
-                } else {
-                    cond = Box::new(Node::new(NodeType::Null))
                 }
 
                 let inc;
-                if !self.consume(TokenType::RightParen) {
+                if self.consume(TokenType::RightParen) {
+                    inc = Box::new(Node::new(NodeType::Null));
+                } else {
                     inc = Box::new(new_expr!(NodeType::ExprStmt, self.expr()));
                     self.expect(TokenType::RightParen);
-                } else {
-                    inc = Box::new(Node::new(NodeType::Null))
                 }
 
                 let body = Box::new(self.stmt());

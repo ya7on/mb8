@@ -60,7 +60,7 @@ impl Default for Token {
         Token {
             ty: TokenType::Int,
             buf: Rc::new(vec![]),
-            filename: Rc::new("".to_string()),
+            filename: Rc::new(String::new()),
             start: 0,
             end: 0,
             stringize: false,
@@ -69,7 +69,7 @@ impl Default for Token {
 }
 
 impl Token {
-    pub fn new(ty: TokenType, start: usize, filename: Rc<String>, buf: Rc<Vec<char>>) -> Self {
+    #[must_use] pub fn new(ty: TokenType, start: usize, filename: Rc<String>, buf: Rc<Vec<char>>) -> Self {
         Token {
             ty,
             buf,
@@ -79,20 +79,23 @@ impl Token {
         }
     }
 
+    /// # Panics
+    ///
+    /// Panics to report an invalid token with its source location.
     pub fn bad_token(&self, msg: &str) -> ! {
-        print_line(&*self.buf, &*self.filename, self.start);
+        print_line(&self.buf, &self.filename, self.start);
         panic!("{}", msg);
     }
 
-    pub fn tokstr(&self) -> String {
+    #[must_use] pub fn tokstr(&self) -> String {
         self.buf[self.start..self.end].iter().collect()
     }
 
-    pub fn get_line_number(&self) -> usize {
+    #[must_use] pub fn get_line_number(&self) -> usize {
         self.buf[..self.end].iter().filter(|c| *c == &'\n').count()
     }
 
-    pub fn is_ident(&self, s: &str) -> bool {
+    #[must_use] pub fn is_ident(&self, s: &str) -> bool {
         match self.ty {
             TokenType::Ident(ref name) => name == s,
             _ => false,
@@ -161,7 +164,7 @@ impl Tokenizer {
     fn read_file(filename: &str) -> String {
         let mut input = String::new();
         let mut fp = io::stdin();
-        if filename != &"-".to_string() {
+        if filename != "-" {
             let mut fp = File::open(filename).expect("file not found");
             fp.read_to_string(&mut input)
                 .expect("something went wrong reading the file");
@@ -203,7 +206,7 @@ impl Tokenizer {
                     self.tokens.push(t);
                 }
                 CharacterType::Whitespace => self.pos += 1,
-                CharacterType::Alphabetic => self.ident(&keywords),
+                CharacterType::Alphabetic => self.ident(keywords),
                 CharacterType::Digit => self.number(),
 
                 CharacterType::NonAlphabetic('\'') => self.char_literal(),
@@ -302,10 +305,7 @@ impl Tokenizer {
         self.pos += 1;
         let result: char;
         let c = self.p.get(self.pos).expect("premature end of input");
-        if c != &'\\' {
-            result = *c;
-            self.pos += 1;
-        } else {
+        if c == &'\\' {
             self.pos += 1;
             let c2 = self
                 .p
@@ -317,11 +317,12 @@ impl Tokenizer {
                 *c2
             };
             self.pos += 1;
+        } else {
+            result = *c;
+            self.pos += 1;
         }
 
-        if self.p.get(self.pos) != Some(&'\'') {
-            panic!("unclosed character literal");
-        }
+        assert!((self.p.get(self.pos) == Some(&'\'')), "unclosed character literal");
 
         let mut t = self.new_token(TokenType::Num(result as u8 as i32));
         self.pos += 1;
@@ -347,7 +348,7 @@ impl Tokenizer {
 
             if c2 != &'\\' {
                 len += 1;
-                sb.push(c2.clone());
+                sb.push(*c2);
                 continue;
             }
 
@@ -359,7 +360,7 @@ impl Tokenizer {
             if let Some(esc) = Self::escaped(*c2) {
                 sb.push(esc);
             } else {
-                sb.push(c2.clone());
+                sb.push(*c2);
             }
             len += 1;
         }
@@ -389,7 +390,7 @@ impl Tokenizer {
 
     fn number(&mut self) {
         match self.p.get(self.pos..self.pos + 2) {
-            Some(&['0', 'x']) | Some(&['0', 'X']) => {
+            Some(&['0', 'x'] | &['0', 'X']) => {
                 self.pos += 2;
                 self.parse_number(16);
             }
@@ -403,7 +404,7 @@ impl Tokenizer {
     fn parse_number(&mut self, base: u32) {
         let mut sum: i32 = 0;
         let mut len = 0;
-        for c in self.p[self.pos..].iter() {
+        for c in &self.p[self.pos..] {
             if let Some(val) = c.to_digit(base) {
                 sum = sum * base as i32 + val as i32;
                 len += 1;
@@ -411,7 +412,7 @@ impl Tokenizer {
                 break;
             }
         }
-        let mut t = self.new_token(TokenType::Num(sum as i32));
+        let mut t = self.new_token(TokenType::Num(sum));
         self.pos += len;
         t.end = self.pos;
         self.tokens.push(t);
@@ -464,7 +465,7 @@ impl Tokenizer {
     }
 
     fn append(&mut self, x_str: &str, y_str: &str, start: usize) -> Token {
-        let concated = format!("{}{}", x_str, y_str);
+        let concated = format!("{x_str}{y_str}");
         let l = concated.len() + 1; // Because `+1` has `\0`.
         Token::new(
             TokenType::Str(concated, l),
@@ -478,7 +479,7 @@ impl Tokenizer {
         let mut v = vec![];
         let mut last_may: Option<Token> = None;
 
-        for t in self.tokens.clone().into_iter() {
+        for t in self.tokens.clone() {
             if let Some(ref last) = last_may {
                 if let (TokenType::Str(ref last_str, _), TokenType::Str(ref t_str, _)) =
                     (&last.ty, &t.ty)
@@ -502,7 +503,7 @@ impl Tokenizer {
             .clone()
             .into_iter()
             .filter(|t| t.ty != TokenType::NewLine)
-            .collect()
+            .collect();
     }
 
     fn bad_position(&self, msg: &'static str) {
@@ -518,7 +519,7 @@ fn print_line(buf: &[char], path: &str, pos: usize) {
     let mut start = 0;
     let mut line = 0;
     let mut col = 0;
-    for c in buf.iter() {
+    for c in buf {
         if c == &'\n' {
             start = pos + 1;
             line += 1;
@@ -537,11 +538,11 @@ fn print_line(buf: &[char], path: &str, pos: usize) {
         break;
     }
 
-    for p in buf[start..].iter() {
+    for p in &buf[start..] {
         if p == &'\n' {
             break;
         }
-        print!("{}", p);
+        print!("{p}");
     }
     println!();
     for _ in 0..col - 1 {

@@ -1,3 +1,13 @@
+#![allow(
+    clippy::assigning_clones,
+    clippy::boxed_local,
+    clippy::expect_used,
+    clippy::needless_pass_by_value,
+    clippy::only_used_in_recursion,
+    clippy::too_many_lines,
+    clippy::match_wildcard_for_single_variants
+)]
+
 pub mod gen_ir;
 pub mod gen_mb8;
 pub mod irdump;
@@ -94,7 +104,7 @@ pub enum CharacterType {
 
 impl TokenType {
     fn new_single_letter(c: char) -> Option<Self> {
-        use self::TokenType::*;
+        use self::TokenType::{Plus, Minus, Mul, Div, And, Semicolon, Equal, LeftParen, RightParen, LeftBracket, RightBracket, LeftBrace, RightBrace, LeftAngleBracket, RightAngleBracket, Comma, Dot, Exclamation, Question, VerticalBar, Hat, Mod, Colon, HashMark};
         match c {
             '+' => Some(Plus),
             '-' => Some(Minus),
@@ -126,7 +136,9 @@ impl TokenType {
 }
 
 #[derive(Debug, Clone)]
+#[derive(Default)]
 pub enum Ctype {
+    #[default]
     Int,
     Char,
     Void,
@@ -136,11 +148,6 @@ pub enum Ctype {
     Func(Box<Type>),
 }
 
-impl Default for Ctype {
-    fn default() -> Ctype {
-        Ctype::Int
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct Type {

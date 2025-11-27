@@ -22,7 +22,7 @@ static REG_MAP: LazyLock<Mutex<[Option<usize>; 8192]>> =
     LazyLock::new(|| Mutex::new([None; 8192]));
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
-    mutex.lock().unwrap_or_else(|e| e.into_inner())
+    mutex.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
 fn used_get(i: usize) -> bool {
@@ -42,9 +42,7 @@ fn reg_map_set(i: usize, val: usize) {
 }
 
 fn alloc(ir_reg: usize) -> usize {
-    if lock(&REG_MAP).len() <= ir_reg {
-        panic!("program too big");
-    }
+    assert!((lock(&REG_MAP).len() > ir_reg), "program too big");
 
     if let Some(r) = reg_map_get(ir_reg) {
         assert!(used_get(r));
@@ -59,11 +57,11 @@ fn alloc(ir_reg: usize) -> usize {
         used_set(i, true);
         return i;
     }
-    panic!("register exhauseted: {}", ir_reg);
+    panic!("register exhauseted: {ir_reg}");
 }
 
 fn visit(irv: &mut Vec<IR>) {
-    use self::IRType::*;
+    use self::IRType::{Reg, RegImm, RegLabel, LabelAddr, Mem, RegReg, Call};
 
     for item in irv {
         let mut ir = item.clone();
@@ -71,7 +69,7 @@ fn visit(irv: &mut Vec<IR>) {
 
         match info.ty {
             Reg | RegImm | RegLabel | LabelAddr => {
-                ir.lhs = Some(alloc(ir.lhs.expect("missing lhs")))
+                ir.lhs = Some(alloc(ir.lhs.expect("missing lhs")));
             }
             Mem | RegReg => {
                 ir.lhs = Some(alloc(ir.lhs.expect("missing lhs")));

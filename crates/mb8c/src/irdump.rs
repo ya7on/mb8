@@ -1,6 +1,6 @@
 use crate::gen_ir::{Function, IROp, IRType, IR};
 
-use std::fmt;
+use std::fmt::{self, Write};
 
 #[derive(Clone, Debug)]
 pub struct IRInfo {
@@ -9,14 +9,14 @@ pub struct IRInfo {
 }
 
 impl IRInfo {
-    pub fn new(name: &'static str, ty: IRType) -> Self {
+    #[must_use] pub fn new(name: &'static str, ty: IRType) -> Self {
         IRInfo { name, ty }
     }
 }
 
 impl<'a> From<&'a IROp> for IRInfo {
     fn from(op: &'a IROp) -> IRInfo {
-        use self::IROp::*;
+        use self::IROp::{Add, AddImm, Call, Div, Imm, Jmp, Kill, Label, LabelAddr, EQ, NE, LE, LT, AND, OR, XOR, SHL, SHR, Mod, Neg, Load, Mov, Mul, MulImm, Nop, Return, Store, StoreArg, Sub, SubImm, Bprel, If, Unless};
         match op {
             Add => IRInfo::new("ADD", IRType::RegReg),
             AddImm => IRInfo::new("ADD", IRType::RegImm),
@@ -57,13 +57,13 @@ impl<'a> From<&'a IROp> for IRInfo {
 
 impl fmt::Display for IR {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use self::IRType::*;
+        use self::IRType::{Label, LabelAddr, Imm, Reg, Jmp, RegReg, Mem, StoreArg, RegImm, RegLabel, Call, Noarg};
 
         let info = &IRInfo::from(&self.op);
 
         let lhs = self.lhs.expect("missing lhs");
         match info.ty {
-            Label => write!(f, ".L{}:", lhs),
+            Label => write!(f, ".L{lhs}:"),
             LabelAddr => match self.op {
                 IROp::LabelAddr(ref name) => write!(f, "  {} r{}, {}", info.name, lhs, name),
                 _ => unreachable!(),
@@ -111,15 +111,15 @@ impl fmt::Display for IR {
             ),
             Call => match self.op {
                 IROp::Call(ref name, nargs, args) => {
-                    let mut sb: String = format!("  r{} = {}(", lhs, name);
+                    let mut sb: String = format!("  r{lhs} = {name}(");
                     for (i, arg) in args.iter().enumerate().take(nargs) {
                         if i != 0 {
-                            sb.push_str(&", ".to_string());
+                            sb.push_str(", ");
                         }
-                        sb.push_str(&format!("r{}", *arg));
+                        let _ = write!(&mut sb, "r{arg}");
                     }
-                    sb.push_str(")");
-                    write!(f, "{}", sb)
+                    sb.push(')');
+                    write!(f, "{sb}")
                 }
                 _ => unreachable!(),
             },
@@ -132,7 +132,7 @@ pub fn dump_ir(fns: &[Function]) {
     for f in fns {
         eprintln!("{}(): ", f.name);
         for ir in &f.ir {
-            eprintln!("{}", ir);
+            eprintln!("{ir}");
         }
     }
 }
