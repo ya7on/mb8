@@ -28,6 +28,7 @@ pub fn encode_program(program: &[Opcode]) -> Vec<u8> {
     } else {
         a = 4;
     }
+    a = 5;
     program
         .iter()
         .flat_map(|opcode| encode(opcode).to_be_bytes())
