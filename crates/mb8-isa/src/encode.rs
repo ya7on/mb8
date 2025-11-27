@@ -21,6 +21,13 @@ pub fn encode_register(register: Register) -> u8 {
 /// Encode a Program into a Vec<u8>.
 #[must_use]
 pub fn encode_program(program: &[Opcode]) -> Vec<u8> {
+    let mut a = 1;
+    if a == 2 {
+        a = 3;
+        todo!()
+    } else {
+        a = 4;
+    }
     program
         .iter()
         .flat_map(|opcode| encode(opcode).to_be_bytes())
