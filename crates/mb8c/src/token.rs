@@ -69,7 +69,8 @@ impl Default for Token {
 }
 
 impl Token {
-    #[must_use] pub fn new(ty: TokenType, start: usize, filename: Rc<String>, buf: Rc<Vec<char>>) -> Self {
+    #[must_use]
+    pub fn new(ty: TokenType, start: usize, filename: Rc<String>, buf: Rc<Vec<char>>) -> Self {
         Token {
             ty,
             buf,
@@ -87,15 +88,18 @@ impl Token {
         panic!("{}", msg);
     }
 
-    #[must_use] pub fn tokstr(&self) -> String {
+    #[must_use]
+    pub fn tokstr(&self) -> String {
         self.buf[self.start..self.end].iter().collect()
     }
 
-    #[must_use] pub fn get_line_number(&self) -> usize {
+    #[must_use]
+    pub fn get_line_number(&self) -> usize {
         self.buf[..self.end].iter().filter(|c| *c == &'\n').count()
     }
 
-    #[must_use] pub fn is_ident(&self, s: &str) -> bool {
+    #[must_use]
+    pub fn is_ident(&self, s: &str) -> bool {
         match self.ty {
             TokenType::Ident(ref name) => name == s,
             _ => false,
@@ -322,7 +326,10 @@ impl Tokenizer {
             self.pos += 1;
         }
 
-        assert!((self.p.get(self.pos) == Some(&'\'')), "unclosed character literal");
+        assert!(
+            (self.p.get(self.pos) == Some(&'\'')),
+            "unclosed character literal"
+        );
 
         let mut t = self.new_token(TokenType::Num(result as u8 as i32));
         self.pos += 1;

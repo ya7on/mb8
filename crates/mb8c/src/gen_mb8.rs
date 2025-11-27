@@ -8,7 +8,9 @@ const REGS: [&str; REGS_N] = ["R0", "R1", "R2", "R3", "R4", "R7", "R0"];
 static LABEL: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
-    mutex.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
+    mutex
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
 macro_rules! emit {
@@ -48,7 +50,11 @@ fn emit_cmp_set_bool(lhs: usize, rhs: usize, cond: &'static str) {
 }
 
 fn gen_fn_mb8(f: Function) {
-    use self::IROp::{Imm, Mov, Add, AddImm, Sub, SubImm, AND, OR, XOR, Neg, SHL, SHR, Mul, MulImm, Div, Mod, EQ, NE, LT, LE, Load, Store, StoreArg, Bprel, Label, LabelAddr, Return, Jmp, If, Unless, Call, Nop, Kill};
+    use self::IROp::{
+        Add, AddImm, Bprel, Call, Div, If, Imm, Jmp, Kill, Label, LabelAddr, Load, Mod, Mov, Mul,
+        MulImm, Neg, Nop, Return, Store, StoreArg, Sub, SubImm, Unless, AND, EQ, LE, LT, NE, OR,
+        SHL, SHR, XOR,
+    };
 
     let ret_label = {
         let mut g = lock(&LABEL);
@@ -183,7 +189,6 @@ fn gen_fn_mb8(f: Function) {
 
                 emit!("MOV {} R0", REGS[lhs]);
             }
-
         }
     }
 

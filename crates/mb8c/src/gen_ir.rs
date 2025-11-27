@@ -23,7 +23,9 @@ static BREAK_LABEL: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
 static CODE: LazyLock<Mutex<Vec<IR>>> = LazyLock::new(|| Mutex::new(vec![]));
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
-    mutex.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
+    mutex
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
 fn next_reg() -> usize {
@@ -303,7 +305,9 @@ fn gen_post_inc(ty: &Type, expr: Box<Node>, num: i32) -> i32 {
 }
 
 fn to_assign_op(op: &TokenType) -> IROp {
-    use self::TokenType::{MulEQ, DivEQ, ModEQ, AddEQ, SubEQ, ShlEQ, ShrEQ, BitandEQ, XorEQ, BitorEQ};
+    use self::TokenType::{
+        AddEQ, BitandEQ, BitorEQ, DivEQ, ModEQ, MulEQ, ShlEQ, ShrEQ, SubEQ, XorEQ,
+    };
     match op {
         MulEQ => IROp::Mul,
         DivEQ => IROp::Div,
@@ -381,7 +385,10 @@ fn gen_expr(node: Box<Node>) -> Option<usize> {
             Some(r)
         }
         NodeType::BinOp(op, lhs, rhs) => {
-            use self::TokenType::{Equal, Plus, Minus, Logand, Logor, MulEQ, DivEQ, ModEQ, AddEQ, SubEQ, ShlEQ, ShrEQ, BitandEQ, XorEQ, BitorEQ, EQ, NE, LE, And, VerticalBar, Hat, SHL, SHR, Mod, Comma};
+            use self::TokenType::{
+                AddEQ, And, BitandEQ, BitorEQ, Comma, DivEQ, Equal, Hat, Logand, Logor, Minus, Mod,
+                ModEQ, MulEQ, Plus, ShlEQ, ShrEQ, SubEQ, VerticalBar, XorEQ, EQ, LE, NE, SHL, SHR,
+            };
             match op {
                 Equal => {
                     let rhs = gen_expr(rhs);
@@ -581,7 +588,8 @@ fn gen_stmt(node: Node) {
 /// # Panics
 ///
 /// Panics if the AST contains unsupported nodes.
-#[must_use] pub fn gen_ir(nodes: Vec<Node>) -> Vec<Function> {
+#[must_use]
+pub fn gen_ir(nodes: Vec<Node>) -> Vec<Function> {
     let mut v = vec![];
     for node in nodes {
         match node.op {

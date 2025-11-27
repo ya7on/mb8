@@ -9,14 +9,19 @@ pub struct IRInfo {
 }
 
 impl IRInfo {
-    #[must_use] pub fn new(name: &'static str, ty: IRType) -> Self {
+    #[must_use]
+    pub fn new(name: &'static str, ty: IRType) -> Self {
         IRInfo { name, ty }
     }
 }
 
 impl<'a> From<&'a IROp> for IRInfo {
     fn from(op: &'a IROp) -> IRInfo {
-        use self::IROp::{Add, AddImm, Call, Div, Imm, Jmp, Kill, Label, LabelAddr, EQ, NE, LE, LT, AND, OR, XOR, SHL, SHR, Mod, Neg, Load, Mov, Mul, MulImm, Nop, Return, Store, StoreArg, Sub, SubImm, Bprel, If, Unless};
+        use self::IROp::{
+            Add, AddImm, Bprel, Call, Div, If, Imm, Jmp, Kill, Label, LabelAddr, Load, Mod, Mov,
+            Mul, MulImm, Neg, Nop, Return, Store, StoreArg, Sub, SubImm, Unless, AND, EQ, LE, LT,
+            NE, OR, SHL, SHR, XOR,
+        };
         match op {
             Add => IRInfo::new("ADD", IRType::RegReg),
             AddImm => IRInfo::new("ADD", IRType::RegImm),
@@ -57,7 +62,9 @@ impl<'a> From<&'a IROp> for IRInfo {
 
 impl fmt::Display for IR {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use self::IRType::{Label, LabelAddr, Imm, Reg, Jmp, RegReg, Mem, StoreArg, RegImm, RegLabel, Call, Noarg};
+        use self::IRType::{
+            Call, Imm, Jmp, Label, LabelAddr, Mem, Noarg, Reg, RegImm, RegLabel, RegReg, StoreArg,
+        };
 
         let info = &IRInfo::from(&self.op);
 
@@ -71,7 +78,13 @@ impl fmt::Display for IR {
             Imm => write!(f, "  {} {}", info.name, lhs),
             Reg => write!(f, "  {} r{}", info.name, lhs),
             Jmp => write!(f, "  {} .L{}", info.name, lhs),
-            RegReg => write!(f, "  {} r{}, r{}", info.name, lhs, self.rhs.expect("missing rhs")),
+            RegReg => write!(
+                f,
+                "  {} r{}, r{}",
+                info.name,
+                lhs,
+                self.rhs.expect("missing rhs")
+            ),
             Mem | StoreArg => match self.op {
                 IROp::Load(ref size) | IROp::Store(ref size) => {
                     write!(

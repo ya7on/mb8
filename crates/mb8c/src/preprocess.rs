@@ -11,8 +11,7 @@ pub fn preprocess(tokens: Vec<Token>, ctx: &mut Preprocessor) -> Vec<Token> {
     ctx.preprocess_impl(tokens)
 }
 
-#[derive(Debug, Clone)]
-#[derive(Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Env {
     input: Vec<Token>,
     output: Vec<Token>,
@@ -20,9 +19,9 @@ pub struct Env {
     next: Option<Box<Env>>,
 }
 
-
 impl Env {
-    #[must_use] pub fn new(input: Vec<Token>, next: Option<Box<Env>>) -> Self {
+    #[must_use]
+    pub fn new(input: Vec<Token>, next: Option<Box<Env>>) -> Self {
         Env {
             input,
             next,
@@ -126,7 +125,8 @@ impl Default for Preprocessor {
 }
 
 impl Preprocessor {
-    #[must_use] pub fn new() -> Self {
+    #[must_use]
+    pub fn new() -> Self {
         Preprocessor {
             macros: HashMap::new(),
             env: Box::new(Env::new(vec![], None)),
@@ -198,10 +198,9 @@ impl Preprocessor {
 
         while !self.eof() {
             let t = self.peek().expect(msg).clone();
-            if level == 0
-                && (t.ty == TokenType::RightParen || t.ty == TokenType::Comma) {
-                    return v;
-                }
+            if level == 0 && (t.ty == TokenType::RightParen || t.ty == TokenType::Comma) {
+                return v;
+            }
 
             self.next();
             if t.ty == TokenType::LeftParen {

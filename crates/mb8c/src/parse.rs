@@ -23,7 +23,8 @@ int main() {     ; +-+                        int   []         2
 }                ; +-+                  return        []      +->primary
                                                                  0
 */
-#[must_use] pub fn parse(tokens: &Vec<Token>) -> Vec<Node> {
+#[must_use]
+pub fn parse(tokens: &Vec<Token>) -> Vec<Node> {
     let mut parser = Parser::new(tokens);
 
     let mut v = vec![];
@@ -99,21 +100,24 @@ pub struct Node {
 }
 
 impl Node {
-    #[must_use] pub fn new(op: NodeType) -> Self {
+    #[must_use]
+    pub fn new(op: NodeType) -> Self {
         Self {
             op,
             ty: Box::new(Type::default()),
         }
     }
 
-    #[must_use] pub fn new_int(val: i32) -> Self {
+    #[must_use]
+    pub fn new_int(val: i32) -> Self {
         Node::new(NodeType::Num(val))
     }
 
     /// # Panics
     ///
     /// Panics if `ty` is not a pointer type.
-    #[must_use] pub fn scale_ptr(node: Box<Node>, ty: &Type) -> Self {
+    #[must_use]
+    pub fn scale_ptr(node: Box<Node>, ty: &Type) -> Self {
         match ty.ty {
             Ctype::Ptr(ref ptr_to) => {
                 Node::new_binop(TokenType::Mul, *node, Node::new_int(ptr_to.size as i32))
@@ -122,21 +126,25 @@ impl Node {
         }
     }
 
-    #[must_use] pub fn new_binop(ty: TokenType, lhs: Node, rhs: Node) -> Self {
+    #[must_use]
+    pub fn new_binop(ty: TokenType, lhs: Node, rhs: Node) -> Self {
         Node::new(NodeType::BinOp(ty, Box::new(lhs), Box::new(rhs)))
     }
 
-    #[must_use] pub fn new_num(val: i32) -> Self {
+    #[must_use]
+    pub fn new_num(val: i32) -> Self {
         Node::new(NodeType::Num(val))
     }
 
-    #[must_use] pub fn is_null(&self) -> bool {
+    #[must_use]
+    pub fn is_null(&self) -> bool {
         matches!(self.op, NodeType::Null)
     }
 }
 
 impl Type {
-    #[must_use] pub fn new(ty: Ctype, size: usize) -> Self {
+    #[must_use]
+    pub fn new(ty: Ctype, size: usize) -> Self {
         Type {
             ty,
             size,
@@ -144,23 +152,28 @@ impl Type {
         }
     }
 
-    #[must_use] pub fn void_ty() -> Self {
+    #[must_use]
+    pub fn void_ty() -> Self {
         Type::new(Ctype::Void, 0)
     }
 
-    #[must_use] pub fn char_ty() -> Self {
+    #[must_use]
+    pub fn char_ty() -> Self {
         Type::new(Ctype::Char, 1)
     }
 
-    #[must_use] pub fn int_ty() -> Self {
+    #[must_use]
+    pub fn int_ty() -> Self {
         Type::new(Ctype::Int, 2)
     }
 
-    #[must_use] pub fn ptr_to(base: Box<Type>) -> Self {
+    #[must_use]
+    pub fn ptr_to(base: Box<Type>) -> Self {
         Type::new(Ctype::Ptr(base), 2)
     }
 
-    #[must_use] pub fn ary_of(base: Box<Type>, len: usize) -> Self {
+    #[must_use]
+    pub fn ary_of(base: Box<Type>, len: usize) -> Self {
         let align = base.align;
         let size = base.size * len;
         let mut ty = Type::new(Ctype::Ary(base, len), size);
@@ -177,7 +190,8 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    #[must_use] pub fn new(tokens: &'a Vec<Token>) -> Self {
+    #[must_use]
+    pub fn new(tokens: &'a Vec<Token>) -> Self {
         Parser {
             tokens,
             pos: 0,
@@ -233,7 +247,7 @@ impl<'a> Parser<'a> {
     }
 
     fn is_typename(&self, t: &Token) -> bool {
-        use self::TokenType::{Int, Char, Void, Struct};
+        use self::TokenType::{Char, Int, Struct, Void};
         if let TokenType::Ident(ref name) = t.ty {
             return self.find_typedef(name).is_some();
         }
@@ -568,7 +582,9 @@ impl<'a> Parser<'a> {
     }
 
     fn assign_op(ty: &TokenType) -> Option<&TokenType> {
-        use self::TokenType::{Equal, MulEQ, DivEQ, ModEQ, AddEQ, SubEQ, ShlEQ, ShrEQ, BitandEQ, XorEQ, BitorEQ};
+        use self::TokenType::{
+            AddEQ, BitandEQ, BitorEQ, DivEQ, Equal, ModEQ, MulEQ, ShlEQ, ShrEQ, SubEQ, XorEQ,
+        };
         match ty {
             Equal | MulEQ | DivEQ | ModEQ | AddEQ | SubEQ | ShlEQ | ShrEQ | BitandEQ | XorEQ
             | BitorEQ => Some(ty),

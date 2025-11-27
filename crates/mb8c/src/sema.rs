@@ -37,7 +37,9 @@ static STRLABEL: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
 static STACKSIZE: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
-    mutex.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
+    mutex
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
 fn next_str_label() -> usize {
@@ -136,7 +138,11 @@ fn check_lval(node: &Node) {
 }
 
 fn walk(mut node: Node, decay: bool) -> Node {
-    use self::NodeType::{Num, Null, Break, Str, Ident, Vardef, If, Ternary, For, DoWhile, Dot, BinOp, PostInc, PostDec, Neg, Exclamation, Addr, Deref, Return, ExprStmt, Sizeof, Alignof, Call, CompStmt, VecStmt, StmtExpr};
+    use self::NodeType::{
+        Addr, Alignof, BinOp, Break, Call, CompStmt, Deref, DoWhile, Dot, Exclamation, ExprStmt,
+        For, Ident, If, Neg, Null, Num, PostDec, PostInc, Return, Sizeof, StmtExpr, Str, Ternary,
+        Vardef, VecStmt,
+    };
     let op = node.op.clone();
     match op {
         Num(_) | Null | Break => (),
@@ -258,7 +264,10 @@ fn walk(mut node: Node, decay: bool) -> Node {
             return maybe_decay(node, decay);
         }
         BinOp(token_type, mut lhs, mut rhs) => {
-            use self::TokenType::{Plus, Minus, AddEQ, SubEQ, Equal, MulEQ, DivEQ, ModEQ, ShlEQ, ShrEQ, BitandEQ, XorEQ, BitorEQ};
+            use self::TokenType::{
+                AddEQ, BitandEQ, BitorEQ, DivEQ, Equal, Minus, ModEQ, MulEQ, Plus, ShlEQ, ShrEQ,
+                SubEQ, XorEQ,
+            };
             match token_type {
                 Plus | Minus => {
                     lhs = Box::new(walk(*lhs, true));
@@ -383,7 +392,8 @@ fn walk(mut node: Node, decay: bool) -> Node {
     node
 }
 
-#[must_use] pub fn sema(nodes: Vec<Node>) -> (Vec<Node>, Vec<Var>) {
+#[must_use]
+pub fn sema(nodes: Vec<Node>) -> (Vec<Node>, Vec<Var>) {
     let mut new_nodes = vec![];
 
     for mut node in nodes {
@@ -413,12 +423,7 @@ fn walk(mut node: Node, decay: bool) -> Node {
                 args2.push(walk(arg, true));
             }
             let body2 = walk(*body, true);
-            node.op = NodeType::Func(
-                name.clone(),
-                args2,
-                Box::new(body2),
-                current_stacksize(),
-            );
+            node.op = NodeType::Func(name.clone(), args2, Box::new(body2), current_stacksize());
             set_stacksize(0);
             new_nodes.push(node);
         }

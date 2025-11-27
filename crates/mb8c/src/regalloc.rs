@@ -18,11 +18,12 @@ use std::sync::{LazyLock, Mutex, MutexGuard};
 // > registers are exhausted and need to be spilled to memory.
 
 static USED: LazyLock<Mutex<[bool; REGS_N]>> = LazyLock::new(|| Mutex::new([false; REGS_N]));
-static REG_MAP: LazyLock<Mutex<[Option<usize>; 8192]>> =
-    LazyLock::new(|| Mutex::new([None; 8192]));
+static REG_MAP: LazyLock<Mutex<[Option<usize>; 8192]>> = LazyLock::new(|| Mutex::new([None; 8192]));
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
-    mutex.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
+    mutex
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
 fn used_get(i: usize) -> bool {
@@ -61,7 +62,7 @@ fn alloc(ir_reg: usize) -> usize {
 }
 
 fn visit(irv: &mut Vec<IR>) {
-    use self::IRType::{Reg, RegImm, RegLabel, LabelAddr, Mem, RegReg, Call};
+    use self::IRType::{Call, LabelAddr, Mem, Reg, RegImm, RegLabel, RegReg};
 
     for item in irv {
         let mut ir = item.clone();

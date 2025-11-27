@@ -104,7 +104,11 @@ pub enum CharacterType {
 
 impl TokenType {
     fn new_single_letter(c: char) -> Option<Self> {
-        use self::TokenType::{Plus, Minus, Mul, Div, And, Semicolon, Equal, LeftParen, RightParen, LeftBracket, RightBracket, LeftBrace, RightBrace, LeftAngleBracket, RightAngleBracket, Comma, Dot, Exclamation, Question, VerticalBar, Hat, Mod, Colon, HashMark};
+        use self::TokenType::{
+            And, Colon, Comma, Div, Dot, Equal, Exclamation, HashMark, Hat, LeftAngleBracket,
+            LeftBrace, LeftBracket, LeftParen, Minus, Mod, Mul, Plus, Question, RightAngleBracket,
+            RightBrace, RightBracket, RightParen, Semicolon, VerticalBar,
+        };
         match c {
             '+' => Some(Plus),
             '-' => Some(Minus),
@@ -135,8 +139,7 @@ impl TokenType {
     }
 }
 
-#[derive(Debug, Clone)]
-#[derive(Default)]
+#[derive(Debug, Clone, Default)]
 pub enum Ctype {
     #[default]
     Int,
@@ -147,7 +150,6 @@ pub enum Ctype {
     Struct(Vec<parse::Node>), // members
     Func(Box<Type>),
 }
-
 
 #[derive(Debug, Clone)]
 pub struct Type {
