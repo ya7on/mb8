@@ -283,16 +283,35 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>) {
     let mut ticks = RENDER_INTERVAL - 1;
     let mut last_render = Instant::now();
     let mut force_render = true;
+    let mut left_shift = false;
+    let mut right_shift = false;
+
     while !vm.halted && window.is_open() {
         ticks = ticks.wrapping_add(1);
         for key in window.get_keys_pressed(KeyRepeat::No) {
-            let Some(char) =
-                map_key_to_char(key, window.is_key_pressed(Key::LeftShift, KeyRepeat::Yes))
-            else {
+            if key == Key::LeftShift {
+                left_shift = true;
+                continue;
+            }
+            if key == Key::RightShift {
+                right_shift = true;
+                continue;
+            }
+
+            force_render = true;
+            let Some(char) = map_key_to_char(key, left_shift || right_shift) else {
                 continue;
             };
-            force_render = true;
+
             vm.devices.keyboard().key_pressed(char);
+        }
+        for key in window.get_keys_released() {
+            if key == Key::LeftShift {
+                left_shift = false;
+            }
+            if key == Key::RightShift {
+                right_shift = false;
+            }
         }
 
         for _ in 0..OPS_PER_FRAME {
