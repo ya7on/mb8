@@ -1,4 +1,7 @@
-use std::path::PathBuf;
+use std::{
+    path::PathBuf,
+    time::{Duration, Instant},
+};
 
 use clap::Parser;
 use mb8::vm;
@@ -278,7 +281,8 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>) {
     let mut buf = vec![0u32; 320 * 200];
 
     let mut ticks = RENDER_INTERVAL - 1;
-    let mut force_render = false;
+    let mut last_render = Instant::now();
+    let mut force_render = true;
     while !vm.halted && window.is_open() {
         ticks = ticks.wrapping_add(1);
         for key in window.get_keys_pressed(KeyRepeat::No) {
@@ -307,6 +311,22 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>) {
                 return;
             }
             force_render = false;
+            last_render = Instant::now();
+
+            continue;
+        }
+
+        if last_render.elapsed() >= Duration::from_millis(16) {
+            let gpu = vm.devices.gpu();
+            let tty = gpu.tty_buffer();
+            render_tty(tty, buf.as_mut_slice());
+
+            if window.update_with_buffer(&buf, 320, 200).is_err() {
+                return;
+            }
+            force_render = false;
+
+            last_render = Instant::now();
         }
     }
 }
