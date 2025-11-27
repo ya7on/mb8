@@ -67,23 +67,18 @@ impl Macro {
                 }
 
                 for i in 0..self.tokens.len() {
-                    let t = &self.tokens[i].clone();
-                    match t.ty {
-                        TokenType::Ident(ref name) => {
-                            if let Some(n) = map.get(name) {
-                                if let Some(elem) = self.tokens.get_mut(i) {
-                                    *elem = Token::new(
-                                        TokenType::Param(*n),
-                                        0,
-                                        t.filename.clone(),
-                                        t.buf.clone(),
-                                    );
-                                }
-                            } else {
-                                continue;
+                    let t = self.tokens[i].clone();
+                    if let TokenType::Ident(ref name) = t.ty {
+                        if let Some(n) = map.get(name) {
+                            if let Some(elem) = self.tokens.get_mut(i) {
+                                *elem = Token::new(
+                                    TokenType::Param(*n),
+                                    0,
+                                    t.filename.clone(),
+                                    t.buf.clone(),
+                                );
                             }
                         }
-                        _ => continue,
                     }
                 }
 
@@ -267,9 +262,8 @@ impl Preprocessor {
         for t in tokens {
             if self.add_special_macro(&t) {
                 continue;
-            } else {
-                self.env.output.push(t);
             }
+            self.env.output.push(t);
         }
     }
 
@@ -349,7 +343,7 @@ impl Preprocessor {
         self.env = Box::new(Env::new(tokens, Some(self.env.clone())));
 
         while !self.eof() {
-            let t = self.next().unwrap();
+            let t = self.next().expect("token expected");
             let macro_name;
             if let TokenType::Ident(ref name) = t.ty {
                 macro_name = Some(name.clone());
@@ -382,7 +376,9 @@ impl Preprocessor {
 
         let mut output = vec![];
         mem::swap(&mut self.env.output, &mut output);
-        self.env = self.env.next.take().unwrap();
+        if let Some(next_env) = self.env.next.take() {
+            self.env = next_env;
+        }
         output
     }
 }

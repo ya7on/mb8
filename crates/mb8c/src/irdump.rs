@@ -61,7 +61,7 @@ impl fmt::Display for IR {
 
         let info = &IRInfo::from(&self.op);
 
-        let lhs = self.lhs.unwrap();
+        let lhs = self.lhs.expect("missing lhs");
         match info.ty {
             Label => write!(f, ".L{}:", lhs),
             LabelAddr => match self.op {
@@ -71,18 +71,44 @@ impl fmt::Display for IR {
             Imm => write!(f, "  {} {}", info.name, lhs),
             Reg => write!(f, "  {} r{}", info.name, lhs),
             Jmp => write!(f, "  {} .L{}", info.name, lhs),
-            RegReg => write!(f, "  {} r{}, r{}", info.name, lhs, self.rhs.unwrap()),
+            RegReg => write!(f, "  {} r{}, r{}", info.name, lhs, self.rhs.expect("missing rhs")),
             Mem | StoreArg => match self.op {
                 IROp::Load(ref size) | IROp::Store(ref size) => {
-                    write!(f, "  {}{} r{}, {}", info.name, size, lhs, self.rhs.unwrap())
+                    write!(
+                        f,
+                        "  {}{} r{}, {}",
+                        info.name,
+                        size,
+                        lhs,
+                        self.rhs.expect("missing rhs")
+                    )
                 }
                 IROp::StoreArg(ref size) => {
-                    write!(f, "  {}{} {}, {}", info.name, size, lhs, self.rhs.unwrap())
+                    write!(
+                        f,
+                        "  {}{} {}, {}",
+                        info.name,
+                        size,
+                        lhs,
+                        self.rhs.expect("missing rhs")
+                    )
                 }
                 _ => unreachable!(),
             },
-            RegImm => write!(f, "  {} r{}, {}", info.name, lhs, self.rhs.unwrap() as i32),
-            RegLabel => write!(f, "  {} r{}, .L{}", info.name, lhs, self.rhs.unwrap()),
+            RegImm => write!(
+                f,
+                "  {} r{}, {}",
+                info.name,
+                lhs,
+                self.rhs.expect("missing rhs") as i32
+            ),
+            RegLabel => write!(
+                f,
+                "  {} r{}, .L{}",
+                info.name,
+                lhs,
+                self.rhs.expect("missing rhs")
+            ),
             Call => match self.op {
                 IROp::Call(ref name, nargs, args) => {
                     let mut sb: String = format!("  r{} = {}(", lhs, name);

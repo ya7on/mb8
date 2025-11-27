@@ -8,9 +8,6 @@ pub mod sema;
 pub mod token;
 mod util;
 
-#[macro_use]
-extern crate lazy_static;
-
 const REGS_N: usize = 7;
 
 // Token type
@@ -156,8 +153,8 @@ impl Default for Type {
     fn default() -> Type {
         Type {
             ty: Ctype::default(),
-            size: 4,
-            align: 4,
+            size: 2,
+            align: 2,
         }
     }
 }

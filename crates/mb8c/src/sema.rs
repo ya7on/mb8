@@ -4,7 +4,7 @@ use crate::{Ctype, Scope, TokenType, Type, Var};
 
 use std::collections::HashMap;
 use std::mem;
-use std::sync::Mutex;
+use std::sync::{LazyLock, Mutex, MutexGuard};
 
 // Quoted from 9cc
 // > Semantics analyzer. This pass plays a few important roles as shown
@@ -31,11 +31,40 @@ fn swap(p: &mut Node, q: &mut Node) {
     mem::swap(p, q);
 }
 
-lazy_static! {
-    static ref GLOBALS: Mutex<Vec<Var>> = Mutex::new(vec![]);
-    static ref ENV: Mutex<Env> = Mutex::new(Env::new(None));
-    static ref STRLABEL: Mutex<usize> = Mutex::new(0);
-    static ref STACKSIZE: Mutex<usize> = Mutex::new(0);
+static GLOBALS: LazyLock<Mutex<Vec<Var>>> = LazyLock::new(|| Mutex::new(vec![]));
+static ENV: LazyLock<Mutex<Env>> = LazyLock::new(|| Mutex::new(Env::new(None)));
+static STRLABEL: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
+static STACKSIZE: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
+
+fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
+    mutex.lock().unwrap_or_else(|e| e.into_inner())
+}
+
+fn next_str_label() -> usize {
+    let mut guard = lock(&STRLABEL);
+    let label = *guard;
+    *guard += 1;
+    label
+}
+
+fn push_global(var: Var) {
+    lock(&GLOBALS).push(var);
+}
+
+fn clone_env() -> Env {
+    lock(&ENV).clone()
+}
+
+fn replace_env(env: Env) {
+    *lock(&ENV) = env;
+}
+
+fn current_stacksize() -> usize {
+    *lock(&STACKSIZE)
+}
+
+fn set_stacksize(value: usize) {
+    *lock(&STACKSIZE) = value;
 }
 
 #[derive(Debug, Clone)]
@@ -54,17 +83,19 @@ impl Env {
 }
 
 fn into_new_range<T: Sized>(param: T, f: Box<dyn Fn(T) -> T>) -> T {
-    let env = ENV.lock().unwrap().clone();
-    *ENV.lock().unwrap() = Env::new(Some(Box::new(env)));
+    let env = clone_env();
+    replace_env(Env::new(Some(Box::new(env))));
     let ret = f(param);
     // Rollback
-    let env = ENV.lock().unwrap().clone();
-    *ENV.lock().unwrap() = *env.next.unwrap();
+    let env = clone_env();
+    if let Some(next) = env.next {
+        replace_env(*next);
+    }
     ret
 }
 
 fn find_var(name: &str) -> Option<Var> {
-    let env = ENV.lock().unwrap().clone();
+    let env = clone_env();
     let mut next: &Option<Box<Env>> = &Some(Box::new(env));
     loop {
         if let Some(ref e) = next {
@@ -113,11 +144,10 @@ fn walk(mut node: Node, decay: bool) -> Node {
             // Quoted from 9cc
             // > A string literal is converted to a reference to an anonymous
             // > global variable of type char array.
-            let name = format!(".L.str{}", *STRLABEL.lock().unwrap());
-            *STRLABEL.lock().unwrap() += 1;
+            let name = format!(".L.str{}", next_str_label());
             let var = Var::new_global(node.ty.clone(), name, data, len, false);
             let name = var.name.clone();
-            GLOBALS.lock().unwrap().push(var);
+            push_global(var);
 
             let mut ret = Node::new(NodeType::Gvar(name, "".into(), len));
             ret.ty = node.ty;
@@ -143,12 +173,13 @@ fn walk(mut node: Node, decay: bool) -> Node {
             }
         }
         Vardef(name, init_may, _) => {
-            let stacksize = *STACKSIZE.lock().unwrap();
-            *STACKSIZE.lock().unwrap() = roundup(stacksize, node.ty.align);
-            *STACKSIZE.lock().unwrap() += node.ty.size;
-            let offset = *STACKSIZE.lock().unwrap();
+            let mut stacksize = lock(&STACKSIZE);
+            *stacksize = roundup(*stacksize, node.ty.align);
+            *stacksize += node.ty.size;
+            let offset = *stacksize;
+            drop(stacksize);
 
-            ENV.lock().unwrap().vars.insert(
+            lock(&ENV).vars.insert(
                 name.clone(),
                 Var::new(node.ty.clone(), name.clone(), Scope::Local(offset)),
             );
@@ -361,8 +392,8 @@ pub fn sema(nodes: Vec<Node>) -> (Vec<Node>, Vec<Var>) {
     for mut node in nodes {
         if let NodeType::Vardef(name, _, Scope::Global(data, len, is_extern)) = node.op {
             let var = Var::new_global(node.ty, name.clone(), data, len, is_extern);
-            GLOBALS.lock().unwrap().push(var.clone());
-            ENV.lock().unwrap().vars.insert(name, var);
+            push_global(var.clone());
+            lock(&ENV).vars.insert(name, var);
             continue;
         }
 
@@ -370,7 +401,7 @@ pub fn sema(nodes: Vec<Node>) -> (Vec<Node>, Vec<Var>) {
         match &node.op {
             NodeType::Func(name, _, _, _) | NodeType::Decl(name) => {
                 var = Var::new_global(node.ty.clone(), name.clone(), "".into(), 0, false);
-                ENV.lock().unwrap().vars.insert(name.clone(), var);
+                lock(&ENV).vars.insert(name.clone(), var);
             }
             _ => unreachable!(),
         }
@@ -389,11 +420,11 @@ pub fn sema(nodes: Vec<Node>) -> (Vec<Node>, Vec<Var>) {
                 name.clone(),
                 args2,
                 Box::new(body2),
-                *STACKSIZE.lock().unwrap(),
+                current_stacksize(),
             );
-            *STACKSIZE.lock().unwrap() = 0;
+            set_stacksize(0);
             new_nodes.push(node);
         }
     }
-    (new_nodes, GLOBALS.lock().unwrap().clone())
+    (new_nodes, lock(&GLOBALS).clone())
 }

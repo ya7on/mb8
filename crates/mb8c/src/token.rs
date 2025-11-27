@@ -7,6 +7,7 @@ use std::fs::File;
 use std::io;
 use std::io::prelude::*;
 use std::rc::Rc;
+use std::sync::LazyLock;
 
 pub fn tokenize(path: String, ctx: &mut preprocess::Preprocessor) -> Vec<Token> {
     let mut tokenizer = Tokenizer::new(Rc::new(path));
@@ -111,8 +112,8 @@ impl Symbol {
     }
 }
 
-lazy_static! {
-    static ref SYMBOLS: Vec<Symbol> = [
+static SYMBOLS: LazyLock<Vec<Symbol>> = LazyLock::new(|| {
+    vec![
         Symbol::new("<<=", TokenType::ShlEQ),
         Symbol::new(">>=", TokenType::ShrEQ),
         Symbol::new("!=", TokenType::NE),
@@ -135,8 +136,7 @@ lazy_static! {
         Symbol::new("^=", TokenType::XorEQ),
         Symbol::new("|=", TokenType::BitorEQ),
     ]
-    .to_vec();
-}
+});
 
 // Tokenizer
 struct Tokenizer {
@@ -307,7 +307,10 @@ impl Tokenizer {
             self.pos += 1;
         } else {
             self.pos += 1;
-            let c2 = self.p.get(self.pos).unwrap();
+            let c2 = self
+                .p
+                .get(self.pos)
+                .expect("premature end of input in char literal");
             result = if let Some(esc) = Self::escaped(*c2) {
                 esc
             } else {
@@ -349,7 +352,10 @@ impl Tokenizer {
             }
 
             len += 1;
-            c2 = self.p.get(self.pos + len).unwrap();
+            c2 = self
+                .p
+                .get(self.pos + len)
+                .expect("premature end of input in string literal");
             if let Some(esc) = Self::escaped(*c2) {
                 sb.push(esc);
             } else {
@@ -415,8 +421,12 @@ impl Tokenizer {
         let mut pos = 0;
         while pos < self.p.len() {
             if self.p[pos] == '\r' && self.p[pos + 1] == '\n' {
-                Rc::get_mut(&mut self.p).unwrap().remove(pos);
-                Rc::get_mut(&mut self.p).unwrap().remove(pos);
+                Rc::get_mut(&mut self.p)
+                    .expect("failed to get mutable buffer")
+                    .remove(pos);
+                Rc::get_mut(&mut self.p)
+                    .expect("failed to get mutable buffer")
+                    .remove(pos);
             }
             pos += 1;
         }
@@ -431,12 +441,18 @@ impl Tokenizer {
         while pos < self.p.len() {
             if self.p[pos] == '\\' && self.p[pos + 1] == '\n' {
                 cnt += 1;
-                Rc::get_mut(&mut self.p).unwrap().remove(pos);
-                Rc::get_mut(&mut self.p).unwrap().remove(pos);
+                Rc::get_mut(&mut self.p)
+                    .expect("failed to get mutable buffer")
+                    .remove(pos);
+                Rc::get_mut(&mut self.p)
+                    .expect("failed to get mutable buffer")
+                    .remove(pos);
                 pos += 1;
             } else if self.p[pos] == '\n' {
                 for _ in 0..cnt {
-                    Rc::get_mut(&mut self.p).unwrap().insert(pos, '\n');
+                    Rc::get_mut(&mut self.p)
+                        .expect("failed to get mutable buffer")
+                        .insert(pos, '\n');
                     pos += 1;
                 }
                 pos += 1;

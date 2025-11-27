@@ -13,35 +13,99 @@
 use crate::parse::{Node, NodeType};
 use crate::{Ctype, Scope, TokenType, Type};
 
-use std::sync::Mutex;
+use std::sync::{LazyLock, Mutex, MutexGuard};
 
-lazy_static! {
-    static ref NUM_REGS: Mutex<usize> = Mutex::new(0);
-    static ref NLABEL: Mutex<usize> = Mutex::new(1);
-    static ref RETURN_LABEL: Mutex<usize> = Mutex::new(0);
-    static ref RETURN_REG: Mutex<usize> = Mutex::new(0);
-    static ref BREAK_LABEL: Mutex<usize> = Mutex::new(0);
-    static ref CODE: Mutex<Vec<IR>> = Mutex::new(vec![]);
+static NUM_REGS: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
+static NLABEL: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(1));
+static RETURN_LABEL: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
+static RETURN_REG: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
+static BREAK_LABEL: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
+static CODE: LazyLock<Mutex<Vec<IR>>> = LazyLock::new(|| Mutex::new(vec![]));
+
+fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
+    mutex.lock().unwrap_or_else(|e| e.into_inner())
+}
+
+fn next_reg() -> usize {
+    let mut guard = lock(&NUM_REGS);
+    let reg = *guard;
+    *guard += 1;
+    reg
+}
+
+fn next_label_id() -> usize {
+    let mut guard = lock(&NLABEL);
+    let label = *guard;
+    *guard += 1;
+    label
+}
+
+fn current_break_label() -> usize {
+    *lock(&BREAK_LABEL)
+}
+
+fn set_break_label(val: usize) {
+    *lock(&BREAK_LABEL) = val;
+}
+
+fn current_return_label() -> usize {
+    *lock(&RETURN_LABEL)
+}
+
+fn set_return_label(val: usize) {
+    *lock(&RETURN_LABEL) = val;
+}
+
+fn current_return_reg() -> usize {
+    *lock(&RETURN_REG)
+}
+
+fn set_return_reg(val: usize) {
+    *lock(&RETURN_REG) = val;
+}
+
+fn push_ir(ir: IR) {
+    lock(&CODE).push(ir);
+}
+
+fn clear_ir() {
+    lock(&CODE).clear();
+}
+
+fn clone_ir() -> Vec<IR> {
+    lock(&CODE).clone()
 }
 
 fn add(op: IROp, lhs: Option<usize>, rhs: Option<usize>) {
     let ir = IR::new(op, lhs, rhs);
-    CODE.lock().unwrap().push(ir.clone());
+    push_ir(ir.clone());
 }
 
 #[derive(Clone, Debug)]
 pub enum IRType {
+    /// No arguments
     Noarg,
+    /// Register value
     Reg,
+    /// Store immediate value to register
     Imm,
+    /// Memory address
     Mem,
+    /// Jump target
     Jmp,
+    /// Label
     Label,
+    /// Label address
     LabelAddr,
+    /// Register-register operation
     RegReg,
+    /// Register-immediate operation
     RegImm,
+    /// Store argument
     StoreArg,
+    /// Register-label operation
     RegLabel,
+    /// Call function
     Call,
 }
 
@@ -186,14 +250,12 @@ fn gen_lval(node: Box<Node>) -> Option<usize> {
             r
         }
         NodeType::Lvar(Scope::Local(offset)) => {
-            let r = Some(*NUM_REGS.lock().unwrap());
-            *NUM_REGS.lock().unwrap() += 1;
+            let r = Some(next_reg());
             add(IROp::Bprel, r, Some(offset));
             r
         }
         NodeType::Gvar(name, _, _) => {
-            let r = Some(*NUM_REGS.lock().unwrap());
-            *NUM_REGS.lock().unwrap() += 1;
+            let r = Some(next_reg());
             add(IROp::LabelAddr(name), r, None);
             r
         }
@@ -218,9 +280,8 @@ fn get_inc_scale(ty: &Type) -> usize {
 
 fn gen_pre_inc(ty: &Type, expr: Box<Node>, num: i32) -> i32 {
     let addr = gen_lval(expr);
-    let val = *NUM_REGS.lock().unwrap();
-    *NUM_REGS.lock().unwrap() += 1;
-    load(ty, Some(val), addr);
+    let val = next_reg();
+    load(ty, Some(val), addr.clone());
     add(
         IROp::AddImm,
         Some(val),
@@ -261,8 +322,7 @@ fn to_assign_op(op: &TokenType) -> IROp {
 fn gen_assign_op(op: &TokenType, ty: &Type, lhs: Box<Node>, rhs: Box<Node>) -> Option<usize> {
     let src = gen_expr(rhs);
     let dst = gen_lval(lhs);
-    let val = Some(*NUM_REGS.lock().unwrap());
-    *NUM_REGS.lock().unwrap() += 1;
+    let val = Some(next_reg());
 
     load(ty, val, dst);
     add(to_assign_op(op), val, src);
@@ -276,8 +336,7 @@ fn gen_expr(node: Box<Node>) -> Option<usize> {
     let node = *node;
     match node.op {
         NodeType::Num(val) => {
-            let r = Some(*NUM_REGS.lock().unwrap());
-            *NUM_REGS.lock().unwrap() += 1;
+            let r = Some(next_reg());
             add(IROp::Imm, r, Some(val as usize));
             r
         }
@@ -289,11 +348,10 @@ fn gen_expr(node: Box<Node>) -> Option<usize> {
         NodeType::Call(name, args) => {
             let mut args_ir: [usize; 6] = [0; 6];
             for i in 0..args.len() {
-                args_ir[i] = gen_expr(Box::new(args[i].clone())).unwrap();
+                args_ir[i] = gen_expr(Box::new(args[i].clone()))?;
             }
 
-            let r = Some(*NUM_REGS.lock().unwrap());
-            *NUM_REGS.lock().unwrap() += 1;
+            let r = Some(next_reg());
 
             add(IROp::Call(name, args.len(), args_ir), r, None);
 
@@ -309,19 +367,17 @@ fn gen_expr(node: Box<Node>) -> Option<usize> {
             r
         }
         NodeType::StmtExpr(body) => {
-            let orig_label = *RETURN_LABEL.lock().unwrap();
-            let orig_reg = *RETURN_REG.lock().unwrap();
-            *RETURN_LABEL.lock().unwrap() = *NLABEL.lock().unwrap();
-            *NLABEL.lock().unwrap() += 1;
-            let r = *NUM_REGS.lock().unwrap();
-            *NUM_REGS.lock().unwrap() += 1;
-            *RETURN_REG.lock().unwrap() = r;
+            let orig_label = current_return_label();
+            let orig_reg = current_return_reg();
+            set_return_label(next_label_id());
+            let r = next_reg();
+            set_return_reg(r);
 
             gen_stmt(*body);
-            label(Some(*RETURN_LABEL.lock().unwrap()));
+            label(Some(current_return_label()));
 
-            *RETURN_LABEL.lock().unwrap() = orig_label;
-            *RETURN_REG.lock().unwrap() = orig_reg;
+            set_return_label(orig_label);
+            set_return_reg(orig_reg);
             Some(r)
         }
         NodeType::BinOp(op, lhs, rhs) => {
@@ -337,8 +393,7 @@ fn gen_expr(node: Box<Node>) -> Option<usize> {
                 Plus => gen_binop(IROp::Add, lhs, rhs),
                 Minus => gen_binop(IROp::Sub, lhs, rhs),
                 Logand => {
-                    let x = Some(*NLABEL.lock().unwrap());
-                    *NLABEL.lock().unwrap() += 1;
+                    let x = Some(next_label_id());
 
                     let r1 = gen_expr(lhs);
                     add(IROp::Unless, r1, x);
@@ -351,10 +406,8 @@ fn gen_expr(node: Box<Node>) -> Option<usize> {
                     r1
                 }
                 Logor => {
-                    let x = Some(*NLABEL.lock().unwrap());
-                    *NLABEL.lock().unwrap() += 1;
-                    let y = Some(*NLABEL.lock().unwrap());
-                    *NLABEL.lock().unwrap() += 1;
+                    let x = Some(next_label_id());
+                    let y = Some(next_label_id());
 
                     let r1 = gen_expr(lhs);
                     add(IROp::Unless, r1, x);
@@ -396,12 +449,8 @@ fn gen_expr(node: Box<Node>) -> Option<usize> {
         NodeType::PostInc(expr) => Some(gen_post_inc(&node.ty, expr, 1) as usize),
         NodeType::PostDec(expr) => Some(gen_post_inc(&node.ty, expr, -1) as usize),
         NodeType::Ternary(cond, then, els) => {
-            //      cond then els  then
-            // return 1 ? 3 : 5; => 3
-            let x = Some(*NLABEL.lock().unwrap());
-            *NLABEL.lock().unwrap() += 1;
-            let y = Some(*NLABEL.lock().unwrap());
-            *NLABEL.lock().unwrap() += 1;
+            let x = Some(next_label_id());
+            let y = Some(next_label_id());
             let r = gen_expr(cond);
 
             add(IROp::Unless, r, x);
@@ -419,8 +468,7 @@ fn gen_expr(node: Box<Node>) -> Option<usize> {
         }
         NodeType::Exclamation(expr) => {
             let lhs = gen_expr(expr);
-            let rhs = Some(*NUM_REGS.lock().unwrap());
-            *NUM_REGS.lock().unwrap() += 1;
+            let rhs = Some(next_reg());
             add(IROp::Imm, rhs, Some(0));
             add(IROp::EQ, lhs, rhs);
             kill(rhs);
@@ -436,8 +484,7 @@ fn gen_stmt(node: Node) {
         NodeType::Vardef(_, init_may, Scope::Local(offset)) => {
             if let Some(init) = init_may {
                 let rhs = gen_expr(init);
-                let lhs = Some(*NUM_REGS.lock().unwrap());
-                *NUM_REGS.lock().unwrap() += 1;
+                let lhs = Some(next_reg());
                 add(IROp::Bprel, lhs, Some(offset));
                 store(&node.ty, lhs, rhs);
                 kill(lhs);
@@ -447,10 +494,8 @@ fn gen_stmt(node: Node) {
         }
         NodeType::If(cond, then, els_may) => {
             if let Some(els) = els_may {
-                let x = Some(*NLABEL.lock().unwrap());
-                *NLABEL.lock().unwrap() += 1;
-                let y = Some(*NLABEL.lock().unwrap());
-                *NLABEL.lock().unwrap() += 1;
+                let x = Some(next_label_id());
+                let y = Some(next_label_id());
                 let r = gen_expr(cond.clone());
                 add(IROp::Unless, r, x);
                 kill(r);
@@ -462,8 +507,7 @@ fn gen_stmt(node: Node) {
                 return;
             }
 
-            let x = Some(*NLABEL.lock().unwrap());
-            *NLABEL.lock().unwrap() += 1;
+            let x = Some(next_label_id());
             let r = gen_expr(cond);
             add(IROp::Unless, r, x);
             kill(r);
@@ -471,13 +515,10 @@ fn gen_stmt(node: Node) {
             label(x);
         }
         NodeType::For(init, cond, inc, body) => {
-            let x = Some(*NLABEL.lock().unwrap());
-            *NLABEL.lock().unwrap() += 1;
-            let y = Some(*NLABEL.lock().unwrap());
-            *NLABEL.lock().unwrap() += 1;
-            let orig = *BREAK_LABEL.lock().unwrap();
-            *BREAK_LABEL.lock().unwrap() = *NLABEL.lock().unwrap();
-            *NLABEL.lock().unwrap() += 1;
+            let x = Some(next_label_id());
+            let y = Some(next_label_id());
+            let orig = current_break_label();
+            set_break_label(next_label_id());
 
             gen_stmt(*init);
             label(x);
@@ -492,25 +533,23 @@ fn gen_stmt(node: Node) {
             }
             jmp(x);
             label(y);
-            label(Some(*BREAK_LABEL.lock().unwrap()));
-            *BREAK_LABEL.lock().unwrap() = orig;
+            label(Some(current_break_label()));
+            set_break_label(orig);
         }
         NodeType::DoWhile(body, cond) => {
-            let x = Some(*NLABEL.lock().unwrap());
-            *NLABEL.lock().unwrap() += 1;
-            let orig = *BREAK_LABEL.lock().unwrap();
-            *BREAK_LABEL.lock().unwrap() = *NLABEL.lock().unwrap();
-            *NLABEL.lock().unwrap() += 1;
+            let x = Some(next_label_id());
+            let orig = current_break_label();
+            set_break_label(next_label_id());
             label(x);
             gen_stmt(*body);
             let r = gen_expr(cond);
             add(IROp::If, r, x);
             kill(r);
-            label(Some(*BREAK_LABEL.lock().unwrap()));
-            *BREAK_LABEL.lock().unwrap() = orig;
+            label(Some(current_break_label()));
+            set_break_label(orig);
         }
         NodeType::Break => {
-            let break_label = *BREAK_LABEL.lock().unwrap();
+            let break_label = current_break_label();
             if break_label == 0 {
                 panic!("stray 'break' statement");
             }
@@ -519,11 +558,10 @@ fn gen_stmt(node: Node) {
         NodeType::Return(expr) => {
             let r = gen_expr(expr);
 
-            // Statement expression (GNU extension)
-            if *RETURN_LABEL.lock().unwrap() != 0 {
-                add(IROp::Mov, Some(*RETURN_REG.lock().unwrap()), r);
+            if current_return_label() != 0 {
+                add(IROp::Mov, Some(current_return_reg()), r);
                 kill(r);
-                jmp(Some(*RETURN_LABEL.lock().unwrap()));
+                jmp(Some(current_return_label()));
                 return;
             }
 
@@ -548,7 +586,7 @@ pub fn gen_ir(nodes: Vec<Node>) -> Vec<Function> {
     for node in nodes {
         match node.op {
             NodeType::Func(name, args, body, stacksize) => {
-                *CODE.lock().unwrap() = vec![];
+                clear_ir();
                 // *NUM_REGS.lock().unwrap() = 0;
 
                 for (i, arg) in args.iter().enumerate() {
@@ -560,7 +598,7 @@ pub fn gen_ir(nodes: Vec<Node>) -> Vec<Function> {
                 }
                 gen_stmt(*body);
 
-                v.push(Function::new(name, CODE.lock().unwrap().clone(), stacksize));
+                v.push(Function::new(name, clone_ir(), stacksize));
             }
             NodeType::Vardef(_, _, _) => (),
             _ => panic!("parse error."),

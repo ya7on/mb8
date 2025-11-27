@@ -1,13 +1,14 @@
 use crate::gen_ir::{Function, IROp};
 use crate::{Scope, Var, REGS_N};
 
-use lazy_static::lazy_static;
-use std::sync::Mutex;
+use std::sync::{LazyLock, Mutex, MutexGuard};
 
 const REGS: [&str; REGS_N] = ["R0", "R1", "R2", "R3", "R4", "R7", "R0"];
 
-lazy_static! {
-    static ref LABEL: Mutex<usize> = Mutex::new(0);
+static LABEL: LazyLock<Mutex<usize>> = LazyLock::new(|| Mutex::new(0));
+
+fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
+    mutex.lock().unwrap_or_else(|e| e.into_inner())
 }
 
 macro_rules! emit {
@@ -17,7 +18,7 @@ macro_rules! emit {
 
 fn emit_cmp_set_bool(lhs: usize, rhs: usize, cond: &'static str) {
     let id = {
-        let mut g = LABEL.lock().unwrap();
+        let mut g = lock(&LABEL);
         let cur = *g;
         *g += 1;
         cur
@@ -50,7 +51,7 @@ fn gen_fn_mb8(f: Function) {
     use self::IROp::*;
 
     let ret_label = {
-        let mut g = LABEL.lock().unwrap();
+        let mut g = lock(&LABEL);
         let id = *g;
         *g += 1;
         format!(".Lret_{}", id)
@@ -59,7 +60,7 @@ fn gen_fn_mb8(f: Function) {
     println!("{}:", f.name);
 
     for ir in f.ir {
-        let lhs = ir.lhs.unwrap();
+        let lhs = ir.lhs.expect("missing lhs");
         let rhs = ir.rhs.unwrap_or(0);
 
         match ir.op {
@@ -116,26 +117,32 @@ fn gen_fn_mb8(f: Function) {
                 emit!("MUL {} R7", REGS[lhs]);
             }
 
-            Div | Mod => {}
+            Div | Mod => {
+                todo!()
+            }
 
             EQ => emit_cmp_set_bool(lhs, rhs, "eq"),
             NE => emit_cmp_set_bool(lhs, rhs, "ne"),
             LT | LE => {}
 
             Load(_size) => {
-                emit!("ZERO R5");
-                emit!("MOV R6 {}", REGS[rhs]);
-                emit!("LD {} R5 R6", REGS[lhs]);
+                emit!("LDI R5 R6 0x0000");
+                emit!("ADD R6 {}", REGS[lhs]);
+                emit!("LD {} R5 R6", REGS[rhs]);
             }
             Store(_size) => {
-                emit!("ZERO R5");
-                emit!("MOV R6 {}", REGS[lhs]);
+                emit!("LDI R5 R6 0x0000");
+                emit!("ADD R6 {}", REGS[lhs]);
                 emit!("ST {} R5 R6", REGS[rhs]);
             }
 
-            StoreArg(_size) => {}
+            StoreArg(_size) => {
+                todo!()
+            }
 
-            Bprel => {}
+            Bprel => {
+                emit!("LDI {} {}", REGS[lhs], rhs as u8);
+            }
 
             Label => {
                 println!(".L{}:", lhs);
@@ -188,9 +195,7 @@ fn gen_fn_mb8(f: Function) {
 pub fn gen_mb8(globals: Vec<Var>, fns: Vec<Function>) {
     println!("#include \"../asm/cpu.asm\"");
     println!("#include \"../asm/ext.asm\"");
-    println!("#include \"../asm/std.asm\"");
     println!();
-    println!("#bank rom");
 
     for var in globals {
         if let Scope::Global(data, len, is_extern) = var.scope {

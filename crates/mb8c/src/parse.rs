@@ -153,11 +153,11 @@ impl Type {
     }
 
     pub fn int_ty() -> Self {
-        Type::new(Ctype::Int, 4)
+        Type::new(Ctype::Int, 2)
     }
 
     pub fn ptr_to(base: Box<Type>) -> Self {
-        Type::new(Ctype::Ptr(base), 8)
+        Type::new(Ctype::Ptr(base), 2)
     }
 
     pub fn ary_of(base: Box<Type>, len: usize) -> Self {
@@ -713,14 +713,18 @@ impl<'a> Parser<'a> {
     }
 
     fn declaration(&mut self) -> Node {
-        let mut ty = self.decl_specifiers().unwrap();
+        let Some(mut ty) = self.decl_specifiers() else {
+            self.tokens[self.pos].bad_token("typename expected");
+        };
         let node = self.declarator(&mut ty);
         self.expect(TokenType::Semicolon);
         node
     }
 
     fn param_declaration(&mut self) -> Node {
-        let mut ty = self.decl_specifiers().unwrap();
+        let Some(mut ty) = self.decl_specifiers() else {
+            self.tokens[self.pos].bad_token("typename expected");
+        };
         let mut node = self.declarator(&mut ty);
         if let Ctype::Ary(ary_of, _) = node.ty.ty {
             node.ty = Box::new(Type::ptr_to(ary_of));
@@ -843,8 +847,9 @@ impl<'a> Parser<'a> {
         while !self.consume(TokenType::RightBrace) {
             stmts.push(self.stmt());
         }
-        let next = self.env.next.clone();
-        self.env = *next.unwrap();
+        if let Some(next) = self.env.next.clone() {
+            self.env = *next;
+        }
         Node::new(NodeType::CompStmt(stmts))
     }
 
