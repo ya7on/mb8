@@ -7,6 +7,7 @@ use clap::{Parser, Subcommand};
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
+    pub seed: Option<u16>,
 }
 
 #[derive(Subcommand, Debug)]

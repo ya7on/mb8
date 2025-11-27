@@ -1,4 +1,4 @@
-use super::{disk::Disk, gpu::GPU, keyboard::Keyboard, ram::RAM, rom::ROM, Device, rand::Rand};
+use super::{disk::Disk, gpu::GPU, keyboard::Keyboard, ram::RAM, rand::Rand, rom::ROM, Device};
 
 #[derive(Debug, Default)]
 pub struct Bus {
@@ -37,7 +37,7 @@ impl Bus {
             0xF000..=0xF0FF => self.gpu.read(addr - 0xF000),
             0xF100..=0xF1FF => self.keyboard.read(addr - 0xF100),
             0xF200..=0xF3FF => self.disk.read(addr - 0xF200),
-            0xF400          => self.rand.read(addr - 0xF400),
+            0xF400 => self.rand.read(addr - 0xF400),
             0xF401..=0xFFFF => unimplemented!(),
         }
     }

@@ -6,10 +6,20 @@ pub mod registers {
 
 #[derive(Debug, Default)]
 pub struct Rand {
-    number: u8,
+    pub number: u8,
 }
 
 impl Rand {
+    pub fn default(seed: u8) -> Self {
+        Self {
+            number: if seed == 0 { 1 } else { seed },
+        }
+    }
+
+    pub fn seed(&mut self, value: u8) {
+        self.number = value;
+    }
+
     fn rand_gen(&mut self) -> u8 {
         let mut x = self.number;
 
@@ -17,7 +27,7 @@ impl Rand {
         x ^= x >> 5;
         x ^= x << 1;
 
-        self.number = if x == 0 { 1 } else { 1 };
+        self.number = if x == 0 { 1 } else { x };
 
         x
     }
@@ -33,5 +43,5 @@ impl Device for Rand {
         }
     }
 
-    fn write(&mut self, addr: u16, value: u8) {}
+    fn write(&mut self, _addr: u16, _value: u8) {}
 }
