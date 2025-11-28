@@ -5,7 +5,7 @@ fn test_sys_rand_deterministic() {
     let bin = include_bytes!("../../../kernel/tests/test_sys_rand.bin");
 
     let mut vm1 = VirtualMachine::default();
-    vm1.devices.rand().seed(1234);
+    vm1.devices.rand().seed(234);
     vm1.load_rom(bin);
     vm1.run();
 
@@ -15,7 +15,7 @@ fn test_sys_rand_deterministic() {
     }
 
     let mut vm2 = VirtualMachine::default();
-    vm2.devices.rand().seed(1234);
+    vm2.devices.rand().seed(234);
     vm2.load_rom(bin);
     vm2.run();
 
