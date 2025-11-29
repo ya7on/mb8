@@ -7,6 +7,10 @@ use crate::{
 use super::Stmt;
 
 impl Parser {
+    /// Parses a statement
+    ///
+    /// # Errors
+    /// Returns a `CompileError` if the statement cannot be parsed.
     pub fn parse_stmt(&mut self) -> CompileResult<Stmt> {
         match self.peek() {
             TokenKind::LeftBrace => self.parse_block_stmt(),
@@ -15,25 +19,33 @@ impl Parser {
         }
     }
 
+    /// Parses a block statement from a list of tokens.
+    ///
+    /// # Errors
+    /// Returns a `CompileError` if the block statement cannot be parsed.
     pub fn parse_block_stmt(&mut self) -> CompileResult<Stmt> {
-        self.expect(TokenKind::LeftBrace)?;
+        self.expect(&TokenKind::LeftBrace)?;
         let mut stmts = Vec::new();
         while !matches!(self.peek(), TokenKind::RightBrace | TokenKind::Eof) {
             stmts.push(self.parse_stmt()?);
         }
-        self.expect(TokenKind::RightBrace)?;
+        self.expect(&TokenKind::RightBrace)?;
 
         Ok(Stmt::Block(stmts))
     }
 
+    /// Parses a return statement from a list of tokens.
+    ///
+    /// # Errors
+    /// Returns a `CompileError` if the return statement cannot be parsed.
     pub fn parse_return_stmt(&mut self) -> CompileResult<Stmt> {
-        self.expect(TokenKind::Keyword(Keyword::Return))?;
+        self.expect(&TokenKind::Keyword(Keyword::Return))?;
         if matches!(self.peek(), TokenKind::Semicolon) {
             self.bump();
             Ok(Stmt::Return(None))
         } else {
             let expr = self.parse_expr()?;
-            self.expect(TokenKind::Semicolon)?;
+            self.expect(&TokenKind::Semicolon)?;
             Ok(Stmt::Return(Some(expr)))
         }
     }

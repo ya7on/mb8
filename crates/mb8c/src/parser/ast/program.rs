@@ -1,10 +1,6 @@
-use crate::{
-    error::{CompileError, CompileResult},
-    parser::base::Parser,
-    tokenizer::token::{Keyword, TokenKind},
-};
+use crate::{error::CompileResult, parser::base::Parser, tokenizer::token::TokenKind};
 
-use super::{Program, Type};
+use super::Program;
 
 impl Parser {
     /// Parses a program from a list of tokens.

@@ -31,9 +31,13 @@ impl Parser {
         kind
     }
 
-    pub fn expect(&mut self, expected: TokenKind) -> CompileResult<()> {
+    /// Expect the next token to be of the given kind.
+    ///
+    /// # Errors
+    /// Returns a `CompileError::UnexpectedToken` if the next token is not of the expected kind.
+    pub fn expect(&mut self, expected: &TokenKind) -> CompileResult<()> {
         let kind = self.peek();
-        if kind == expected {
+        if kind == *expected {
             self.bump();
             return Ok(());
         }

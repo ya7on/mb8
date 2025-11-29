@@ -10,7 +10,7 @@ impl Parser {
     pub fn parse_function(&mut self, return_type: Type, name: String) -> CompileResult<Function> {
         let mut args = vec![];
 
-        self.expect(TokenKind::LeftParenthesis)?;
+        self.expect(&TokenKind::LeftParenthesis)?;
         while self.peek() != TokenKind::RightParenthesis {
             let ty = self.parse_type()?;
             let name = self.parse_ident()?;
@@ -21,14 +21,14 @@ impl Parser {
                 self.bump();
             }
         }
-        self.expect(TokenKind::RightParenthesis)?;
+        self.expect(&TokenKind::RightParenthesis)?;
 
         if self.peek() == TokenKind::LeftBrace {
             let body = self.parse_stmt()?;
 
             return Ok(Function {
-                return_type,
                 name,
+                return_type,
                 args,
                 body,
             });
