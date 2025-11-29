@@ -10,7 +10,6 @@ pub struct Rand {
 }
 
 impl Rand {
-
     #[must_use]
     pub fn default(seed: u8) -> Self {
         Self {
@@ -38,9 +37,7 @@ impl Rand {
 impl Device for Rand {
     fn read(&mut self, addr: u16) -> u8 {
         match addr {
-            registers::DATA => {
-                self.rand_gen()
-            }
+            registers::DATA => self.rand_gen(),
             _ => unimplemented!(),
         }
     }
