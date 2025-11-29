@@ -1,4 +1,4 @@
-use mb8::vm::VirtualMachine;
+use mb8::{dev::Device, vm::VirtualMachine};
 
 #[test]
 fn test_sys_rand_deterministic() {
@@ -25,4 +25,7 @@ fn test_sys_rand_deterministic() {
     }
 
     assert_eq!(out1, out2);
+
+    let rng_value = vm1.devices.rand().read(0);
+    assert_ne!(out1[0], rng_value);
 }

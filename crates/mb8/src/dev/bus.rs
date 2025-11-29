@@ -50,8 +50,8 @@ impl Bus {
             0xF000..=0xF0FF => self.gpu.write(addr - 0xF000, value),
             0xF100..=0xF1FF => self.keyboard.write(addr - 0xF100, value),
             0xF200..=0xF3FF => self.disk.write(addr - 0xF200, value),
-            //do we want to utilize 0xF400 for rand since we are not utilizing it....
-            0xF400..=0xFFFF => unimplemented!(),
+            0xF400 => self.rand.write(addr - 0xF400, value),
+            0xF401..=0xFFFF => unimplemented!(),
         }
     }
 }

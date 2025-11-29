@@ -80,7 +80,7 @@ syscall_table:
     JMP sys_exec
 .sys_exit:
     CMPI R0 SYS_EXIT
-    JNZR .not_found
+    JNZR .sys_rand
     JMP sys_exit
 .sys_rand:
     CMPI R0 SYS_RAND

@@ -238,7 +238,6 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
     };
 
     let seed = seed.unwrap_or(1);
-    println!("RNG seed = {:#06X}", seed);
 
     vm.devices.rand().number = (seed as u8).max(1);
 

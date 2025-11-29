@@ -1,7 +1,7 @@
 use super::Device;
 
 pub mod registers {
-    pub const DATA: u16 = 0x01;
+    pub const DATA: u16 = 0x00;
 }
 
 #[derive(Debug, Default)]
@@ -10,6 +10,8 @@ pub struct Rand {
 }
 
 impl Rand {
+
+    #[must_use]
     pub fn default(seed: u8) -> Self {
         Self {
             number: if seed == 0 { 1 } else { seed },
@@ -37,7 +39,7 @@ impl Device for Rand {
     fn read(&mut self, addr: u16) -> u8 {
         match addr {
             registers::DATA => {
-                return self.rand_gen();
+                self.rand_gen()
             }
             _ => unimplemented!(),
         }
