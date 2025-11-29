@@ -1,0 +1,51 @@
+#[derive(Debug, PartialEq)]
+pub struct Token {
+    pub kind: TokenKind,
+    pub span: Span,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Span {
+    /// Start position of the token in the source code.
+    pub start: usize,
+    /// End position of the token in the source code.
+    pub end: usize,
+    /// Line number where the token starts.
+    pub line: usize,
+    /// Column number where the token starts.
+    pub column: usize,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum TokenKind {
+    /// Identifier (e.g. variable name)
+    Ident(String),
+    /// Number (e.g. 123)
+    Number(i16),
+    /// Reserved keyword (e.g. int)
+    Keyword(Keyword),
+
+    /// Left brace {
+    LeftBrace,
+    /// Right brace }
+    RightBrace,
+    /// Left parenthesis (
+    LeftParenthesis,
+    /// Right parenthesis )
+    RightParenthesis,
+    /// Comma ,
+    Comma,
+    /// Semicolon ;
+    Semicolon,
+
+    /// End of file
+    Eof,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum Keyword {
+    /// Integer
+    Int,
+    /// Return
+    Return,
+}

@@ -389,7 +389,7 @@ version = "0.1.0"
 name = "mb8c"
 version = "0.1.0"
 dependencies = [
- "lazy_static",
+ "mb8-isa",
 ]
 
 [[package]]
