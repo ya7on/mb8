@@ -2,7 +2,7 @@ use mb6::Mb8Asm;
 
 use crate::{
     error::{CompileError, CompileResult},
-    ir::{IRFunction, IROpcode, Reg},
+    ir::{BinOperation, IRFunction, IROpcode, Reg},
 };
 
 pub mod mb6;
@@ -61,6 +61,7 @@ impl<'a> FunctionContext<'a> {
 
     /// # Errors
     /// Returns a `CompileError` if there was an error writing to the code buffer.
+    #[allow(clippy::too_many_lines)]
     pub fn generate(&mut self) -> CompileResult<String> {
         self.layout_slots();
 
@@ -140,7 +141,68 @@ impl<'a> FunctionContext<'a> {
                         _ => unreachable!("invalid size"),
                     }
                 }
-                _ => {}
+                IROpcode::LoadLocal { local, size } => {
+                    let dst = instruction.dst.ok_or_else(|| CompileError::InternalError {
+                        message: "LoadLocal must have dst".to_string(),
+                    })?;
+                    let src_addr = self.local_addr(*local);
+                    let dst_addr = self.reg_addr(dst);
+
+                    match size {
+                        1 => {
+                            result.ld_addr("R0", src_addr)?;
+                            result.st_addr("R0", dst_addr)?;
+                        }
+                        2 => {
+                            result.ld_addr("R0", src_addr)?;
+                            result.st_addr("R0", dst_addr)?;
+
+                            result.ld_addr("R0", src_addr + 1)?;
+                            result.st_addr("R0", dst_addr + 1)?;
+                        }
+                        _ => unreachable!("invalid size"),
+                    }
+                }
+                IROpcode::Bin { op } => {
+                    let dst = instruction.dst.ok_or_else(|| CompileError::InternalError {
+                        message: "Bin must have dst".to_string(),
+                    })?;
+                    let lhs = instruction
+                        .src1
+                        .ok_or_else(|| CompileError::InternalError {
+                            message: "Bin must have src1".to_string(),
+                        })?;
+                    let rhs = instruction
+                        .src2
+                        .ok_or_else(|| CompileError::InternalError {
+                            message: "Bin must have src2".to_string(),
+                        })?;
+
+                    let lhs_addr = self.reg_addr(lhs);
+                    let rhs_addr = self.reg_addr(rhs);
+                    let dst_addr = self.reg_addr(dst);
+
+                    result.ld_addr("R0", lhs_addr)?;
+
+                    result.ld_addr("R1", rhs_addr)?;
+
+                    match op {
+                        BinOperation::Add => {
+                            result.add("R0", "R1")?;
+                        }
+                        BinOperation::Sub => {
+                            result.sub("R0", "R1")?;
+                        }
+                        BinOperation::Mul => {
+                            result.mul("R0", "R1")?;
+                        }
+                        BinOperation::Div => {
+                            result.div("R0", "R1")?;
+                        }
+                    }
+
+                    result.st_addr("R0", dst_addr)?;
+                }
             }
         }
 

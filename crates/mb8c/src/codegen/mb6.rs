@@ -57,4 +57,28 @@ impl Mb8Asm {
     pub fn st_addr(&mut self, src: &str, addr: u16) -> CompileResult<()> {
         self.instruction(&format!("ST {src} 0x{addr:X}"))
     }
+
+    /// # Errors
+    /// Returns a `CompileError` if there was an error writing to the code buffer.
+    pub fn add(&mut self, dst: &str, src: &str) -> CompileResult<()> {
+        self.instruction(&format!("ADD {dst} {src}"))
+    }
+
+    /// # Errors
+    /// Returns a `CompileError` if there was an error writing to the code buffer.
+    pub fn sub(&mut self, dst: &str, src: &str) -> CompileResult<()> {
+        self.instruction(&format!("SUB {dst} {src}"))
+    }
+
+    /// # Errors
+    /// Returns a `CompileError` if there was an error writing to the code buffer.
+    pub fn mul(&mut self, dst: &str, src: &str) -> CompileResult<()> {
+        self.instruction(&format!("MUL {dst} {src}"))
+    }
+
+    /// # Errors
+    /// Returns a `CompileError` if there was an error writing to the code buffer.
+    pub fn div(&mut self, dst: &str, src: &str) -> CompileResult<()> {
+        self.instruction(&format!("DIV {dst} {src}"))
+    }
 }
