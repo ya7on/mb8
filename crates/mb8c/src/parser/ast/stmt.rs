@@ -16,6 +16,11 @@ impl Parser {
             TokenKind::LeftBrace => self.parse_block_stmt(),
             TokenKind::Keyword(Keyword::Return) => self.parse_return_stmt(),
             TokenKind::Keyword(_) => self.parse_declaration_stmt(),
+            TokenKind::Ident(_) => {
+                let expr = self.parse_expr()?;
+                self.expect(&TokenKind::Semicolon)?;
+                Ok(Stmt::Expression(expr))
+            }
             _ => unimplemented!(),
         }
     }

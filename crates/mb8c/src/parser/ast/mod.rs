@@ -34,6 +34,7 @@ pub enum Stmt {
         init: Option<Expr>,
     },
     Return(Option<Expr>),
+    Expression(Expr),
 }
 
 #[derive(Debug, PartialEq)]
@@ -45,4 +46,9 @@ pub enum Expr {
         rhs: Box<Expr>,
     },
     Negation(Box<Expr>),
+    Var(String),
+    Assign {
+        name: String,
+        value: Box<Expr>,
+    },
 }

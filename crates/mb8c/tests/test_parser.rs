@@ -11,6 +11,7 @@ fn test_main() {
     let src = r#"
         int main(int a, int b) {
             int a = 1;
+            a = a + 1;
             return (1 + -1) * 2;
         }
     "#;
@@ -29,6 +30,14 @@ fn test_main() {
                         ty: Type::Int,
                         init: Some(Expr::IntLiteral(1))
                     },
+                    Stmt::Expression(Expr::Assign {
+                        name: "a".to_string(),
+                        value: Box::new(Expr::BinaryOp {
+                            op: Operator::Plus,
+                            lhs: Box::new(Expr::Var("a".to_string())),
+                            rhs: Box::new(Expr::IntLiteral(1))
+                        })
+                    }),
                     Stmt::Return(Some(Expr::BinaryOp {
                         op: Operator::Asterisk,
                         lhs: Box::new(Expr::BinaryOp {

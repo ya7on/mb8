@@ -1,5 +1,5 @@
 use crate::{
-    error::CompileResult,
+    error::{CompileError, CompileResult},
     parser::base::Parser,
     tokenizer::token::{Operator, TokenKind},
 };
@@ -12,8 +12,33 @@ impl Parser {
     /// # Errors
     /// Returns a `CompileError` if the expression cannot be parsed.
     pub fn parse_expr(&mut self) -> CompileResult<Expr> {
-        let expr = self.parse_add_expr()?;
+        let expr = self.parse_assign_expr()?;
         Ok(expr)
+    }
+
+    pub fn parse_assign_expr(&mut self) -> CompileResult<Expr> {
+        let lhs = self.parse_add_expr()?;
+
+        match self.peek() {
+            TokenKind::Operator(Operator::Eq) => {
+                self.bump();
+
+                if let Expr::Var(name) = lhs {
+                    let rhs = self.parse_assign_expr()?;
+                    Ok(Expr::Assign {
+                        name,
+                        value: Box::new(rhs),
+                    })
+                } else {
+                    return Err(CompileError::ParseError {
+                        line: self.line(),
+                        column: self.column(),
+                        message: "Left-hand side of assignment must be a variable".to_owned(),
+                    });
+                }
+            }
+            _ => Ok(lhs),
+        }
     }
 
     /// Parses an addition expression from a list of tokens.
@@ -109,6 +134,11 @@ impl Parser {
                 let expr = self.parse_expr()?;
                 self.expect(&TokenKind::RightParenthesis)?;
                 Ok(expr)
+            }
+            TokenKind::Ident(name) => {
+                let name = name.clone();
+                self.bump();
+                Ok(Expr::Var(name))
             }
             _ => unimplemented!(),
         }
