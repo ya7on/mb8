@@ -1,7 +1,7 @@
 use crate::{
     error::CompileResult,
     parser::base::Parser,
-    tokenizer::token::{Keyword, TokenKind},
+    tokenizer::token::{Keyword, Operator, TokenKind},
 };
 
 use super::Stmt;
@@ -15,6 +15,7 @@ impl Parser {
         match self.peek() {
             TokenKind::LeftBrace => self.parse_block_stmt(),
             TokenKind::Keyword(Keyword::Return) => self.parse_return_stmt(),
+            TokenKind::Keyword(_) => self.parse_declaration_stmt(),
             _ => unimplemented!(),
         }
     }
@@ -48,5 +49,21 @@ impl Parser {
             self.expect(&TokenKind::Semicolon)?;
             Ok(Stmt::Return(Some(expr)))
         }
+    }
+
+    pub fn parse_declaration_stmt(&mut self) -> CompileResult<Stmt> {
+        let ty = self.parse_type()?;
+        let name = self.parse_ident()?;
+
+        let init = if matches!(self.peek(), TokenKind::Operator(Operator::Eq)) {
+            self.bump();
+            Some(self.parse_expr()?)
+        } else {
+            None
+        };
+
+        self.expect(&TokenKind::Semicolon)?;
+
+        Ok(Stmt::Declaration { name, ty, init })
     }
 }

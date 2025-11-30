@@ -61,6 +61,8 @@ pub enum Operator {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Keyword {
+    /// Void
+    Void,
     /// Integer
     Int,
     /// Return

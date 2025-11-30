@@ -14,6 +14,7 @@ impl Parser {
     pub fn parse_type(&mut self) -> CompileResult<Type> {
         match self.bump() {
             TokenKind::Keyword(Keyword::Int) => Ok(Type::Int),
+            TokenKind::Keyword(Keyword::Void) => Ok(Type::Void),
             _ => Err(CompileError::ParseError {
                 line: self.line(),
                 column: self.column(),

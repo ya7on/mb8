@@ -8,6 +8,7 @@ pub mod stmt;
 
 #[derive(Debug, PartialEq)]
 pub enum Type {
+    Void,
     Int,
 }
 
@@ -27,6 +28,11 @@ pub struct Function {
 #[derive(Debug, PartialEq)]
 pub enum Stmt {
     Block(Vec<Stmt>),
+    Declaration {
+        name: String,
+        ty: Type,
+        init: Option<Expr>,
+    },
     Return(Option<Expr>),
 }
 
