@@ -16,6 +16,10 @@ impl Parser {
         Ok(expr)
     }
 
+    /// Parses an assignment expression from a list of tokens.
+    ///
+    /// # Errors
+    /// Returns a `CompileError` if the expression cannot be parsed.
     pub fn parse_assign_expr(&mut self) -> CompileResult<Expr> {
         let lhs = self.parse_add_expr()?;
 
@@ -30,11 +34,11 @@ impl Parser {
                         value: Box::new(rhs),
                     })
                 } else {
-                    return Err(CompileError::ParseError {
+                    Err(CompileError::ParseError {
                         line: self.line(),
                         column: self.column(),
                         message: "Left-hand side of assignment must be a variable".to_owned(),
-                    });
+                    })
                 }
             }
             _ => Ok(lhs),

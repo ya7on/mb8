@@ -56,6 +56,10 @@ impl Parser {
         }
     }
 
+    /// Parses a declaration statement from a list of tokens.
+    ///
+    /// # Errors
+    /// Returns a `CompileError` if the declaration statement cannot be parsed.
     pub fn parse_declaration_stmt(&mut self) -> CompileResult<Stmt> {
         let ty = self.parse_type()?;
         let name = self.parse_ident()?;
