@@ -21,7 +21,18 @@ pub fn compile(input: &str) -> error::CompileResult<()> {
     let ir = lower_program(&ast)?;
 
     for ir_function in ir {
-        println!("{ir_function:?}");
+        println!(
+            "Function: {:?} -> {:?}",
+            ir_function.name, ir_function.return_type
+        );
+        println!("Locals:");
+        for local in ir_function.locals {
+            println!("{local:?}");
+        }
+        println!("Code:");
+        for instruction in ir_function.code {
+            println!("{instruction:?}");
+        }
     }
 
     Ok(())
