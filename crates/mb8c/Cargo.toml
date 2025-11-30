@@ -1,0 +1,11 @@
+[package]
+name = "mb8c"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+mb8-isa = { path = "../mb8-isa" }
+
+[lints]
+workspace = true
