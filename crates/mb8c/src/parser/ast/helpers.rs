@@ -13,6 +13,7 @@ impl Parser {
     /// Returns a `CompileError` if the type cannot be parsed.
     pub fn parse_type(&mut self) -> CompileResult<Type> {
         match self.bump() {
+            TokenKind::Keyword(Keyword::Char) => Ok(Type::Char),
             TokenKind::Keyword(Keyword::Int) => Ok(Type::Int),
             TokenKind::Keyword(Keyword::Void) => Ok(Type::Void),
             _ => Err(CompileError::ParseError {

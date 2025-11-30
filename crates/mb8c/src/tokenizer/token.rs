@@ -64,7 +64,9 @@ pub enum Operator {
 pub enum Keyword {
     /// Void
     Void,
-    /// Integer
+    /// Char. 8-bit type
+    Char,
+    /// Integer. 16-bit type
     Int,
     /// Return
     Return,

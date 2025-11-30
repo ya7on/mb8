@@ -19,4 +19,9 @@ pub enum Commands {
         /// Path to the user spaace
         user: Vec<PathBuf>,
     },
+    /// Compile a source file to an executable file
+    Compile {
+        /// Path to the source file
+        source: PathBuf,
+    },
 }

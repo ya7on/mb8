@@ -118,7 +118,6 @@ pub fn analyze_expr(
             }
         }
         Expr::Call { name, args } => {
-            dbg!(name);
             let Some(func_signature) = functions.get(name) else {
                 return Err(CompileError::UndefinedSymbol { name: name.clone() });
             };

@@ -9,6 +9,7 @@ clap = { version = "4.5.51", features = ["derive"] }
 minifb = "0.28.0"
 
 mb8 = { path = "../mb8" }
+mb8c = { path = "../mb8c" }
 
 [lints]
 workspace = true

@@ -9,7 +9,19 @@ pub mod stmt;
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Type {
     Void,
+    Char,
     Int,
+}
+
+impl Type {
+    #[must_use]
+    pub fn size_in_bytes(&self) -> u8 {
+        match self {
+            Type::Void => 0,
+            Type::Char => 1,
+            Type::Int => 2,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq)]

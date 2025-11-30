@@ -86,6 +86,7 @@ impl<'a> Lexer<'a> {
 
                 break 'kind match ident.as_str() {
                     "void" => TokenKind::Keyword(Keyword::Void),
+                    "char" => TokenKind::Keyword(Keyword::Char),
                     "int" => TokenKind::Keyword(Keyword::Int),
                     "return" => TokenKind::Keyword(Keyword::Return),
                     _ => TokenKind::Ident(ident),

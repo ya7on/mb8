@@ -1,4 +1,7 @@
+use ir::lower_program;
+
 pub mod error;
+pub mod ir;
 pub mod parser;
 pub mod semantic;
 pub mod tokenizer;
@@ -14,6 +17,12 @@ pub fn compile(input: &str) -> error::CompileResult<()> {
     let ast = parser.parse_program()?;
 
     semantic::analyze(&ast)?;
+
+    let ir = lower_program(&ast)?;
+
+    for ir_function in ir {
+        println!("{ir_function:?}");
+    }
 
     Ok(())
 }
