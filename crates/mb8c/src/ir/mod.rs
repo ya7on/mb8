@@ -25,7 +25,7 @@ pub enum IROpcode {
     LoadLocal { local: u32, size: u8 },
     StoreLocal { local: u32, size: u8 },
     Bin { op: BinOperation },
-    Call { name: String, argc: u32 },
+    Call { name: String, args: Vec<Reg> },
     Return,
 }
 

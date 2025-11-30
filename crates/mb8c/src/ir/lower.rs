@@ -117,11 +117,11 @@ impl IRBuilder {
                 self.emit(
                     IROpcode::Call {
                         name: name.clone(),
-                        argc: arg_regs.len() as u32,
+                        args: arg_regs.clone(),
                     },
                     Some(res),
-                    arg_regs.first().copied(),
-                    arg_regs.get(1).copied(),
+                    None,
+                    None,
                 );
 
                 Ok(res)

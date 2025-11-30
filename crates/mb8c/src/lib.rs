@@ -1,5 +1,7 @@
+use codegen::CodeGenerator;
 use ir::lower_program;
 
+pub mod codegen;
 pub mod error;
 pub mod ir;
 pub mod parser;
@@ -20,20 +22,8 @@ pub fn compile(input: &str) -> error::CompileResult<()> {
 
     let ir = lower_program(&ast)?;
 
-    for ir_function in ir {
-        println!(
-            "Function: {:?} -> {:?}",
-            ir_function.name, ir_function.return_type
-        );
-        println!("Locals:");
-        for local in ir_function.locals {
-            println!("{local:?}");
-        }
-        println!("Code:");
-        for instruction in ir_function.code {
-            println!("{instruction:?}");
-        }
-    }
+    let code = CodeGenerator::new(ir).generate()?;
+    println!("{code}");
 
     Ok(())
 }
