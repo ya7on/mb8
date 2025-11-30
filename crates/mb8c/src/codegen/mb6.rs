@@ -30,7 +30,7 @@ impl Mb8Asm {
 
     /// # Errors
     /// Returns a `CompileError` if there was an error writing to the code buffer.
-    pub fn ldi(&mut self, reg: &str, imm: i64) -> CompileResult<()> {
+    pub fn ldi(&mut self, reg: &str, imm: u8) -> CompileResult<()> {
         self.instruction(&format!("LDI {reg} {imm}"))
     }
 
@@ -48,7 +48,13 @@ impl Mb8Asm {
 
     /// # Errors
     /// Returns a `CompileError` if there was an error writing to the code buffer.
-    pub fn st16(&mut self, reg: &str, offset: i16) -> CompileResult<()> {
-        self.instruction(&format!("ST {reg} 0x{offset:X}"))
+    pub fn ld_addr(&mut self, reg: &str, addr: u16) -> CompileResult<()> {
+        self.instruction(&format!("LD {reg} 0x{addr:X}"))
+    }
+
+    /// # Errors
+    /// Returns a `CompileError` if there was an error writing to the code buffer.
+    pub fn st_addr(&mut self, src: &str, addr: u16) -> CompileResult<()> {
+        self.instruction(&format!("ST {src} 0x{addr:X}"))
     }
 }
