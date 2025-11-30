@@ -1,4 +1,4 @@
-use super::{disk::Disk, gpu::GPU, keyboard::Keyboard, ram::RAM, rom::ROM, Device};
+use super::{disk::Disk, gpu::GPU, keyboard::Keyboard, ram::RAM, rand::Rand, rom::ROM, Device};
 
 #[derive(Debug, Default)]
 pub struct Bus {
@@ -7,6 +7,7 @@ pub struct Bus {
     gpu: GPU,
     keyboard: Keyboard,
     disk: Disk,
+    rand: Rand,
 }
 
 impl Bus {
@@ -23,6 +24,10 @@ impl Bus {
         &mut self.disk
     }
 
+    pub fn rand(&mut self) -> &mut Rand {
+        &mut self.rand
+    }
+
     #[must_use]
     pub fn read(&mut self, addr: u16) -> u8 {
         match addr {
@@ -32,7 +37,8 @@ impl Bus {
             0xF000..=0xF0FF => self.gpu.read(addr - 0xF000),
             0xF100..=0xF1FF => self.keyboard.read(addr - 0xF100),
             0xF200..=0xF3FF => self.disk.read(addr - 0xF200),
-            0xF400..=0xFFFF => unimplemented!(),
+            0xF400 => self.rand.read(addr - 0xF400),
+            0xF401..=0xFFFF => unimplemented!(),
         }
     }
 
@@ -44,7 +50,8 @@ impl Bus {
             0xF000..=0xF0FF => self.gpu.write(addr - 0xF000, value),
             0xF100..=0xF1FF => self.keyboard.write(addr - 0xF100, value),
             0xF200..=0xF3FF => self.disk.write(addr - 0xF200, value),
-            0xF400..=0xFFFF => unimplemented!(),
+            0xF400 => self.rand.write(addr - 0xF400, value),
+            0xF401..=0xFFFF => unimplemented!(),
         }
     }
 }

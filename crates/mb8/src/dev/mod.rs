@@ -3,6 +3,7 @@ pub mod disk;
 pub mod gpu;
 pub mod keyboard;
 pub mod ram;
+pub mod rand;
 pub mod rom;
 pub mod utils;
 

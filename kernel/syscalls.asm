@@ -17,6 +17,7 @@ SYS_FS_WRITE = 0x0C
 SYS_FS_DELETE = 0x0D
 SYS_EXEC = 0x0E
 SYS_EXIT = 0x0F
+SYS_RAND = 0x10
 
 #addr 0xE500
 K_SYSCALL_ENTRY:
@@ -79,8 +80,12 @@ syscall_table:
     JMP sys_exec
 .sys_exit:
     CMPI R0 SYS_EXIT
-    JNZR .not_found
+    JNZR .sys_rand
     JMP sys_exit
+.sys_rand:
+    CMPI R0 SYS_RAND
+    JNZR .not_found
+    JMP  sys_rand
 .not_found:
     RET
 
@@ -432,4 +437,17 @@ sys_exit:
     POP R0
     POP R0
     JMP 0xE100
+    RET
+
+; Returns a random byte from MMIO RNG
+;
+; Input:
+; R0: sys_rand
+;
+; Output:
+; R0: Data - Random Byte
+sys_rand:
+    LDI R6 0xF4
+    LDI R7 0x00
+    LD R0 R6 R7 
     RET
