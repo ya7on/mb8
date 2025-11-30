@@ -45,16 +45,6 @@ impl Symbols {
         Ok(())
     }
 
-    /// Enters a new scope.
-    pub fn enter_scope(&mut self) {
-        self.scopes.push(HashMap::new());
-    }
-
-    /// Leaves the current scope.
-    pub fn leave_scope(&mut self) {
-        self.scopes.pop();
-    }
-
     #[must_use]
     pub fn lookup_var(&self, name: &str) -> Option<Type> {
         for scope in self.scopes.iter().rev() {
@@ -63,5 +53,15 @@ impl Symbols {
             }
         }
         None
+    }
+
+    /// Enters a new scope.
+    pub fn enter_scope(&mut self) {
+        self.scopes.push(HashMap::new());
+    }
+
+    /// Leaves the current scope.
+    pub fn leave_scope(&mut self) {
+        self.scopes.pop();
     }
 }

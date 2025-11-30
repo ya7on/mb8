@@ -95,7 +95,10 @@ pub fn analyze_stmt(
             analyze_expr(functions, symbols, expr)?;
             Ok(())
         }
-        _ => Ok(()),
+        Stmt::Declaration { name, ty, init: _ } => {
+            symbols.insert(name.to_owned(), *ty)?;
+            Ok(())
+        }
     }
 }
 
@@ -140,6 +143,20 @@ pub fn analyze_expr(
             }
 
             Ok(func_signature.return_type)
+        }
+        Expr::BinaryOp { op: _, lhs, rhs } => {
+            let lhs = analyze_expr(functions, symbols, lhs)?;
+            let rhs = analyze_expr(functions, symbols, rhs)?;
+
+            if lhs != rhs {
+                return Err(CompileError::TypeMismatch {
+                    expected: lhs,
+                    found: rhs,
+                });
+            }
+            // TODO
+
+            Ok(lhs)
         }
         _ => Ok(Type::Void),
     }
