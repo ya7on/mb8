@@ -3,14 +3,14 @@ use mb8c::{
         ast::{Expr, Function, Program, Stmt, Type},
         base::Parser,
     },
-    tokenizer::lexer::Lexer,
+    tokenizer::{lexer::Lexer, token::Operator},
 };
 
 #[test]
 fn test_main() {
     let src = r#"
         int main(int a, int b) {
-            return 0;
+            return (1 + -1) * 2;
         }
     "#;
     let tokens = Lexer::new(src).tokenize().unwrap();
@@ -22,7 +22,15 @@ fn test_main() {
                 name: "main".to_string(),
                 return_type: Type::Int,
                 args: vec![("a".to_string(), Type::Int), ("b".to_string(), Type::Int)],
-                body: Stmt::Block(vec![Stmt::Return(Some(Expr::IntLiteral(0)))])
+                body: Stmt::Block(vec![Stmt::Return(Some(Expr::BinaryOp {
+                    op: Operator::Asterisk,
+                    lhs: Box::new(Expr::BinaryOp {
+                        op: Operator::Plus,
+                        lhs: Box::new(Expr::IntLiteral(1)),
+                        rhs: Box::new(Expr::Negation(Box::new(Expr::IntLiteral(1)))),
+                    }),
+                    rhs: Box::new(Expr::IntLiteral(2)),
+                }))])
             }]
         }
     );

@@ -1,4 +1,4 @@
-use super::lexer::Lexer;
+use super::{lexer::Lexer, token::Operator};
 
 impl Lexer<'_> {
     #[must_use]
@@ -52,6 +52,32 @@ impl Lexer<'_> {
             }
 
             break;
+        }
+    }
+
+    pub fn parse_operator(&mut self, c: char) -> Option<Operator> {
+        match c {
+            '+' => {
+                self.bump();
+                Some(Operator::Plus)
+            }
+            '-' => {
+                self.bump();
+                Some(Operator::Minus)
+            }
+            '*' => {
+                self.bump();
+                Some(Operator::Asterisk)
+            }
+            '/' => {
+                self.bump();
+                Some(Operator::Slash)
+            }
+            '=' => {
+                self.bump();
+                Some(Operator::Eq)
+            }
+            _ => None,
         }
     }
 }

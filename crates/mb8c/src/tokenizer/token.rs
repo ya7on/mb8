@@ -25,6 +25,9 @@ pub enum TokenKind {
     /// Reserved keyword (e.g. int)
     Keyword(Keyword),
 
+    /// Operator (e.g. +, -, *, /)
+    Operator(Operator),
+
     /// Left brace {
     LeftBrace,
     /// Right brace }
@@ -40,6 +43,20 @@ pub enum TokenKind {
 
     /// End of file
     Eof,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum Operator {
+    /// Plus +
+    Plus,
+    /// Minus -
+    Minus,
+    /// Asterisk *
+    Asterisk,
+    /// Slash /
+    Slash,
+    /// Equal =
+    Eq,
 }
 
 #[derive(Debug, PartialEq, Clone)]

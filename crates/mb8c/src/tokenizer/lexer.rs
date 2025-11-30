@@ -110,6 +110,12 @@ impl<'a> Lexer<'a> {
                 );
             }
 
+            // Operators
+            if let Some(operator) = self.parse_operator(char) {
+                break 'kind TokenKind::Operator(operator);
+            }
+
+            // Delimiters
             match char {
                 '{' => {
                     self.bump();

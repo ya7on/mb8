@@ -14,9 +14,10 @@ impl Parser {
     pub fn parse_type(&mut self) -> CompileResult<Type> {
         match self.bump() {
             TokenKind::Keyword(Keyword::Int) => Ok(Type::Int),
-            _ => Err(CompileError::UnexpectedToken {
+            _ => Err(CompileError::ParseError {
                 line: self.line(),
                 column: self.column(),
+                message: "Expected type".to_string(),
             }),
         }
     }
@@ -28,9 +29,10 @@ impl Parser {
     pub fn parse_ident(&mut self) -> CompileResult<String> {
         match self.bump() {
             TokenKind::Ident(ident) => Ok(ident),
-            _ => Err(CompileError::UnexpectedToken {
+            _ => Err(CompileError::ParseError {
                 line: self.line(),
                 column: self.column(),
+                message: "Expected identifier".to_string(),
             }),
         }
     }

@@ -41,9 +41,10 @@ impl Parser {
             self.bump();
             return Ok(());
         }
-        Err(CompileError::UnexpectedToken {
+        Err(CompileError::ParseError {
             line: self.line(),
             column: self.column(),
+            message: format!("Expected type {expected:?}"),
         })
     }
 }

@@ -1,3 +1,5 @@
+use crate::tokenizer::token::Operator;
+
 pub mod expr;
 pub mod function;
 pub mod helpers;
@@ -31,4 +33,10 @@ pub enum Stmt {
 #[derive(Debug, PartialEq)]
 pub enum Expr {
     IntLiteral(i16),
+    BinaryOp {
+        op: Operator,
+        lhs: Box<Expr>,
+        rhs: Box<Expr>,
+    },
+    Negation(Box<Expr>),
 }
