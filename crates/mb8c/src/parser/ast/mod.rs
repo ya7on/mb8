@@ -51,4 +51,8 @@ pub enum Expr {
         name: String,
         value: Box<Expr>,
     },
+    Call {
+        name: String,
+        args: Vec<Expr>,
+    },
 }

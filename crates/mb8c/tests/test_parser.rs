@@ -12,6 +12,8 @@ fn test_main() {
         int main(int a, int b) {
             int a = 1;
             a = a + 1;
+            func();
+            func(a, 3, 2 + variable);
             return (1 + -1) * 2;
         }
     "#;
@@ -37,6 +39,22 @@ fn test_main() {
                             lhs: Box::new(Expr::Var("a".to_string())),
                             rhs: Box::new(Expr::IntLiteral(1))
                         })
+                    }),
+                    Stmt::Expression(Expr::Call {
+                        name: "func".to_owned(),
+                        args: vec![]
+                    }),
+                    Stmt::Expression(Expr::Call {
+                        name: "func".to_owned(),
+                        args: vec![
+                            Expr::Var("a".to_owned()),
+                            Expr::IntLiteral(3),
+                            Expr::BinaryOp {
+                                op: Operator::Plus,
+                                lhs: Box::new(Expr::IntLiteral(2)),
+                                rhs: Box::new(Expr::Var("variable".to_owned()))
+                            }
+                        ],
                     }),
                     Stmt::Return(Some(Expr::BinaryOp {
                         op: Operator::Asterisk,

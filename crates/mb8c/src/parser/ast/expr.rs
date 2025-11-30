@@ -142,7 +142,30 @@ impl Parser {
             TokenKind::Ident(name) => {
                 let name = name.clone();
                 self.bump();
-                Ok(Expr::Var(name))
+
+                if self.peek() != TokenKind::LeftParenthesis {
+                    return Ok(Expr::Var(name));
+                }
+                self.bump();
+
+                if self.peek() == TokenKind::RightParenthesis {
+                    self.bump();
+
+                    return Ok(Expr::Call {
+                        name,
+                        args: Vec::new(),
+                    });
+                }
+
+                let mut args = Vec::new();
+                args.push(self.parse_expr()?);
+                while self.peek() == TokenKind::Comma {
+                    self.bump();
+                    args.push(self.parse_expr()?);
+                }
+                self.expect(&TokenKind::RightParenthesis)?;
+
+                Ok(Expr::Call { name, args })
             }
             _ => unimplemented!(),
         }
