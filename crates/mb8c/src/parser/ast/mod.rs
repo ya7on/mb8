@@ -6,7 +6,7 @@ pub mod helpers;
 pub mod program;
 pub mod stmt;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Type {
     Void,
     Int,
@@ -21,7 +21,7 @@ pub struct Program {
 pub struct Function {
     pub name: String,
     pub return_type: Type,
-    pub args: Vec<(String, Type)>,
+    pub params: Vec<(String, Type)>,
     pub body: Stmt,
 }
 

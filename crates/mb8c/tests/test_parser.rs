@@ -25,7 +25,7 @@ fn test_main() {
             functions: vec![Function {
                 name: "main".to_string(),
                 return_type: Type::Int,
-                args: vec![("a".to_string(), Type::Int), ("b".to_string(), Type::Int)],
+                params: vec![("a".to_string(), Type::Int), ("b".to_string(), Type::Int)],
                 body: Stmt::Block(vec![
                     Stmt::Declaration {
                         name: "a".to_string(),

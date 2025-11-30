@@ -8,14 +8,14 @@ impl Parser {
     /// # Errors
     /// Returns a [`CompileError`] if the function cannot be parsed.
     pub fn parse_function(&mut self, return_type: Type, name: String) -> CompileResult<Function> {
-        let mut args = vec![];
+        let mut params = vec![];
 
         self.expect(&TokenKind::LeftParenthesis)?;
         while self.peek() != TokenKind::RightParenthesis {
             let ty = self.parse_type()?;
             let name = self.parse_ident()?;
 
-            args.push((name, ty));
+            params.push((name, ty));
 
             if self.peek() == TokenKind::Comma {
                 self.bump();
@@ -29,7 +29,7 @@ impl Parser {
             return Ok(Function {
                 name,
                 return_type,
-                args,
+                params,
                 body,
             });
         }

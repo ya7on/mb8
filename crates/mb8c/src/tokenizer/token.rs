@@ -28,6 +28,7 @@ pub enum TokenKind {
     /// Operator (e.g. +, -, *, /)
     Operator(Operator),
 
+    /* Delimiters */
     /// Left brace {
     LeftBrace,
     /// Right brace }
