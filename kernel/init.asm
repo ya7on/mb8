@@ -34,7 +34,7 @@ MB8_BANNER:
     #d "MB8 kernel is starting...\n\0"
 
 LOADING:
-    #d "Loading...\n\0"
+    #d "Type 'help' for more information\n\0"
 
 STARTING_SHELL:
     #d "Starting shell...\n\0"
