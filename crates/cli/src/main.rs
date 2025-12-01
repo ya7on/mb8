@@ -225,7 +225,7 @@ fn map_key_to_char(key: Key, shift: bool) -> Option<u8> {
 
     Some(ch)
 }
-
+#[allow(clippy::too_many_lines)]
 fn run_vm(kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
     let Ok(rom) = std::fs::read(kernel) else {
         return;
