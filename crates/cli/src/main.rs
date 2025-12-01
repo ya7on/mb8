@@ -369,8 +369,12 @@ fn main() {
             run_vm(kernel, user, cli.seed);
         }
         config::Commands::Compile { source } => {
-            let Ok(code) = std::fs::read_to_string(source) else {
-                return;
+            let code = match std::fs::read_to_string(source) {
+                Ok(code) => code,
+                Err(err) => {
+                    eprintln!("Failed to read source file: {err}");
+                    return;
+                }
             };
             match compile(&code) {
                 Ok(()) => {}

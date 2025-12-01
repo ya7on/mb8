@@ -232,26 +232,6 @@ POP R7
 
 ---
 
-## CMP
-
-**Syntax**:
-```asm
-CMP rA rB
-```
-
-**Expands to**:
-```asm
-PUSH rA
-SUB rA rB
-POP rA
-```
-
-**Scratch**: stack  
-**Flags**: from `SUB` (Z/N/C)  
-**Description**: Compare two registers; flags reflect `rA - rB`, operands restored.
-
----
-
 ## CMPI
 
 **Syntax**:

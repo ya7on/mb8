@@ -12,9 +12,9 @@ MB8 is an 8-bit microcomputer in the spirit of the ZX Spectrum and Commodore 64,
 ```sh
 make all
 ```
-2) Run the VM, passing the kernel entrypoint first and then any user-space programs:
+2) Run the VM, passing the kernel entrypoint and all user-space programs in `./user` directory:
 ```sh
-cargo run -- run ./kernel/main.bin ./user/sh.bin ./user/hw.bin ./user/ls.bin ./user/exit.bin ./user/help.bin
+make run
 ```
 
 The kernel image is loaded at `0xE000`, user programs are passed as extra binaries, and the OS provides basic CP/M-like services via syscalls.

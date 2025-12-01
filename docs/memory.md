@@ -12,7 +12,8 @@ The MB8 VM exposes a single 64 KiB address space. All reads and writes go throug
 | `0xF000` – `0xF0FF` | 256 B | GPU registers |
 | `0xF100` – `0xF1FF` | 256 B | Keyboard registers |
 | `0xF200` – `0xF3FF` | 512 B | Disk registers and buffer |
-| `0xF400` – `0xFFFF` | 3072 B | Reserved MMIO (not wired yet) |
+| `0xF400` | 1 B | Random number generator |
+| `0xF401` – `0xFFFF` | 3071 B | Reserved MMIO (not wired yet) |
 
 The bus rejects the reserved regions with `unimplemented!()`.
 
@@ -46,3 +47,8 @@ The bus rejects the reserved regions with `unimplemented!()`.
   - `0x0001` — `CMD` (`0x00` no-op, `0x01` read, `0x02` write).
   - `0x0002`–`0x0102` — 256-byte disk buffer used for reads/writes.
 - `CMD` operations move data between the internal image and the buffer; buffer reads/writes go directly to the 256-byte window.
+
+## Random Number Generator (`crates/mb8/src/dev/rand.rs`)
+- Registers at `0xF400` (offsets relative to that base):
+  - `0x00` — `DATA`. Reading returns the next random number in the sequence.
+  - Writes to `DATA` are ignored.

@@ -3,7 +3,7 @@
 We assemble with [`customasm`](https://github.com/hlorenzi/customasm).
 
 ## Writing a program for the VM
-- Always include `../asm/cpu.asm` first (see `user/sh.asm`). It defines the memory banks so your ROM segment assembles with a base address of `0x1000`.
+- Always include `asm/cpu.asm` first (see `user/sh.asm`). It defines the memory banks so your ROM segment assembles with a base address of `0x1000`.
 - When the program is launched, that ROM image is copied into RAM starting at `0x1000` and execution begins at your entry label.
 
 ## Includes
@@ -47,4 +47,6 @@ start:
 
 ## Building and running
 - Build: `customasm file.asm` → produces `file.bin`.
-- Run: `cargo run -- run file.bin` (add `--bot other.bin` to load a bot alongside the judge).
+- Place the executable file in the `user` directory.
+- Update `Makefile` with `USER_PROGRAMS += file.bin`.
+- Run: `make run`
