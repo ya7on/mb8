@@ -7,14 +7,22 @@ use mb8c::{
 };
 
 #[test]
-fn test_main() {
+fn test_empty_program() {
+    let src = r#""#;
+    let tokens = Lexer::new(src).tokenize().unwrap();
+    let mut program = Parser::new(tokens);
+    assert_eq!(
+        program.parse_program().unwrap(),
+        Program { functions: vec![] }
+    );
+}
+
+#[test]
+fn test_return() {
     let src = r#"
-        int main(int a, int b) {
-            int a = 1;
-            a = a + 1;
-            func();
-            func(a, 3, 2 + variable);
-            return (1 + -1) * 2;
+        int func() {
+            return;
+            return 0;
         }
     "#;
     let tokens = Lexer::new(src).tokenize().unwrap();
@@ -23,48 +31,108 @@ fn test_main() {
         program.parse_program().unwrap(),
         Program {
             functions: vec![Function {
-                name: "main".to_string(),
+                name: "func".to_string(),
                 return_type: Type::Int,
-                params: vec![("a".to_string(), Type::Int), ("b".to_string(), Type::Int)],
+                params: vec![],
+                body: Stmt::Block(vec![
+                    Stmt::Return(None),
+                    Stmt::Return(Some(Expr::IntLiteral(0)))
+                ])
+            }]
+        }
+    );
+}
+
+#[test]
+fn test_variables() {
+    let src = r#"
+        int func() {
+            int a;
+            int a = 1;
+            char b;
+            char b = 2;
+        }
+    "#;
+    let tokens = Lexer::new(src).tokenize().unwrap();
+    let mut program = Parser::new(tokens);
+    assert_eq!(
+        program.parse_program().unwrap(),
+        Program {
+            functions: vec![Function {
+                name: "func".to_string(),
+                return_type: Type::Int,
+                params: vec![],
                 body: Stmt::Block(vec![
                     Stmt::Declaration {
                         name: "a".to_string(),
                         ty: Type::Int,
-                        init: Some(Expr::IntLiteral(1))
+                        init: None,
                     },
-                    Stmt::Expression(Expr::Assign {
+                    Stmt::Declaration {
                         name: "a".to_string(),
-                        value: Box::new(Expr::BinaryOp {
-                            op: Operator::Plus,
-                            lhs: Box::new(Expr::Var("a".to_string())),
-                            rhs: Box::new(Expr::IntLiteral(1))
-                        })
-                    }),
+                        ty: Type::Int,
+                        init: Some(Expr::IntLiteral(1)),
+                    },
+                    Stmt::Declaration {
+                        name: "b".to_string(),
+                        ty: Type::Char,
+                        init: None,
+                    },
+                    Stmt::Declaration {
+                        name: "b".to_string(),
+                        ty: Type::Char,
+                        init: Some(Expr::IntLiteral(2)),
+                    },
+                ])
+            }]
+        }
+    );
+}
+
+#[test]
+fn test_call() {
+    let src = r#"
+        int func() {
+            func();
+            func(a, b);
+            func(2 + 2);
+            func(2 * c);
+        }
+    "#;
+    let tokens = Lexer::new(src).tokenize().unwrap();
+    let mut program = Parser::new(tokens);
+    assert_eq!(
+        program.parse_program().unwrap(),
+        Program {
+            functions: vec![Function {
+                name: "func".to_string(),
+                return_type: Type::Int,
+                params: vec![],
+                body: Stmt::Block(vec![
                     Stmt::Expression(Expr::Call {
-                        name: "func".to_owned(),
+                        name: "func".to_string(),
                         args: vec![]
                     }),
                     Stmt::Expression(Expr::Call {
-                        name: "func".to_owned(),
-                        args: vec![
-                            Expr::Var("a".to_owned()),
-                            Expr::IntLiteral(3),
-                            Expr::BinaryOp {
-                                op: Operator::Plus,
-                                lhs: Box::new(Expr::IntLiteral(2)),
-                                rhs: Box::new(Expr::Var("variable".to_owned()))
-                            }
-                        ],
+                        name: "func".to_string(),
+                        args: vec![Expr::Var("a".to_string()), Expr::Var("b".to_string())]
                     }),
-                    Stmt::Return(Some(Expr::BinaryOp {
-                        op: Operator::Asterisk,
-                        lhs: Box::new(Expr::BinaryOp {
+                    Stmt::Expression(Expr::Call {
+                        name: "func".to_string(),
+                        args: vec![Expr::BinaryOp {
                             op: Operator::Plus,
-                            lhs: Box::new(Expr::IntLiteral(1)),
-                            rhs: Box::new(Expr::Negation(Box::new(Expr::IntLiteral(1)))),
-                        }),
-                        rhs: Box::new(Expr::IntLiteral(2)),
-                    }))
+                            lhs: Box::new(Expr::IntLiteral(2)),
+                            rhs: Box::new(Expr::IntLiteral(2))
+                        }],
+                    }),
+                    Stmt::Expression(Expr::Call {
+                        name: "func".to_string(),
+                        args: vec![Expr::BinaryOp {
+                            op: Operator::Asterisk,
+                            lhs: Box::new(Expr::IntLiteral(2)),
+                            rhs: Box::new(Expr::Var("c".to_string()))
+                        }],
+                    })
                 ])
             }]
         }

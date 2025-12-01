@@ -2,7 +2,7 @@ use crate::parser::ast::Type;
 
 pub type CompileResult<T, E = CompileError> = Result<T, E>;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum CompileError {
     InternalError {
         message: String,
