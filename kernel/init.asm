@@ -25,7 +25,12 @@ START_SHELL:
     LDI R1 R2 SHELL_BIN
     CALL K_SYSCALL_ENTRY
 
-    HALT
+    LDI R0 SYS_WRITELN
+    LDI R1 R2 SHELL_NOT_FOUND
+    CALL K_SYSCALL_ENTRY
+
+panic:
+    JR panic
 
 .error:
     HALT
@@ -36,8 +41,8 @@ MB8_BANNER:
 LOADING:
     #d "Type 'help' for more information\n\0"
 
-STARTING_SHELL:
-    #d "Starting shell...\n\0"
-
 SHELL_BIN:
     #d "sh\0"
+
+SHELL_NOT_FOUND:
+    #d "KERNEL PANIC: shell executable not found\n\0"
