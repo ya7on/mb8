@@ -265,8 +265,8 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
         // TODO: check if file name size is less than 8
         if chars.len() > 8 {
             eprintln!(
-                "Error: File name {:?} is too long. Max 8 characters allowed.",
-                name
+                "Error: File name {} is too long. Max 8 characters allowed.",
+                name.to_string_lossy()
             );
             return;
         }
