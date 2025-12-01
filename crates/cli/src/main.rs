@@ -263,10 +263,14 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
 
         let chars = name.as_encoded_bytes();
         // TODO: check if file name size is less than 8
-        let max_len: usize = 8;
-        let len_to_copy = chars.len().min(max_len);
-        let safe_chars = &chars[0..len_to_copy];
-        for (i, c) in safe_chars.iter().enumerate() {
+        if chars.len() > 8 {
+            eprintln!(
+                "Error: File name {:?} is too long. Max 8 characters allowed.",
+                name
+            );
+            return;
+        }
+        for (i, c) in chars.iter().enumerate() {
             fs[zero_block_start + 3 + i] = *c;
         }
 
