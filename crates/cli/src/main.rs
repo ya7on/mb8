@@ -249,7 +249,7 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
         let Ok(data) = std::fs::read(&path) else {
             continue;
         };
-        let Ok(name) = path.file_name().ok_or("Failed to get file name") else {
+        let Ok(name) = path.file_stem().ok_or("Failed to get file name") else {
             continue;
         };
 

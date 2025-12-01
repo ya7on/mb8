@@ -40,4 +40,4 @@ STARTING_SHELL:
     #d "Starting shell...\n\0"
 
 SHELL_BIN:
-    #d "sh.bin\0"
+    #d "sh\0"
