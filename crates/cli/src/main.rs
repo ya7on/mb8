@@ -262,7 +262,6 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
         fs[zero_block_start + 2] = size as u8;
 
         let chars = name.as_encoded_bytes();
-        // TODO: check if file name size is less than 8
         if chars.len() > 8 {
             eprintln!(
                 "Error: File name {} is too long. Max 8 characters allowed.",
