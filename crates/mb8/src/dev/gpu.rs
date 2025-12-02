@@ -1,3 +1,5 @@
+use crate::dev::gpu::registers::VRAM_TTY_END;
+
 use super::{utils::empty_memory, Device};
 
 pub mod registers {
@@ -94,7 +96,45 @@ impl Device for GPU {
                     self.vram[registers::VRAM_CURSOR_X],
                     self.vram[registers::VRAM_CURSOR_Y],
                 );
-                let symbol_index =
+
+                let tty_buf = &mut self.vram[registers::VRAM_TTY_START..VRAM_TTY_END];
+                let cols = registers::TTY_COLS as usize;
+
+                match value {
+                    b'\n' => {
+                        cursor_x = 0;
+                        cursor_y += 1;
+                    }
+
+                    b'\x08' => {
+                        if cursor_x > 0 {
+                            cursor_x -= 1;
+                        } else {
+                            cursor_x = registers::TTY_COLS - 1;
+                            if cursor_y > 0 {
+                                cursor_y -= 1;
+                            } else {
+                                cursor_y = registers::TTY_ROWS - 1;
+                            }
+
+                            let index = cursor_y as usize * cols + cursor_x as usize;
+                            tty_buf[index] = b' ';
+                        }
+                    }
+
+                    _ => {
+                        let index = cursor_y as usize * cols + cursor_x as usize;
+                        tty_buf[index] = b' ';
+
+                        cursor_x += 1;
+                        if cursor_x >= registers::TTY_COLS {
+                            cursor_x = 0;
+                            cursor_y += 1;
+                        }
+                    }
+                }
+
+                /*let symbol_index =
                     cursor_y as usize * registers::TTY_COLS as usize + cursor_x as usize;
                 let tty_buf = &mut self.vram[registers::VRAM_TTY_START..registers::VRAM_TTY_END];
 
@@ -103,13 +143,7 @@ impl Device for GPU {
                     cursor_y += 1;
                 } else {
                     tty_buf[symbol_index] = value;
-
-                    cursor_x += 1;
-                    if cursor_x >= registers::TTY_COLS {
-                        cursor_x = 0;
-                        cursor_y += 1;
-                    }
-                }
+                }*/
 
                 if cursor_y >= registers::TTY_ROWS {
                     cursor_y = 0;
