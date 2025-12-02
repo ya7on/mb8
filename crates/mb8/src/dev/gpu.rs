@@ -109,7 +109,7 @@ impl Device for GPU {
                     b'\x08' => {
                         if cursor_x > 0 {
                             cursor_x -= 1;
-                        } else if cursor_y > 0{
+                        } else if cursor_y > 0 {
                             cursor_y -= 1;
                             cursor_x = registers::TTY_COLS - 1;
                             } else {
@@ -118,8 +118,6 @@ impl Device for GPU {
                                 cursor_y = 0;
                                
                             }
-                        }
-                        }
 
                         let index = cursor_y as usize * cols + cursor_x as usize;
                         tty_buf[index] = b' ';
