@@ -116,10 +116,10 @@ impl Device for GPU {
                             } else {
                                 cursor_y = registers::TTY_ROWS - 1;
                             }
-
-                            let index = cursor_y as usize * cols + cursor_x as usize;
-                            tty_buf[index] = b' ';
                         }
+
+                        let index = cursor_y as usize * cols + cursor_x as usize;
+                        tty_buf[index] = b' ';
                     }
 
                     _ => {
@@ -134,17 +134,6 @@ impl Device for GPU {
                     }
                 }
 
-                /*let symbol_index =
-                    cursor_y as usize * registers::TTY_COLS as usize + cursor_x as usize;
-                let tty_buf = &mut self.vram[registers::VRAM_TTY_START..registers::VRAM_TTY_END];
-
-                if value as char == '\n' {
-                    cursor_x = 0;
-                    cursor_y += 1;
-                } else {
-                    tty_buf[symbol_index] = value;
-                }*/
-
                 if cursor_y >= registers::TTY_ROWS {
                     cursor_y = 0;
                 }
@@ -154,5 +143,36 @@ impl Device for GPU {
             }
             _ => unimplemented!(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tty_backspace() {
+        let mut gpu = GPU::default();
+        // enable tty mode
+        gpu.write(registers::GPU_REG_MODE, registers::GPU_MODE_TTY);
+
+        // initial cursor at (0,0)
+        assert_eq!(gpu.vram[registers::VRAM_CURSOR_X], 0);
+        assert_eq!(gpu.vram[registers::VRAM_CURSOR_Y], 0);
+
+        // write 'A' then 'B'
+        gpu.write(registers::GPU_REG_TTY, b'A');
+        gpu.write(registers::GPU_REG_TTY, b'B');
+
+        // cursor should be at (2,0)
+        assert_eq!(gpu.vram[registers::VRAM_CURSOR_X], 2);
+
+        // backspace: should delete 'B' and move cursor to (1,0)
+        gpu.write(registers::GPU_REG_TTY, b'\x08');
+
+        assert_eq!(gpu.vram[registers::VRAM_CURSOR_X], 1);
+        let buf = gpu.tty_buffer();
+        assert_eq!(buf[0], b'A'); // 'A' still there
+        assert_eq!(buf[1], b' '); // 'B' erased -> space
     }
 }
