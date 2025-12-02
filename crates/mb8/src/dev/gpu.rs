@@ -112,12 +112,10 @@ impl Device for GPU {
                         } else if cursor_y > 0 {
                             cursor_y -= 1;
                             cursor_x = registers::TTY_COLS - 1;
-                            } else {
-
-                                cursor_x = 0;
-                                cursor_y = 0;
-                               
-                            }
+                        } else {
+                            cursor_x = 0;
+                            cursor_y = 0;
+                        }
 
                         let index = cursor_y as usize * cols + cursor_x as usize;
                         tty_buf[index] = b' ';
@@ -146,4 +144,3 @@ impl Device for GPU {
         }
     }
 }
-
