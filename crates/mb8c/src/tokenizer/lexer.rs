@@ -88,6 +88,8 @@ impl<'a> Lexer<'a> {
                     "void" => TokenKind::Keyword(Keyword::Void),
                     "char" => TokenKind::Keyword(Keyword::Char),
                     "int" => TokenKind::Keyword(Keyword::Int),
+                    "if" => TokenKind::Keyword(Keyword::If),
+                    "else" => TokenKind::Keyword(Keyword::Else),
                     "return" => TokenKind::Keyword(Keyword::Return),
                     _ => TokenKind::Ident(ident),
                 };

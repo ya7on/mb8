@@ -47,6 +47,11 @@ pub enum Stmt {
     },
     Return(Option<Expr>),
     Expression(Expr),
+    If {
+        condition: Expr,
+        then_branch: Box<Stmt>,
+        else_branch: Option<Box<Stmt>>,
+    },
 }
 
 #[derive(Debug, PartialEq)]

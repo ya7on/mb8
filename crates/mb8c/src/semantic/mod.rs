@@ -99,6 +99,43 @@ pub fn analyze_stmt(
             symbols.insert(name.to_owned(), *ty)?;
             Ok(())
         }
+        Stmt::If {
+            condition,
+            then_branch,
+            else_branch,
+        } => {
+            match condition {
+                Expr::IntLiteral(_) => {}
+                Expr::BinaryOp { op: _, lhs, rhs } => {
+                    let lhs = analyze_expr(functions, symbols, lhs)?;
+                    let rhs = analyze_expr(functions, symbols, rhs)?;
+                    if lhs != rhs {
+                        return Err(CompileError::TypeMismatch {
+                            expected: lhs,
+                            found: rhs,
+                        });
+                    }
+                }
+                Expr::Var(name) => {
+                    if symbols.lookup_var(name).is_none() {
+                        return Err(CompileError::UndefinedSymbol { name: name.clone() });
+                    }
+                }
+                _ => {
+                    return Err(CompileError::TypeMismatch {
+                        expected: return_type,
+                        found: Type::Void,
+                    });
+                }
+            }
+
+            analyze_stmt(functions, symbols, return_type, then_branch)?;
+            if let Some(else_branch) = else_branch {
+                analyze_stmt(functions, symbols, return_type, else_branch)?;
+            }
+
+            Ok(())
+        }
     }
 }
 

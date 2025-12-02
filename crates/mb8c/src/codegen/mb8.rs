@@ -28,6 +28,16 @@ impl Mb8Asm {
         })
     }
 
+    /// Pushes a comment onto the code buffer.
+    ///
+    /// # Errors
+    /// Returns a `CompileError` if there was an error writing to the code buffer.
+    pub fn comment(&mut self, comment: &str) -> CompileResult<()> {
+        writeln!(self.code, "\t; {comment}").map_err(|_| CompileError::InternalError {
+            message: "Codegen error".to_string(),
+        })
+    }
+
     /// # Errors
     /// Returns a `CompileError` if there was an error writing to the code buffer.
     pub fn ldi(&mut self, reg: &str, imm: u8) -> CompileResult<()> {
@@ -80,5 +90,35 @@ impl Mb8Asm {
     /// Returns a `CompileError` if there was an error writing to the code buffer.
     pub fn div(&mut self, dst: &str, src: &str) -> CompileResult<()> {
         self.instruction(&format!("DIV {dst} {src}"))
+    }
+
+    /// # Errors
+    /// Returns a `CompileError` if there was an error writing to the code buffer.
+    pub fn cmp(&mut self, dst: &str, src: &str) -> CompileResult<()> {
+        self.instruction(&format!("CMP {dst} {src}"))
+    }
+
+    /// # Errors
+    /// Returns a `CompileError` if there was an error writing to the code buffer.
+    pub fn jr(&mut self, label: &str) -> CompileResult<()> {
+        self.instruction(&format!("JR {label}"))
+    }
+
+    /// # Errors
+    /// Returns a `CompileError` if there was an error writing to the code buffer.
+    pub fn jzr(&mut self, label: &str) -> CompileResult<()> {
+        self.instruction(&format!("JZR {label}"))
+    }
+
+    /// # Errors
+    /// Returns a `CompileError` if there was an error writing to the code buffer.
+    pub fn jnzr(&mut self, label: &str) -> CompileResult<()> {
+        self.instruction(&format!("JNZR {label}"))
+    }
+
+    /// # Errors
+    /// Returns a `CompileError` if there was an error writing to the code buffer.
+    pub fn jmp(&mut self, addr: &str) -> CompileResult<()> {
+        self.instruction(&format!("JMP {addr}"))
     }
 }

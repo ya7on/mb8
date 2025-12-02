@@ -15,6 +15,7 @@ impl Parser {
         match self.peek() {
             TokenKind::LeftBrace => self.parse_block_stmt(),
             TokenKind::Keyword(Keyword::Return) => self.parse_return_stmt(),
+            TokenKind::Keyword(Keyword::If) => self.parse_if_stmt(),
             TokenKind::Keyword(_) => self.parse_declaration_stmt(),
             TokenKind::Ident(_) => {
                 let expr = self.parse_expr()?;
@@ -54,6 +55,32 @@ impl Parser {
             self.expect(&TokenKind::Semicolon)?;
             Ok(Stmt::Return(Some(expr)))
         }
+    }
+
+    /// Parses an if statement from a list of tokens.
+    ///
+    /// # Errors
+    /// Returns a `CompileError` if the if statement cannot be parsed.
+    pub fn parse_if_stmt(&mut self) -> CompileResult<Stmt> {
+        self.expect(&TokenKind::Keyword(Keyword::If))?;
+        self.expect(&TokenKind::LeftParenthesis)?;
+        let conition = self.parse_expr()?;
+        self.expect(&TokenKind::RightParenthesis)?;
+
+        let then_branch = self.parse_stmt()?;
+
+        let else_branch = if matches!(self.peek(), TokenKind::Keyword(Keyword::Else)) {
+            self.bump();
+            Some(self.parse_stmt()?)
+        } else {
+            None
+        };
+
+        Ok(Stmt::If {
+            condition: conition,
+            then_branch: Box::new(then_branch),
+            else_branch: else_branch.map(Box::new),
+        })
     }
 
     /// Parses a declaration statement from a list of tokens.
