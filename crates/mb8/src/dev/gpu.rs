@@ -124,7 +124,7 @@ impl Device for GPU {
 
                     _ => {
                         let index = cursor_y as usize * cols + cursor_x as usize;
-                        tty_buf[index] = b' ';
+                        tty_buf[index] = value;
 
                         cursor_x += 1;
                         if cursor_x >= registers::TTY_COLS {
