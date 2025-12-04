@@ -1,64 +1,67 @@
 use std::fmt::Display;
 
-use mb8_isa::{registers::Register, GENERAL_PURPOSE_REGISTERS_COUNT, STACK_TOP};
+use mb8_isa::{registers::Register, REGISTERS_COUNT};
 
 /// API for accessing and manipulating the registers.
 #[derive(Debug)]
 pub struct Registers {
     /// General purpose registers.
-    pub general_purpose: [u8; GENERAL_PURPOSE_REGISTERS_COUNT],
-    /// Program counter register.
-    pub program_counter: u16,
-    /// Stack pointer register.
-    pub stack_pointer: u16,
-    /// Flag register.
-    pub flag: u8,
+    pub registers: [u8; REGISTERS_COUNT],
 }
 
 impl Default for Registers {
     fn default() -> Self {
-        Self {
-            general_purpose: [0; GENERAL_PURPOSE_REGISTERS_COUNT],
-            program_counter: 0xE000,
-            stack_pointer: STACK_TOP as u16,
-            flag: 0,
-        }
+        let mut registers = [0; REGISTERS_COUNT];
+        registers[0xD] = 0xBF;
+        registers[0xE] = 0xFF;
+        Self { registers }
     }
 }
 
 impl Registers {
     /// Write a value to a register.
-    pub fn write(&mut self, register: Register, value: u16) {
+    pub fn write(&mut self, register: impl Into<Register>, value: u8) {
+        let register = register.into();
         match register {
-            Register::R0 => self.general_purpose[0] = value as u8,
-            Register::R1 => self.general_purpose[1] = value as u8,
-            Register::R2 => self.general_purpose[2] = value as u8,
-            Register::R3 => self.general_purpose[3] = value as u8,
-            Register::R4 => self.general_purpose[4] = value as u8,
-            Register::R5 => self.general_purpose[5] = value as u8,
-            Register::R6 => self.general_purpose[6] = value as u8,
-            Register::R7 => self.general_purpose[7] = value as u8,
-            Register::F => self.flag = value as u8,
-            Register::PC => self.program_counter = value,
-            Register::SP => self.stack_pointer = value,
+            Register::R0 | Register::A => self.registers[0x0] = value,
+            Register::R1 => self.registers[0x1] = value,
+            Register::R2 => self.registers[0x2] = value,
+            Register::R3 => self.registers[0x3] = value,
+            Register::R4 => self.registers[0x4] = value,
+            Register::R5 => self.registers[0x5] = value,
+            Register::R6 => self.registers[0x6] = value,
+            Register::R7 => self.registers[0x7] = value,
+            Register::R8 => self.registers[0x8] = value,
+            Register::R9 | Register::IH => self.registers[0x9] = value,
+            Register::R10 | Register::IL => self.registers[0xA] = value,
+            Register::R11 | Register::FPH => self.registers[0xB] = value,
+            Register::R12 | Register::FPL => self.registers[0xC] = value,
+            Register::R13 | Register::SPH => self.registers[0xD] = value,
+            Register::R14 | Register::SPL => self.registers[0xE] = value,
+            Register::R15 | Register::F => self.registers[0xF] = value,
         }
     }
 
     /// Read a value from a register.
     #[must_use]
-    pub fn read(&self, register: Register) -> u16 {
+    pub fn read(&self, register: Register) -> u8 {
         match register {
-            Register::R0 => self.general_purpose[0] as u16,
-            Register::R1 => self.general_purpose[1] as u16,
-            Register::R2 => self.general_purpose[2] as u16,
-            Register::R3 => self.general_purpose[3] as u16,
-            Register::R4 => self.general_purpose[4] as u16,
-            Register::R5 => self.general_purpose[5] as u16,
-            Register::R6 => self.general_purpose[6] as u16,
-            Register::R7 => self.general_purpose[7] as u16,
-            Register::F => self.flag as u16,
-            Register::PC => self.program_counter,
-            Register::SP => self.stack_pointer,
+            Register::R0 | Register::A => self.registers[0x0],
+            Register::R1 => self.registers[0x1],
+            Register::R2 => self.registers[0x2],
+            Register::R3 => self.registers[0x3],
+            Register::R4 => self.registers[0x4],
+            Register::R5 => self.registers[0x5],
+            Register::R6 => self.registers[0x6],
+            Register::R7 => self.registers[0x7],
+            Register::R8 => self.registers[0x8],
+            Register::R9 | Register::IH => self.registers[0x9],
+            Register::R10 | Register::IL => self.registers[0xA],
+            Register::R11 | Register::FPH => self.registers[0xB],
+            Register::R12 | Register::FPL => self.registers[0xC],
+            Register::R13 | Register::SPH => self.registers[0xD],
+            Register::R14 | Register::SPL => self.registers[0xE],
+            Register::R15 | Register::F => self.registers[0xF],
         }
     }
 }
@@ -73,9 +76,7 @@ impl Display for Registers {
         write!(f, "R5={}\t", self.read(Register::R5))?;
         write!(f, "R6={}\t", self.read(Register::R6))?;
         write!(f, "R7={}\t", self.read(Register::R7))?;
-        write!(f, "F={}\t", self.read(Register::F))?;
-        write!(f, "PC={}\t", self.read(Register::PC))?;
-        write!(f, "SP={}", self.read(Register::SP))
+        write!(f, "F={}\t", self.read(Register::F))
     }
 }
 

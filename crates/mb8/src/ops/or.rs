@@ -9,7 +9,7 @@ impl VirtualMachine {
         let result = a | b;
 
         let mut f_register = 0;
-        if result as u8 == 0 {
+        if result == 0 {
             f_register |= flags::Z_FLAG;
         }
         if (result & 0x80) != 0 {
@@ -17,7 +17,7 @@ impl VirtualMachine {
         }
 
         self.registers.write(dst, result);
-        self.registers.write(Register::F, f_register as u16);
+        self.registers.write(Register::F, f_register);
     }
 }
 
@@ -49,7 +49,7 @@ mod tests {
             dst: Register::R0,
             src: Register::R1,
         });
-        assert_eq!(vm.registers.read(Register::F), flags::Z_FLAG as u16);
+        assert_eq!(vm.registers.read(Register::F), flags::Z_FLAG);
     }
 
     #[test]
@@ -61,6 +61,6 @@ mod tests {
             dst: Register::R0,
             src: Register::R1,
         });
-        assert_eq!(vm.registers.read(Register::F), flags::N_FLAG as u16);
+        assert_eq!(vm.registers.read(Register::F), flags::N_FLAG);
     }
 }

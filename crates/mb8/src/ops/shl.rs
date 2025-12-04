@@ -6,13 +6,19 @@ impl VirtualMachine {
     pub fn shl(&mut self, dst: Register, src: Register) {
         let a = self.registers.read(dst);
         let b = self.registers.read(src);
-        let result = a.wrapping_shl(b as u32);
+
+        let mut result = a;
+        let mut carry = false;
+        for _ in 0..b {
+            carry = (result & 0x80) != 0;
+            result <<= 1;
+        }
 
         let mut f_register = 0;
-        if result as u8 == 0 {
+        if result == 0 {
             f_register |= flags::Z_FLAG;
         }
-        if result > 255 {
+        if carry {
             f_register |= flags::C_FLAG;
         }
         if (result & 0x80) != 0 {
@@ -20,7 +26,7 @@ impl VirtualMachine {
         }
 
         self.registers.write(dst, result);
-        self.registers.write(Register::F, f_register as u16);
+        self.registers.write(Register::F, f_register);
     }
 }
 
@@ -52,7 +58,7 @@ mod tests {
             dst: Register::R0,
             src: Register::R1,
         });
-        assert_eq!(vm.registers.read(Register::F), flags::Z_FLAG as u16);
+        assert_eq!(vm.registers.read(Register::F), flags::Z_FLAG);
     }
 
     #[test]
@@ -64,7 +70,7 @@ mod tests {
             dst: Register::R0,
             src: Register::R1,
         });
-        assert_eq!(vm.registers.read(Register::F), flags::C_FLAG as u16);
+        assert_eq!(vm.registers.read(Register::F), flags::C_FLAG);
     }
 
     #[test]
@@ -76,6 +82,6 @@ mod tests {
             dst: Register::R0,
             src: Register::R1,
         });
-        assert_eq!(vm.registers.read(Register::F), flags::N_FLAG as u16);
+        assert_eq!(vm.registers.read(Register::F), flags::N_FLAG);
     }
 }

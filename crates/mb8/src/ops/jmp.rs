@@ -6,8 +6,8 @@ impl VirtualMachine {
     pub fn jmp(&mut self, hi: Register, lo: Register) {
         let hi = self.registers.read(hi);
         let lo = self.registers.read(lo);
-        let addr = (hi << 8) | lo;
-        self.registers.write(Register::PC, addr);
+        let addr = u16::from_be_bytes([hi, lo]);
+        self.program_counter = addr;
     }
 }
 
@@ -21,13 +21,13 @@ mod tests {
     fn jumps_to_absolute_address() {
         // VM jumps to a specific address
         let mut vm = VirtualMachine::default();
-        vm.registers.write(Register::PC, 0x100);
+        vm.program_counter = 0x100;
         vm.registers.write(Register::R0, 0x02);
         vm.registers.write(Register::R1, 0x00);
         vm.execute(&Opcode::Jmp {
             hi: Register::R0,
             lo: Register::R1,
         });
-        assert_eq!(vm.registers.read(Register::PC), 0x200);
+        assert_eq!(vm.program_counter, 0x200);
     }
 }
