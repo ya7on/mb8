@@ -138,3 +138,39 @@ fn test_call() {
         }
     );
 }
+
+#[test]
+fn test_if_statement() {
+    {
+        let src = r#"
+        int main() {
+            if (1) {
+                return 1;
+            } else {
+                return 2;
+            }
+        }
+        "#;
+        let tokens = Lexer::new(src).tokenize().unwrap();
+        let mut program = Parser::new(tokens);
+        assert_eq!(
+            program.parse_program().unwrap(),
+            Program {
+                functions: vec![Function {
+                    name: "main".to_string(),
+                    return_type: Type::Int,
+                    params: vec![],
+                    body: Stmt::Block(vec![Stmt::If {
+                        condition: Expr::IntLiteral(1),
+                        then_branch: Box::new(Stmt::Block(vec![Stmt::Return(Some(
+                            Expr::IntLiteral(1)
+                        ))])),
+                        else_branch: Some(Box::new(Stmt::Block(vec![Stmt::Return(Some(
+                            Expr::IntLiteral(2)
+                        ))])))
+                    },])
+                }]
+            }
+        );
+    }
+}

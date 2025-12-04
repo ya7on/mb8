@@ -8,6 +8,7 @@ use super::{IRFunction, IRInstruction, IROpcode, LocalInfo, Reg};
 pub struct IRBuilder {
     pub func: IRFunction,
     pub next_reg: u32,
+    pub next_label: u32,
     pub locals_map: HashMap<String, u32>,
 }
 
@@ -22,6 +23,7 @@ impl IRBuilder {
                 code: Vec::new(),
             },
             next_reg: 0,
+            next_label: 0,
             locals_map: HashMap::new(),
         }
     }
@@ -30,6 +32,12 @@ impl IRBuilder {
         let r = Reg(self.next_reg);
         self.next_reg += 1;
         r
+    }
+
+    pub fn new_label(&mut self) -> u32 {
+        let label = self.next_label;
+        self.next_label += 1;
+        label
     }
 
     pub fn emit(

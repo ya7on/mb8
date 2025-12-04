@@ -94,6 +94,7 @@ impl IRBuilder {
                     Operator::Minus => BinOperation::Sub,
                     Operator::Asterisk => BinOperation::Mul,
                     Operator::Slash => BinOperation::Div,
+                    Operator::EqEq => BinOperation::Eq,
                     Operator::Eq => unimplemented!(),
                 };
 
@@ -164,6 +165,56 @@ impl IRBuilder {
 
             Stmt::Expression(expr) => {
                 self.lower_expr(expr)?;
+            }
+
+            Stmt::If {
+                condition,
+                then_branch,
+                else_branch,
+            } => {
+                let result = self.lower_expr(condition)?;
+                if !matches!(
+                    condition,
+                    Expr::BinaryOp {
+                        op: Operator::EqEq,
+                        lhs: _,
+                        rhs: _
+                    }
+                ) {
+                    let dst = self.new_reg();
+                    self.emit(IROpcode::LoadImm { imm: 0 }, Some(dst), None, None);
+                    self.emit(
+                        IROpcode::Bin {
+                            op: BinOperation::Eq,
+                        },
+                        Some(dst),
+                        Some(result),
+                        Some(dst),
+                    );
+                    //
+                }
+                let then_label = self.new_label();
+                let else_label = self.new_label();
+
+                self.emit(
+                    IROpcode::JumpIfZero { label: then_label },
+                    None,
+                    Some(result),
+                    None,
+                );
+                self.emit(
+                    IROpcode::JumpIfNotZero { label: else_label },
+                    None,
+                    Some(result),
+                    None,
+                );
+
+                self.emit(IROpcode::Branch { label: then_label }, None, None, None);
+                self.lower_stmt(then_branch)?;
+                self.emit(IROpcode::Branch { label: else_label }, None, None, None);
+                if let Some(else_branch) = else_branch {
+                    self.lower_stmt(else_branch)?;
+                }
             }
         }
         Ok(())

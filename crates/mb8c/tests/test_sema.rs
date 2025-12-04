@@ -190,3 +190,54 @@ fn test_call() {
         );
     }
 }
+
+#[test]
+fn test_if() {
+    {
+        let src = r#"
+        int main() {
+            if (1) {
+                return 1;
+            }
+        }
+        "#;
+        let tokens = Lexer::new(src).tokenize().unwrap();
+        let ast = Parser::new(tokens).parse_program().unwrap();
+        let result = analyze(&ast);
+        assert!(result.is_ok(), "{result:?}");
+    }
+
+    {
+        let src = r#"
+        int main() {
+            int a = 1;
+            if (a) {
+                return 1;
+            }
+        }
+        "#;
+        let tokens = Lexer::new(src).tokenize().unwrap();
+        let ast = Parser::new(tokens).parse_program().unwrap();
+        let result = analyze(&ast);
+        assert!(result.is_ok(), "{result:?}");
+    }
+
+    {
+        let src = r#"
+        int main() {
+            if (a) {
+                return 1;
+            }
+        }
+        "#;
+        let tokens = Lexer::new(src).tokenize().unwrap();
+        let ast = Parser::new(tokens).parse_program().unwrap();
+        let result = analyze(&ast);
+        assert_eq!(
+            result.unwrap_err(),
+            CompileError::UndefinedSymbol {
+                name: "a".to_string()
+            }
+        );
+    }
+}

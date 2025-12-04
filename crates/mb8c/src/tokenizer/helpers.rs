@@ -56,6 +56,12 @@ impl Lexer<'_> {
     }
 
     pub fn parse_operator(&mut self, c: char) -> Option<Operator> {
+        if let ('=', Some('=')) = (c, self.peek_next()) {
+            self.bump();
+            self.bump();
+            return Some(Operator::EqEq);
+        }
+
         match c {
             '+' => {
                 self.bump();
