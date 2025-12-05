@@ -17,6 +17,8 @@ pub enum BinOperation {
     Sub,
     Mul,
     Div,
+
+    Eq,
 }
 
 #[derive(Debug)]
@@ -27,6 +29,9 @@ pub enum IROpcode {
     Bin { op: BinOperation },
     Call { name: String, args: Vec<Reg> },
     Return,
+    Branch { label: u32 },
+    JumpIfZero { label: u32 },
+    JumpIfNotZero { label: u32 },
 }
 
 #[derive(Debug)]

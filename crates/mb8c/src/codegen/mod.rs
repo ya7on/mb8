@@ -1,11 +1,11 @@
-use mb6::Mb8Asm;
+use mb8::Mb8Asm;
 
 use crate::{
     error::{CompileError, CompileResult},
     ir::{BinOperation, IRFunction, IROpcode, Reg},
 };
 
-pub mod mb6;
+pub mod mb8;
 
 const BASE_ADDR: u16 = 0x0100;
 
@@ -70,6 +70,7 @@ impl<'a> FunctionContext<'a> {
 
         result.label(func_name)?;
         for instruction in &self.function.code {
+            result.comment(&format!("{instruction:?}"))?;
             match &instruction.opcode {
                 IROpcode::LoadImm { imm } => {
                     let dst = instruction.dst.ok_or_else(|| CompileError::InternalError {
@@ -163,6 +164,28 @@ impl<'a> FunctionContext<'a> {
                         _ => unreachable!("invalid size"),
                     }
                 }
+                IROpcode::Bin {
+                    op: BinOperation::Eq,
+                } => {
+                    let lhs = instruction
+                        .src1
+                        .ok_or_else(|| CompileError::InternalError {
+                            message: "Bin must have src1".to_string(),
+                        })?;
+                    let rhs = instruction
+                        .src2
+                        .ok_or_else(|| CompileError::InternalError {
+                            message: "Bin must have src2".to_string(),
+                        })?;
+
+                    let lhs_addr = self.reg_addr(lhs);
+                    let rhs_addr = self.reg_addr(rhs);
+
+                    result.ld_addr("R0", lhs_addr)?;
+                    result.ld_addr("R1", rhs_addr)?;
+
+                    result.cmp("R0", "R1")?;
+                }
                 IROpcode::Bin { op } => {
                     let dst = instruction.dst.ok_or_else(|| CompileError::InternalError {
                         message: "Bin must have dst".to_string(),
@@ -199,9 +222,27 @@ impl<'a> FunctionContext<'a> {
                         BinOperation::Div => {
                             result.div("R0", "R1")?;
                         }
+                        BinOperation::Eq => {
+                            result.cmp("R0", "R1")?;
+                        }
                     }
 
                     result.st_addr("R0", dst_addr)?;
+                }
+                IROpcode::Branch { label } => result.label(&format!(".branch_{label}"))?,
+                IROpcode::JumpIfZero { label } => {
+                    result.jzr(&format!(".jump_if_zero_{label}_jmp"))?;
+                    result.jr(&format!(".jump_if_zero_{label}_after_jmp"))?;
+                    result.label(&format!(".jump_if_zero_{label}_jmp"))?;
+                    result.jmp(&format!(".branch_{label}"))?;
+                    result.label(&format!(".jump_if_zero_{label}_after_jmp"))?;
+                }
+                IROpcode::JumpIfNotZero { label } => {
+                    result.jnzr(&format!(".jump_if_zero_{label}_jmp"))?;
+                    result.jr(&format!(".jump_if_zero_{label}_after_jmp"))?;
+                    result.label(&format!(".jump_if_zero_{label}_jmp"))?;
+                    result.jmp(&format!(".branch_{label}"))?;
+                    result.label(&format!(".jump_if_zero_{label}_after_jmp"))?;
                 }
             }
         }

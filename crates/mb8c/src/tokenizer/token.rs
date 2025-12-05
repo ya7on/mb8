@@ -58,6 +58,9 @@ pub enum Operator {
     Slash,
     /// Equal =
     Eq,
+
+    /// Equal equal ==
+    EqEq,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -68,6 +71,10 @@ pub enum Keyword {
     Char,
     /// Integer. 16-bit type
     Int,
+    /// If
+    If,
+    /// Else
+    Else,
     /// Return
     Return,
 }

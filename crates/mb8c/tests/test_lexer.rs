@@ -11,9 +11,9 @@ fn test_all_tokens() {
         // identifier
         identifier
         // keywords
-        int char void return
+        int char void if else return
         // operators
-        + - * / =
+        + - * / = ==
         // delimiters
         ( ) { } , ;
     "#;
@@ -33,6 +33,8 @@ fn test_all_tokens() {
             TokenKind::Keyword(Keyword::Int),
             TokenKind::Keyword(Keyword::Char),
             TokenKind::Keyword(Keyword::Void),
+            TokenKind::Keyword(Keyword::If),
+            TokenKind::Keyword(Keyword::Else),
             TokenKind::Keyword(Keyword::Return),
             // operators
             TokenKind::Operator(Operator::Plus),
@@ -40,6 +42,7 @@ fn test_all_tokens() {
             TokenKind::Operator(Operator::Asterisk),
             TokenKind::Operator(Operator::Slash),
             TokenKind::Operator(Operator::Eq),
+            TokenKind::Operator(Operator::EqEq),
             // delimiters
             TokenKind::LeftParenthesis,
             TokenKind::RightParenthesis,

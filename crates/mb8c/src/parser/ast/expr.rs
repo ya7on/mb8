@@ -21,7 +21,7 @@ impl Parser {
     /// # Errors
     /// Returns a `CompileError` if the expression cannot be parsed.
     pub fn parse_assign_expr(&mut self) -> CompileResult<Expr> {
-        let lhs = self.parse_add_expr()?;
+        let lhs = self.parse_eq_expr()?;
 
         match self.peek() {
             TokenKind::Operator(Operator::Eq) => {
@@ -42,6 +42,29 @@ impl Parser {
                 }
             }
             _ => Ok(lhs),
+        }
+    }
+
+    /// Parses an equality expression from a list of tokens.
+    ///
+    /// # Errors
+    /// Returns a `CompileError` if the expression cannot be parsed.
+    pub fn parse_eq_expr(&mut self) -> CompileResult<Expr> {
+        let mut lhs = self.parse_add_expr()?;
+
+        loop {
+            match self.peek() {
+                TokenKind::Operator(Operator::EqEq) => {
+                    self.bump();
+                    let rhs = self.parse_add_expr()?;
+                    lhs = Expr::BinaryOp {
+                        op: Operator::EqEq,
+                        lhs: Box::new(lhs),
+                        rhs: Box::new(rhs),
+                    };
+                }
+                _ => return Ok(lhs),
+            }
         }
     }
 
