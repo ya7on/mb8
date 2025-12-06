@@ -174,3 +174,32 @@ fn test_if_statement() {
         );
     }
 }
+
+#[test]
+fn test_while_statement() {
+    {
+        let src = r#"
+        int main() {
+            while (1) {
+                return 1;
+            }
+        }
+        "#;
+        let tokens = Lexer::new(src).tokenize().unwrap();
+        let mut program = Parser::new(tokens);
+        assert_eq!(
+            program.parse_program().unwrap(),
+            Program {
+                functions: vec![Function {
+                    name: "main".to_string(),
+                    return_type: Type::Int,
+                    params: vec![],
+                    body: Stmt::Block(vec![Stmt::While {
+                        condition: Expr::IntLiteral(1),
+                        body: Box::new(Stmt::Block(vec![Stmt::Return(Some(Expr::IntLiteral(1)))])),
+                    }])
+                }]
+            }
+        );
+    }
+}

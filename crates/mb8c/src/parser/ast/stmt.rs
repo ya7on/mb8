@@ -16,6 +16,7 @@ impl Parser {
             TokenKind::LeftBrace => self.parse_block_stmt(),
             TokenKind::Keyword(Keyword::Return) => self.parse_return_stmt(),
             TokenKind::Keyword(Keyword::If) => self.parse_if_stmt(),
+            TokenKind::Keyword(Keyword::While) => self.parse_while_stmt(),
             TokenKind::Keyword(_) => self.parse_declaration_stmt(),
             TokenKind::Ident(_) => {
                 let expr = self.parse_expr()?;
@@ -80,6 +81,24 @@ impl Parser {
             condition: conition,
             then_branch: Box::new(then_branch),
             else_branch: else_branch.map(Box::new),
+        })
+    }
+
+    /// Parses a while statement from a list of tokens.
+    ///
+    /// # Errors
+    /// Returns a `CompileError` if the while statement cannot be parsed.
+    pub fn parse_while_stmt(&mut self) -> CompileResult<Stmt> {
+        self.expect(&TokenKind::Keyword(Keyword::While))?;
+        self.expect(&TokenKind::LeftParenthesis)?;
+        let condition = self.parse_expr()?;
+        self.expect(&TokenKind::RightParenthesis)?;
+
+        let body = self.parse_stmt()?;
+
+        Ok(Stmt::While {
+            condition,
+            body: Box::new(body),
         })
     }
 
