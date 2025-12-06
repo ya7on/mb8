@@ -1,11 +1,3 @@
-//const TTY_COLS: usize = 40;
-//const TTY_ROWS: usize = 25;
-
-//const FONT_WIDTH: usize = 8;
-//const FONT_HEIGHT: usize = 8;
-//const GRAPHICS_WIDTH: usize = TTY_COLS * FONT_WIDTH;
-//const GRAPHICS_HEIGHT: usize = TTY_ROWS * FONT_HEIGHT;
-
 const PIXEL_ON_COLOR: u32 = 0x006a_bfc6;
 const PIXEL_OFF_COLOR: u32 = 0x0050_459b;
 
