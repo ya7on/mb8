@@ -4,12 +4,19 @@ use crate::vm::VirtualMachine;
 
 impl VirtualMachine {
     pub fn push(&mut self, src: Register) {
-        let stack_pointer = self.registers.read(Register::SP);
+        let mut stack_pointer = u16::from_be_bytes([
+            self.registers.read(Register::SPH),
+            self.registers.read(Register::SPL),
+        ]);
         let value = self.registers.read(src);
 
-        self.devices.write(stack_pointer, value as u8);
+        self.devices.write(stack_pointer, value);
 
-        self.registers.write(Register::SP, stack_pointer - 1);
+        stack_pointer -= 1;
+
+        let [sp_hi, sp_lo] = stack_pointer.to_be_bytes();
+        self.registers.write(Register::SPH, sp_hi);
+        self.registers.write(Register::SPL, sp_lo);
 
         if stack_pointer - 1 <= STACK_BOTTOM as u16 {
             self.halted = true;
@@ -29,7 +36,13 @@ mod tests {
         let mut vm = VirtualMachine::default();
         vm.registers.write(Register::R0, 0x45);
         vm.execute(&Opcode::Push { src: Register::R0 });
-        assert_eq!(vm.registers.read(Register::SP), 0xBFFF - 1);
+        assert_eq!(
+            (
+                vm.registers.read(Register::SPH),
+                vm.registers.read(Register::SPL)
+            ),
+            (0xBF, 0xFE)
+        );
         assert_eq!(vm.devices.read(0xBFFF), 0x45);
     }
 
@@ -37,7 +50,8 @@ mod tests {
     fn halts_on_stack_overflow() {
         // VM halts when the stack overflows
         let mut vm = VirtualMachine::default();
-        vm.registers.write(Register::SP, 0xBF00);
+        vm.registers.write(Register::SPH, 0xBF);
+        vm.registers.write(Register::SPL, 0x00);
         vm.registers.write(Register::R0, 0x45);
         vm.execute(&Opcode::Push { src: Register::R0 });
         assert!(vm.halted);

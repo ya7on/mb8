@@ -30,10 +30,39 @@ pub enum Register {
     R6,
     /// General-purpose register 7
     R7,
-    /// Stack pointer
-    SP,
-    /// Program counter
-    PC,
+    /// General-purpose register 8
+    R8,
+    /// General-purpose register 9
+    R9,
+    /// General-purpose register 10
+    R10,
+    /// General-purpose register 11
+    R11,
+    /// General-purpose register 12
+    R12,
+    /// General-purpose register 13
+    R13,
+    /// General-purpose register 14
+    R14,
+    /// General-purpose register 15
+    R15,
+
+    /** Aliases */
+
+    /// Accumulator register
+    A,
+    /// Index high byte
+    IH,
+    /// Index low byte
+    IL,
+    /// Frame pointer high byte
+    FPH,
+    /// Frame pointer low byte
+    FPL,
+    /// Stack pointer high byte
+    SPH,
+    /// Stack pointer low byte
+    SPL,
     /// Flag register
     F,
 }

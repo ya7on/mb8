@@ -4,11 +4,14 @@ use crate::vm::VirtualMachine;
 
 impl VirtualMachine {
     pub fn call(&mut self, hi: Register, lo: Register) {
-        let mut stack_pointer = self.registers.read(Register::SP);
-        let program_counter = self.registers.read(Register::PC);
+        let mut stack_pointer = u16::from_be_bytes([
+            self.registers.read(Register::SPH),
+            self.registers.read(Register::SPL),
+        ]);
+        let program_counter = self.program_counter;
 
-        let hi = self.registers.read(hi) as u8;
-        let lo = self.registers.read(lo) as u8;
+        let hi = self.registers.read(hi);
+        let lo = self.registers.read(lo);
 
         let addr = u16::from_be_bytes([hi, lo]);
 
@@ -22,8 +25,10 @@ impl VirtualMachine {
             }
         }
 
-        self.registers.write(Register::SP, stack_pointer);
-        self.registers.write(Register::PC, addr);
+        let [sp_hi, sp_lo] = stack_pointer.to_be_bytes();
+        self.registers.write(Register::SPH, sp_hi);
+        self.registers.write(Register::SPL, sp_lo);
+        self.program_counter = addr;
     }
 }
 
@@ -37,7 +42,7 @@ mod tests {
     fn pushes_return_and_jumps() {
         // VM calls a subroutine at a given address
         let mut vm = VirtualMachine::default();
-        vm.registers.write(Register::PC, 0x9876);
+        vm.program_counter = 0x9876;
         vm.registers.write(Register::R0, 0x12);
         vm.registers.write(Register::R1, 0x34);
         vm.execute(&Opcode::Call {
@@ -45,12 +50,13 @@ mod tests {
             lo: Register::R1,
         });
         assert_eq!(
-            vm.registers.read(Register::SP),
-            0xBFFF - 2,
-            "SP=0x{:X}",
-            vm.registers.read(Register::SP)
+            (
+                vm.registers.read(Register::SPH),
+                vm.registers.read(Register::SPL)
+            ),
+            (0xBF, 0xFD),
         );
-        assert_eq!(vm.registers.read(Register::PC), 0x1234);
+        assert_eq!(vm.program_counter, 0x1234);
         assert_eq!(vm.devices.read(0xBFFF - 1), 0x98);
         assert_eq!(vm.devices.read(0xBFFF), 0x76);
     }

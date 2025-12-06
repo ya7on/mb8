@@ -4,7 +4,7 @@ use crate::{opcodes::Opcode, registers::Register};
 #[must_use]
 pub fn encode_register(register: Register) -> u8 {
     match register {
-        Register::R0 => 0x0,
+        Register::R0 | Register::A => 0x0,
         Register::R1 => 0x1,
         Register::R2 => 0x2,
         Register::R3 => 0x3,
@@ -12,9 +12,14 @@ pub fn encode_register(register: Register) -> u8 {
         Register::R5 => 0x5,
         Register::R6 => 0x6,
         Register::R7 => 0x7,
-        Register::SP => 0xD,
-        Register::PC => 0xE,
-        Register::F => 0xF,
+        Register::R8 => 0x8,
+        Register::R9 | Register::IH => 0x9,
+        Register::R10 | Register::IL => 0xA,
+        Register::R11 | Register::FPH => 0xB,
+        Register::R12 | Register::FPL => 0xC,
+        Register::R13 | Register::SPH => 0xD,
+        Register::R14 | Register::SPL => 0xE,
+        Register::R15 | Register::F => 0xF,
     }
 }
 
@@ -137,9 +142,14 @@ mod tests {
         assert_eq!(encode_register(Register::R5), 0x5);
         assert_eq!(encode_register(Register::R6), 0x6);
         assert_eq!(encode_register(Register::R7), 0x7);
-        assert_eq!(encode_register(Register::SP), 0xD);
-        assert_eq!(encode_register(Register::PC), 0xE);
-        assert_eq!(encode_register(Register::F), 0xF);
+        assert_eq!(encode_register(Register::R8), 0x8);
+        assert_eq!(encode_register(Register::R9), 0x9);
+        assert_eq!(encode_register(Register::R10), 0xA);
+        assert_eq!(encode_register(Register::R11), 0xB);
+        assert_eq!(encode_register(Register::R12), 0xC);
+        assert_eq!(encode_register(Register::R13), 0xD);
+        assert_eq!(encode_register(Register::R14), 0xE);
+        assert_eq!(encode_register(Register::R15), 0xF);
     }
 
     #[test]

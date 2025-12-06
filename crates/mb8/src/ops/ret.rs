@@ -4,7 +4,10 @@ use crate::vm::VirtualMachine;
 
 impl VirtualMachine {
     pub fn ret(&mut self) {
-        let mut stack_pointer = self.registers.read(Register::SP);
+        let mut stack_pointer = u16::from_be_bytes([
+            self.registers.read(Register::SPH),
+            self.registers.read(Register::SPL),
+        ]);
         if stack_pointer + 2 > 0xBFFF {
             self.halted = true;
             return;
@@ -13,9 +16,10 @@ impl VirtualMachine {
         let hi = self.devices.read(stack_pointer);
         stack_pointer += 1;
         let lo = self.devices.read(stack_pointer);
-        self.registers.write(Register::SP, stack_pointer);
-        self.registers
-            .write(Register::PC, u16::from_be_bytes([hi, lo]));
+        let [sp_hi, sp_lo] = stack_pointer.to_be_bytes();
+        self.registers.write(Register::SPH, sp_hi);
+        self.registers.write(Register::SPL, sp_lo);
+        self.program_counter = u16::from_be_bytes([hi, lo]);
     }
 }
 
@@ -29,20 +33,32 @@ mod tests {
     fn restores_pc_from_stack() {
         // VM returns from a subroutine
         let mut vm = VirtualMachine::default();
-        vm.registers.write(Register::PC, 0x100);
+        vm.program_counter = 0x100;
         vm.registers.write(Register::R0, 0x02);
         vm.registers.write(Register::R1, 0x00);
         vm.execute(&Opcode::Call {
             hi: Register::R0,
             lo: Register::R1,
         });
-        assert_eq!(vm.registers.read(Register::SP), 0xBFFF - 2);
-        assert_eq!(vm.registers.read(Register::PC), 0x200);
+        assert_eq!(
+            (
+                vm.registers.read(Register::SPH),
+                vm.registers.read(Register::SPL)
+            ),
+            (0xBF, 0xFD)
+        );
+        assert_eq!(vm.program_counter, 0x200);
         assert_eq!(vm.devices.read(0xBFFF - 1), 0x01);
         assert_eq!(vm.devices.read(0xBFFF), 0x00);
         vm.execute(&Opcode::Ret);
-        assert_eq!(vm.registers.read(Register::SP), 0xBFFF);
-        assert_eq!(vm.registers.read(Register::PC), 0x100);
+        assert_eq!(
+            (
+                vm.registers.read(Register::SPH),
+                vm.registers.read(Register::SPL)
+            ),
+            (0xBF, 0xFF)
+        );
+        assert_eq!(vm.program_counter, 0x100);
     }
 
     #[test]
@@ -50,8 +66,14 @@ mod tests {
         // VM returns from a subroutine
         let mut vm = VirtualMachine::default();
         vm.execute(&Opcode::Ret);
-        assert_eq!(vm.registers.read(Register::SP), 0xBFFF);
-        assert_eq!(vm.registers.read(Register::PC), 0xE000);
+        assert_eq!(
+            (
+                vm.registers.read(Register::SPH),
+                vm.registers.read(Register::SPL)
+            ),
+            (0xBF, 0xFF)
+        );
+        assert_eq!(vm.program_counter, 0xE000);
         assert!(vm.halted);
     }
 }

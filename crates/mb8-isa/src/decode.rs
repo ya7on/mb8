@@ -18,9 +18,14 @@ pub fn decode_register(reg: u16) -> Option<Register> {
         0x5 => Some(Register::R5),
         0x6 => Some(Register::R6),
         0x7 => Some(Register::R7),
-        0xD => Some(Register::SP),
-        0xE => Some(Register::PC),
-        0xF => Some(Register::F),
+        0x8 => Some(Register::R8),
+        0x9 => Some(Register::R9),
+        0xA => Some(Register::R10),
+        0xB => Some(Register::R11),
+        0xC => Some(Register::R12),
+        0xD => Some(Register::R13),
+        0xE => Some(Register::R14),
+        0xF => Some(Register::R15),
         _ => None,
     }
 }
@@ -153,10 +158,14 @@ mod tests {
         assert_eq!(decode_register(0x5), Some(Register::R5));
         assert_eq!(decode_register(0x6), Some(Register::R6));
         assert_eq!(decode_register(0x7), Some(Register::R7));
-        assert_eq!(decode_register(0xD), Some(Register::SP));
-        assert_eq!(decode_register(0xE), Some(Register::PC));
-        assert_eq!(decode_register(0xF), Some(Register::F));
-        assert_eq!(decode_register(0xFF), None);
+        assert_eq!(decode_register(0x8), Some(Register::R8));
+        assert_eq!(decode_register(0x9), Some(Register::R9));
+        assert_eq!(decode_register(0xA), Some(Register::R10));
+        assert_eq!(decode_register(0xB), Some(Register::R11));
+        assert_eq!(decode_register(0xC), Some(Register::R12));
+        assert_eq!(decode_register(0xD), Some(Register::R13));
+        assert_eq!(decode_register(0xE), Some(Register::R14));
+        assert_eq!(decode_register(0xF), Some(Register::R15));
     }
 
     #[test]

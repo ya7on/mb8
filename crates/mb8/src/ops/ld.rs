@@ -4,11 +4,11 @@ use crate::vm::VirtualMachine;
 
 impl VirtualMachine {
     pub fn ld(&mut self, dst: Register, hi: Register, lo: Register) {
-        let addr_hi = self.registers.read(hi) as u8;
-        let addr_lo = self.registers.read(lo) as u8;
+        let addr_hi = self.registers.read(hi);
+        let addr_lo = self.registers.read(lo);
         let addr = u16::from_be_bytes([addr_hi, addr_lo]);
         let value = self.devices.read(addr);
-        self.registers.write(dst, value as u16);
+        self.registers.write(dst, value);
     }
 }
 
