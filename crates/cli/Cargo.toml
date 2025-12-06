@@ -4,9 +4,14 @@ version = "0.1.0"
 edition.workspace = true
 license.workspace = true
 
+[lib]
+crate-type = ["cdylib"]
+
 [dependencies]
 clap = { version = "4.5.51", features = ["derive"] }
-minifb = "0.28.0"
+minifb = { version = "0.28" }
+web-sys = { version = "0.3.83", features = ["Window", "console"] }
+wasm-bindgen = "0.2.106"
 
 mb8 = { path = "../mb8" }
 mb8c = { path = "../mb8c" }

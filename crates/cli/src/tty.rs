@@ -6,7 +6,14 @@ const FONT_HEIGHT: usize = 8;
 const GRAPHICS_WIDTH: usize = TTY_COLS * FONT_WIDTH;
 const GRAPHICS_HEIGHT: usize = TTY_ROWS * FONT_HEIGHT;
 
+#[cfg(target_arch = "wasm32")]
+const PIXEL_ON_COLOR: u32 = 0xffc6_bf6a;
+#[cfg(target_arch = "wasm32")]
+const PIXEL_OFF_COLOR: u32 = 0xff9b_4550;
+
+#[cfg(not(target_arch = "wasm32"))]
 const PIXEL_ON_COLOR: u32 = 0x006a_bfc6;
+#[cfg(not(target_arch = "wasm32"))]
 const PIXEL_OFF_COLOR: u32 = 0x0050_459b;
 
 static FONT: [[u8; 8]; 128] = [

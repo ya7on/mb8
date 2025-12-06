@@ -42,7 +42,7 @@ impl VirtualMachine {
         }
     }
 
-    pub fn step(&mut self) {
+    pub fn step(&mut self) -> u16 {
         let pc = self.registers.read(Register::PC);
         self.registers.write(Register::PC, pc.saturating_add(2));
 
@@ -51,7 +51,7 @@ impl VirtualMachine {
         let binary_instruction = u16::from_be_bytes([hi, lo]);
         let Some(opcode) = decode(binary_instruction) else {
             self.halted = true;
-            return;
+            return 0;
         };
 
         println!("{pc:X}:\t({binary_instruction:?})");
@@ -60,6 +60,8 @@ impl VirtualMachine {
         // println!("=");
 
         self.execute(&opcode);
+
+        pc
     }
 
     /// Execute a program.
