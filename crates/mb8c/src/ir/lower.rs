@@ -134,6 +134,7 @@ impl IRBuilder {
     ///
     /// # Errors
     /// Returns an error if the statement cannot be lowered.
+    #[allow(clippy::too_many_lines)]
     pub fn lower_stmt(&mut self, stmt: &Stmt) -> CompileResult<()> {
         match stmt {
             Stmt::Block(stmts) => {
@@ -215,6 +216,49 @@ impl IRBuilder {
                 if let Some(else_branch) = else_branch {
                     self.lower_stmt(else_branch)?;
                 }
+            }
+
+            Stmt::While { condition, body } => {
+                let loop_label = self.new_label();
+                let exit_label = self.new_label();
+
+                self.emit(IROpcode::Branch { label: loop_label }, None, None, None);
+                self.lower_stmt(body)?;
+                let result = self.lower_expr(condition)?;
+                if !matches!(
+                    condition,
+                    Expr::BinaryOp {
+                        op: Operator::EqEq,
+                        lhs: _,
+                        rhs: _
+                    }
+                ) {
+                    let dst = self.new_reg();
+                    self.emit(IROpcode::LoadImm { imm: 0 }, Some(dst), None, None);
+                    self.emit(
+                        IROpcode::Bin {
+                            op: BinOperation::Eq,
+                        },
+                        Some(dst),
+                        Some(result),
+                        Some(dst),
+                    );
+                    //
+                }
+                self.emit(
+                    IROpcode::JumpIfZero { label: loop_label },
+                    None,
+                    Some(result),
+                    None,
+                );
+                self.emit(
+                    IROpcode::JumpIfNotZero { label: exit_label },
+                    None,
+                    Some(result),
+                    None,
+                );
+                self.emit(IROpcode::Branch { label: loop_label }, None, None, None);
+                self.emit(IROpcode::Branch { label: exit_label }, None, None, None);
             }
         }
         Ok(())

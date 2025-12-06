@@ -11,7 +11,7 @@ fn test_all_tokens() {
         // identifier
         identifier
         // keywords
-        int char void if else return
+        int char void if else while return
         // operators
         + - * / = ==
         // delimiters
@@ -35,6 +35,7 @@ fn test_all_tokens() {
             TokenKind::Keyword(Keyword::Void),
             TokenKind::Keyword(Keyword::If),
             TokenKind::Keyword(Keyword::Else),
+            TokenKind::Keyword(Keyword::While),
             TokenKind::Keyword(Keyword::Return),
             // operators
             TokenKind::Operator(Operator::Plus),
