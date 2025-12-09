@@ -3,10 +3,10 @@
 Helper macros from `asm/std.asm`. Include them after `cpu.asm`/`ext.asm` to get simple data routines.
 
 ## MEMCPY
-- **Syntax**: `MEMCPY i len srchi srclo dsthi dstlo`
-- **Inputs**: `i` loop counter (start at 0), `len` stop value, `srchi:srclo` source pointer, `dsthi:dstlo` destination pointer.
-- **Behavior**: Copies bytes from source to destination until `i == len`. Both pointers are incremented with `INC16`. Restores `i` each iteration via push/pop.
-- **Scratch**: uses stack to save `i`; flags from `CMP`, `INC`, `INC16`.
+- **Syntax**: `MEMCPY [dsthi:dstlo] [srchi:srclo] len`
+- **Inputs**: `srchi:srclo` source pointer, `dsthi:dstlo` destination pointer, `len` stop value.
+- **Behavior**: Copies bytes from source to destination while an internal counter in `A` walks from `0` up to `len`. That means it copies `len + 1` bytes. Source and destination advance with `INC16`. Restores the original `A` after finishing.
+- **Scratch**: uses stack to save `A`; flags from `CMP`, `INC`, `INC16`.
 
 ## STRCMP
 - **Syntax**: `STRCMP i j srchi srclo dsthi dstlo`
