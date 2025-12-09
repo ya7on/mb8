@@ -13,7 +13,7 @@ start:
     LDI R1 R2 FILENAME
     LDI R3 0x00
     LDI R4 0x00
-    CALL K_SYSCALL_ENTRY
+    CALL [K_SYSCALL_ENTRY]
 
     HALT
 

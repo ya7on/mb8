@@ -21,29 +21,29 @@
     }
 
     ; Call an absolute address
-    CALL { addr: u16 } => {
+    CALL [{ addr: u16 }] => {
         hi = addr >> 8;
         lo = addr & 0xFF;
         asm {
             LDI R6 {hi}
             LDI R7 {lo}
-            CALL R6 R7
+            CALL [R6:R7]
         }
     }
 
     ; Jump to an absolute address
-    JMP { addr: u16 } => {
+    JMP [{ addr: u16 }] => {
         hi = addr >> 8;
         lo = addr & 0xFF;
         asm {
             LDI R6 {hi}
             LDI R7 {lo}
-            JMP R6 R7
+            JMP [R6:R7]
         }
     }
 
     ; Jump to an absolute label using a relative offset
-    JR { addr: u16 } => {
+    JR [{ addr: u16 }] => {
         offset = addr - $ - 2
         assert(offset <= 127)
         assert(offset >= -128)
@@ -51,7 +51,7 @@
     }
 
     ; Jump if zero flag is set to an absolute label
-    JZR { addr: u16 } => {
+    JZR [{ addr: u16 }] => {
         offset = addr - $ - 2
         assert(offset <= 127)
         assert(offset >= -128)
@@ -59,7 +59,7 @@
     }
 
     ; Jump if zero flag is not set to an absolute label
-    JNZR { addr: u16 } => {
+    JNZR [{ addr: u16 }] => {
         offset = addr - $ - 2
         assert(offset <= 127)
         assert(offset >= -128)
@@ -93,9 +93,9 @@
     ; WARNING: This macro may modify the stack pointer.
     INC16 { hi: register } { lo: register } => asm {
         CMPI {lo} 0xFF
-        JZR inc_hi
+        JZR [inc_hi]
         INC {lo}
-        JR end
+        JR [end]
         inc_hi:
         LDI {lo} 0
         INC {hi}
@@ -155,7 +155,7 @@
             ADD {dst} {a}
             DEC {b}
             CMPI {b} 0
-            JNZR iter
+            JNZR [iter]
         POP {b}
     }
 }

@@ -4,10 +4,10 @@
 start:
     LDI R0 0x03
     LDI R1 R2 HELP_TEXT
-    CALL 0xE500
+    CALL [0xE500]
 
     LDI R0 0x0F
-    CALL 0xE500
+    CALL [0xE500]
 
 HELP_TEXT:
     #d "MB8 - 8bit fantasy computer\n"

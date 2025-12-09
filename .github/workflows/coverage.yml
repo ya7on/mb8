@@ -26,7 +26,7 @@ jobs:
       - uses: taiki-e/install-action@cargo-llvm-cov
 
       - name: Install customasm
-        run: cargo install customasm --locked
+        run: cargo install --git https://github.com/hlorenzi/customasm
       - name: Compile asm
         run: make
 

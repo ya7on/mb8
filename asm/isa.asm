@@ -44,16 +44,16 @@
     SHL { dst: register } { src: register } => 0x17 @ dst @ src
     CMP { dst: register } { src: register } => 0x18 @ dst @ src
     LDI { dst: register } { value: u8 } => 0x2 @ dst @ value
-    JMP { hi: register } { lo: register } => 0x30 @ hi @ lo
+    JMP [{ hi: register }:{ lo: register }] => 0x30 @ hi @ lo
     JR { offset: i8 } => 0x31 @ offset
     JZR { offset: i8 } => 0x32 @ offset
     JNZR { offset: i8 } => 0x33 @ offset
     JCR { offset: i8 } => 0x34 @ offset
     JNCR { offset: i8 } => 0x35 @ offset
-    CALL { hi: register } { lo: register } => 0x40 @ hi @ lo
+    CALL [{ hi: register }:{ lo: register }] => 0x40 @ hi @ lo
     RET => 0x4100
     PUSH { src: register } => 0x42 @ src @ 0x0
     POP { dst: register } => 0x43 @ dst @ 0x0
-    LD { dst: register } { hi: register } { lo: register } => 0x5 @ dst @ hi @ lo
-    ST { dst: register } { hi: register } { lo: register } => 0x6 @ dst @ hi @ lo
+    LD { dst: register } [{ hi: register }:{ lo: register }] => 0x5 @ dst @ hi @ lo
+    ST { dst: register } [{ hi: register }:{ lo: register }] => 0x6 @ dst @ hi @ lo
 }
