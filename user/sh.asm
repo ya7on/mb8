@@ -36,7 +36,7 @@ read_key:
     LDI R4 0x02       ; hi
     ZERO R5
     MOV R5 R2         ; lo = idx (base lo = 0)
-    ST R0 [R4:R5]
+    ST [R4:R5] R0
     INC R2
 
     ; echo typed char
@@ -51,7 +51,7 @@ exec_line:
     LDI R4 0x02
     MOV R5 R2
     LDI R1 0x00
-    ST R1 [R4:R5]
+    ST [R4:R5] R1
 
     ; newline then next prompt
     LDI R0 0x02

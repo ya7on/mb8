@@ -20,7 +20,7 @@ rand_loop:
     LDI R0 SYS_RAND
     CALL [K_SYSCALL_ENTRY]    ; result returned in R0
 
-    ST R0 [R3:R4]
+    ST [R3:R4] R0
 
 
     LDI R6 1

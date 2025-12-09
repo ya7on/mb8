@@ -371,7 +371,7 @@ rD = imm8
 
 **Syntax**:
 ```asm
-JMP rH rL
+JMP [rH:rL]
 ```
 
 **Operation**:
@@ -530,7 +530,7 @@ if C == 0 { PC = PC + sign_extend(off8) }
 
 **Syntax**:
 ```asm
-CALL rH rL
+CALL [rH:rL]
 ```
 
 **Operation**:
@@ -630,7 +630,7 @@ POP rD
 
 **Syntax**:
 ```asm
-LD rD rH rL
+LD rD [rH:rL]
 ```
 
 **Operation**:
@@ -659,7 +659,7 @@ rD = MEM[(rH << 8) | rL]
 
 **Syntax**:
 ```asm
-ST rS rH rL
+ST [rH:rL] rS
 ```
 
 **Operation**:

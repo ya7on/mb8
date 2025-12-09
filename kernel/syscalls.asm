@@ -102,7 +102,7 @@ sys_gpu_mode:
     ; R6:R7 = 0xF000
     LDI R6 0xF0
     LDI R7 0x00
-    ST R1 [R6:R7]
+    ST [R6:R7] R1
     RET
 
 ; Writes a character to the terminal
@@ -118,7 +118,7 @@ sys_tty_write:
     ; R6:R7 = 0xF001
     LDI R6 0xF0
     LDI R7 0x01
-    ST R1 [R6:R7]
+    ST [R6:R7] R1
     RET
 
 ; Writes a in-memory string to the terminal
@@ -140,7 +140,7 @@ sys_tty_writeln:
     LD R5 [R1:R2]
     CMPI R5 0x00
     JZR [.end_loop]
-    ST R5 [R6:R7]
+    ST [R6:R7] R5
     INC R2
     JR [.loop]
 .end_loop:
@@ -194,7 +194,7 @@ sys_disk_set_block:
     ; R6:R7 = 0xF200
     LDI R6 0xF2
     LDI R7 0x00
-    ST R1 [R6:R7]
+    ST [R6:R7] R1
     RET
 
 ; Reads a disk block into the disk buffer
@@ -211,7 +211,7 @@ sys_disk_read_block:
     LDI R6 0xF2
     LDI R7 0x01
     LDI R5 0x01
-    ST R5 [R6:R7]
+    ST [R6:R7] R5
     RET
 
 ; Writes a disk buffer into the disk
@@ -228,7 +228,7 @@ sys_disk_write_block:
     LDI R6 0xF2
     LDI R7 0x01
     LDI R5 0x02
-    ST R5 [R6:R7]
+    ST [R6:R7] R5
     RET
 
 ; Writes a directory block into the memory
@@ -257,7 +257,7 @@ sys_fs_list:
     LDI R6 0x02
     LDI R7 0xFF
 
-    MEMCPY R1 R7 R5 R6 R3 R4
+    MEMCPY [R3:R4] [R5:R6] R7
     RET
 
 ; Finds a file in the FS
@@ -373,8 +373,8 @@ sys_fs_read:
 
     LDI R0 0x00
 .copy_byte:
-    LD  R7 [R6:R5]
-    ST  R7 [R3:R4]
+    LD R7 [R6:R5]
+    ST [R3:R4] R7
 
     INC R5
     CMPI R5 0x00

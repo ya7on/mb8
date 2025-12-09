@@ -16,7 +16,7 @@ start:
     LDI R1 228
     LDI R2 0xF2
     LDI R3 0x02
-    ST R1 [R2:R3]
+    ST [R2:R3] R1
 
     LDI R0 SYS_DISK_WRITE_BLOCK
     CALL [K_SYSCALL_ENTRY]

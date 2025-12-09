@@ -44,14 +44,14 @@ LDI rL (imm16 & 0xFF)
 
 **Syntax**:
 ```asm
-CALL addr16
+CALL [addr16]
 ```
 
 **Expands to**:
 ```asm
 LDI R6 (addr16 >> 8)
 LDI R7 (addr16 & 0xFF)
-CALL R6 R7
+CALL [R6:R7]
 ```
 
 **Scratch**: uses `R6`, `R7`  

@@ -17,6 +17,6 @@ start:
     LDI R4 0x01
     LDI R5 0x50
 
-    MEMCPY R0 R1 R2 R3 R4 R5
+    MEMCPY [R4:R5] [R2:R3] R1
 
     HALT
