@@ -1,13 +1,17 @@
 use std::{
+    collections::HashMap,
     path::PathBuf,
     time::{Duration, Instant},
 };
 
 use clap::Parser;
-use mb8::vm;
+use mb8::{
+    dev::gpu::registers::{TTY_COLS, TTY_ROWS},
+    vm,
+};
 use mb8c::compile;
 use minifb::{Key, KeyRepeat, Window, WindowOptions};
-use tty::render_tty;
+use tty::Tty;
 
 mod config;
 mod tty;
@@ -240,6 +244,7 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
 
     let seed = seed.unwrap_or(1);
 
+    let mut tty = Tty::new(TTY_COLS as usize, TTY_ROWS as usize, 1024);
     vm.devices.rand().number = (seed as u8).max(1);
 
     // MakeFS
@@ -293,13 +298,22 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
 
     let mut ticks = RENDER_INTERVAL - 1;
     let mut last_render = Instant::now();
-    let mut force_render = true;
     let mut left_shift = false;
     let mut right_shift = false;
 
+    let mut key_last_pressed = HashMap::new();
+
     while !vm.halted && window.is_open() {
         ticks = ticks.wrapping_add(1);
+
         for key in window.get_keys_pressed(KeyRepeat::No) {
+            let current_time = Instant::now();
+
+            if let Some(last_time) = key_last_pressed.get(&key) {
+                if current_time.duration_since(*last_time) < Duration::from_millis(100) {
+                    continue;
+                }
+            }
             if key == Key::LeftShift {
                 left_shift = true;
                 continue;
@@ -309,12 +323,11 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
                 continue;
             }
 
-            force_render = true;
-            let Some(char) = map_key_to_char(key, left_shift || right_shift) else {
-                continue;
-            };
+            if let Some(mapped_char) = map_key_to_char(key, left_shift || right_shift) {
+                vm.devices.keyboard().key_pressed(mapped_char);
+            }
 
-            vm.devices.keyboard().key_pressed(char);
+            key_last_pressed.insert(key, current_time);
         }
         for key in window.get_keys_released() {
             if key == Key::LeftShift {
@@ -332,30 +345,17 @@ fn run_vm(kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
             vm.step();
         }
 
-        if force_render || ticks.is_multiple_of(RENDER_INTERVAL) {
-            let gpu = vm.devices.gpu();
-            let tty = gpu.tty_buffer();
-            render_tty(tty, buf.as_mut_slice());
-
-            if window.update_with_buffer(&buf, 320, 200).is_err() {
-                return;
-            }
-            force_render = false;
-            last_render = Instant::now();
-
-            continue;
-        }
-
         if last_render.elapsed() >= Duration::from_millis(16) {
             let gpu = vm.devices.gpu();
-            let tty = gpu.tty_buffer();
-            render_tty(tty, buf.as_mut_slice());
+            for &byte in gpu.tty_buffer() {
+                tty.write_byte(byte);
+            }
+
+            tty.render(buf.as_mut_slice(), 320);
 
             if window.update_with_buffer(&buf, 320, 200).is_err() {
                 return;
             }
-            force_render = false;
-
             last_render = Instant::now();
         }
     }

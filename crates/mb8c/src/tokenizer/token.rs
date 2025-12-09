@@ -75,6 +75,8 @@ pub enum Keyword {
     If,
     /// Else
     Else,
+    /// While
+    While,
     /// Return
     Return,
 }

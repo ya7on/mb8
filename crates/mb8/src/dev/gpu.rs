@@ -134,7 +134,20 @@ impl Device for GPU {
                 }
 
                 if cursor_y >= registers::TTY_ROWS {
-                    cursor_y = 0;
+                    for y in 1..registers::TTY_ROWS {
+                        for x in 0..registers::TTY_COLS {
+                            let src_index = (y as usize * cols) + x as usize;
+                            let dest_index = ((y - 1) as usize * cols) + x as usize;
+                            tty_buf[dest_index] = tty_buf[src_index];
+                        }
+                    }
+
+                    let last_line_start = (registers::TTY_ROWS - 1) as usize * cols;
+                    for x in 0..registers::TTY_COLS {
+                        tty_buf[last_line_start + x as usize] = b' ';
+                    }
+
+                    cursor_y = registers::TTY_ROWS - 1;
                 }
 
                 self.vram[registers::VRAM_CURSOR_X] = cursor_x;
