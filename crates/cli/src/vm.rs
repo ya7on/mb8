@@ -5,7 +5,7 @@ use std::{
 
 use crate::{filesystem::makefs, keyboard::Keyboard};
 use mb8::{
-    dev::{gpu::registers::{TTY_COLS, TTY_ROWS}},
+    dev::gpu::registers::{TTY_COLS, TTY_ROWS},
     vm,
 };
 
@@ -44,15 +44,15 @@ pub fn run_vm(kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
     while !vm.halted && window.is_open() {
         ticks = ticks.wrapping_add(1);
 
-        Keyboard::key_pressed( key, &window, &mut vm);
+        Keyboard::key_pressed(key, &window, &mut vm);
 
-        Keyboard::key_released( key, &window);
+        Keyboard::key_released(key, &window);
 
         for _ in 0..OPS_PER_FRAME {
             if vm.halted {
                 break;
             }
-            vm.step();
+            vm_step(&mut vm);
         }
 
         if last_render.elapsed() >= Duration::from_millis(16) {
@@ -69,4 +69,8 @@ pub fn run_vm(kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
             last_render = Instant::now();
         }
     }
+}
+
+fn vm_step(vm: &mut vm::VirtualMachine) {
+    vm.step();
 }
