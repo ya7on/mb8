@@ -1,4 +1,3 @@
-
 use mb8::vm::VirtualMachine;
 use std::path::PathBuf;
 
