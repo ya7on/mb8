@@ -5,6 +5,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+chumsky = { version = "0.11.2" }
 mb8-isa = { path = "../mb8-isa" }
 
 [lints]

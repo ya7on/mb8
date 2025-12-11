@@ -5,6 +5,7 @@ pub mod codegen;
 pub mod error;
 pub mod ir;
 pub mod parser;
+pub mod parser2;
 pub mod semantic;
 pub mod tokenizer;
 
