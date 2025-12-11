@@ -1,4 +1,4 @@
-.PHONY: run clean
+.PHONY: run clean book build test lint ci
 
 all: kernel user tests
 
@@ -27,3 +27,18 @@ run: $(KERNEL_MAIN) $(USER_TARGETS)
 
 clean:
 	rm -f kernel/*.bin user/*.bin kernel/tests/*.bin
+
+book:
+	mdbook serve ./docs
+
+build:
+	cargo build --release
+
+test:
+	cargo test
+
+lint:
+	cargo fmt -- --check
+	cargo clippy
+
+ci: build test lint

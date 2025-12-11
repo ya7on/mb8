@@ -24,68 +24,68 @@ K_SYSCALL_ENTRY:
 
 syscall_table:
     CMPI R0 SYS_GPU_MODE
-    JNZR .sys_tty_write
-    JMP sys_gpu_mode
+    JNZR [.sys_tty_write]
+    JMP [sys_gpu_mode]
 .sys_tty_write:
     CMPI R0 SYS_WRITE
-    JNZR .sys_tty_writeln
-    JMP sys_tty_write
+    JNZR [.sys_tty_writeln]
+    JMP [sys_tty_write]
 .sys_tty_writeln:
     CMPI R0 SYS_WRITELN
-    JNZR .sys_wait_for_key
-    JMP sys_tty_writeln
+    JNZR [.sys_wait_for_key]
+    JMP [sys_tty_writeln]
 .sys_wait_for_key:
     CMPI R0 SYS_WAIT_FOR_KEY
-    JNZR .sys_read_key
-    JMP sys_wait_for_key
+    JNZR [.sys_read_key]
+    JMP [sys_wait_for_key]
 .sys_read_key:
     CMPI R0 SYS_READ_KEY
-    JNZR .sys_disk_set_block
-    JMP sys_read_key
+    JNZR [.sys_disk_set_block]
+    JMP [sys_read_key]
 .sys_disk_set_block:
     CMPI R0 SYS_DISK_SET_BLOCK
-    JNZR .sys_disk_read_block
-    JMP sys_disk_set_block
+    JNZR [.sys_disk_read_block]
+    JMP [sys_disk_set_block]
 .sys_disk_read_block:
     CMPI R0 SYS_DISK_READ_BLOCK
-    JNZR .sys_disk_write_block
-    JMP sys_disk_read_block
+    JNZR [.sys_disk_write_block]
+    JMP [sys_disk_read_block]
 .sys_disk_write_block:
     CMPI R0 SYS_DISK_WRITE_BLOCK
-    JNZR .sys_fs_list
-    JMP sys_disk_write_block
+    JNZR [.sys_fs_list]
+    JMP [sys_disk_write_block]
 .sys_fs_list:
     CMPI R0 SYS_FS_LIST
-    JNZR .sys_fs_find
-    JMP sys_fs_list
+    JNZR [.sys_fs_find]
+    JMP [sys_fs_list]
 .sys_fs_find:
     CMPI R0 SYS_FS_FIND
-    JNZR .sys_fs_read
-    JMP sys_fs_find
+    JNZR [.sys_fs_read]
+    JMP [sys_fs_find]
 .sys_fs_read:
     CMPI R0 SYS_FS_READ
-    JNZR .sys_fs_write
-    JMP sys_fs_read
+    JNZR [.sys_fs_write]
+    JMP [sys_fs_read]
 .sys_fs_write:
     CMPI R0 SYS_FS_WRITE
-    JNZR .sys_fs_delete
-    JMP sys_fs_write
+    JNZR [.sys_fs_delete]
+    JMP [sys_fs_write]
 .sys_fs_delete:
     CMPI R0 SYS_FS_DELETE
-    JNZR .sys_exec
-    JMP sys_fs_delete
+    JNZR [.sys_exec]
+    JMP [sys_fs_delete]
 .sys_exec:
     CMPI R0 SYS_EXEC
-    JNZR .sys_exit
-    JMP sys_exec
+    JNZR [.sys_exit]
+    JMP [sys_exec]
 .sys_exit:
     CMPI R0 SYS_EXIT
-    JNZR .sys_rand
-    JMP sys_exit
+    JNZR [.sys_rand]
+    JMP [sys_exit]
 .sys_rand:
     CMPI R0 SYS_RAND
-    JNZR .not_found
-    JMP  sys_rand
+    JNZR [.not_found]
+    JMP [sys_rand]
 .not_found:
     RET
 
@@ -102,7 +102,7 @@ sys_gpu_mode:
     ; R6:R7 = 0xF000
     LDI R6 0xF0
     LDI R7 0x00
-    ST R1 R6 R7
+    ST [R6:R7] R1
     RET
 
 ; Writes a character to the terminal
@@ -118,7 +118,7 @@ sys_tty_write:
     ; R6:R7 = 0xF001
     LDI R6 0xF0
     LDI R7 0x01
-    ST R1 R6 R7
+    ST [R6:R7] R1
     RET
 
 ; Writes a in-memory string to the terminal
@@ -137,12 +137,12 @@ sys_tty_writeln:
     LDI R6 0xF0
     LDI R7 0x01
 .loop:
-    LD R5 R1 R2
+    LD R5 [R1:R2]
     CMPI R5 0x00
-    JZR .end_loop
-    ST R5 R6 R7
+    JZR [.end_loop]
+    ST [R6:R7] R5
     INC R2
-    JR .loop
+    JR [.loop]
 .end_loop:
     RET
 
@@ -160,9 +160,9 @@ sys_wait_for_key:
     LDI R6 0xF1
     LDI R7 0x00
 .loop:
-    LD R5 R6 R7
+    LD R5 [R6:R7]
     CMPI R5 0x00
-    JZR .loop
+    JZR [.loop]
     RET
 
 ; Reads a key press
@@ -178,7 +178,7 @@ sys_read_key:
     ; R6:R7 = 0xF101
     LDI R6 0xF1
     LDI R7 0x01
-    LD R0 R6 R7
+    LD R0 [R6:R7]
     RET
 
 ; Sets a disk block
@@ -194,7 +194,7 @@ sys_disk_set_block:
     ; R6:R7 = 0xF200
     LDI R6 0xF2
     LDI R7 0x00
-    ST R1 R6 R7
+    ST [R6:R7] R1
     RET
 
 ; Reads a disk block into the disk buffer
@@ -211,7 +211,7 @@ sys_disk_read_block:
     LDI R6 0xF2
     LDI R7 0x01
     LDI R5 0x01
-    ST R5 R6 R7
+    ST [R6:R7] R5
     RET
 
 ; Writes a disk buffer into the disk
@@ -228,7 +228,7 @@ sys_disk_write_block:
     LDI R6 0xF2
     LDI R7 0x01
     LDI R5 0x02
-    ST R5 R6 R7
+    ST [R6:R7] R5
     RET
 
 ; Writes a directory block into the memory
@@ -250,14 +250,14 @@ sys_fs_list:
 
     ; Prepare disk block
     LDI R1 0x00
-    CALL sys_disk_set_block
-    CALL sys_disk_read_block
+    CALL [sys_disk_set_block]
+    CALL [sys_disk_read_block]
     ; Set disk buffer address
     LDI R5 0xF2
     LDI R6 0x02
     LDI R7 0xFF
 
-    MEMCPY R1 R7 R5 R6 R3 R4
+    MEMCPY [R3:R4] [R5:R6] R7
     RET
 
 ; Finds a file in the FS
@@ -276,8 +276,8 @@ sys_fs_find:
     MOV R4 R2
 
     LDI R1 0x00
-    CALL sys_disk_set_block
-    CALL sys_disk_read_block
+    CALL [sys_disk_set_block]
+    CALL [sys_disk_read_block]
 
     MOV R1 R3
     MOV R2 R4
@@ -293,21 +293,21 @@ sys_fs_find:
     LDI R5 0x02 ; buffer ptr low
 .file:
     CMPI R3 0x10
-    JNZR .load_byte
-    JMP .not_found
+    JNZR [.load_byte]
+    JMP [.not_found]
 
 .load_byte:
-    LD R6 R4 R5
+    LD R6 [R4:R5]
     CMPI R6 0x00
-    JNZR .metadata
-    JMP .next_file
+    JNZR [.metadata]
+    JMP [.next_file]
 
 .metadata:
     INC16 R4 R5 ; start_block
-    LD R0 R4 R5
+    LD R0 [R4:R5]
     PUSH R0
     INC16 R4 R5 ; size
-    LD R0 R4 R5
+    LD R0 [R4:R5]
     PUSH R0
     INC16 R4 R5 ; filename
 
@@ -321,7 +321,7 @@ sys_fs_find:
     POP R2
     POP R1
     CMPI R0 0x00
-    JZR .success
+    JZR [.success]
     POP R0
     POP R0
 .next_file:
@@ -334,8 +334,8 @@ sys_fs_find:
     INC16 R4 R5
     DEC R6
     CMPI R6 0x00
-    JNZR .iter
-    JMP .file
+    JNZR [.iter]
+    JMP [.file]
 .not_found:
     LDI R0 0x01
     RET
@@ -358,44 +358,44 @@ sys_fs_find:
 sys_fs_read:
     PUSH R3
     PUSH R4
-    CALL sys_fs_find
+    CALL [sys_fs_find]
     POP R4
     POP R3
 
     CMPI R0 0x00
-    JNZR .not_found
+    JNZR [.not_found]
 .copy_block:
-    CALL sys_disk_set_block
-    CALL sys_disk_read_block
+    CALL [sys_disk_set_block]
+    CALL [sys_disk_read_block]
 
     LDI R6 0xF2
     LDI R5 0x02
 
     LDI R0 0x00
 .copy_byte:
-    LD  R7 R6 R5
-    ST  R7 R3 R4
+    LD R7 [R6:R5]
+    ST [R3:R4] R7
 
     INC R5
     CMPI R5 0x00
-    JNZR .no_carry_buf
+    JNZR [.no_carry_buf]
     INC R6
 .no_carry_buf:
     INC R4
     CMPI R4 0x00
-    JNZR .no_carry_dst
+    JNZR [.no_carry_dst]
     INC R3
 .no_carry_dst:
     INC R0
     CMPI R0 0x00
-    JNZR .copy_byte
+    JNZR [.copy_byte]
 
     DEC R2
     CMPI R2 0x00
-    JZR .eof
+    JZR [.eof]
 
     INC R1
-    JR  .copy_block
+    JR  [.copy_block]
 .eof:
     LDI R0 0x00
     RET
@@ -421,14 +421,14 @@ sys_exec:
     LDI R0 SYS_FS_READ
     LDI R3 0x10
     LDI R4 0x00
-    CALL K_SYSCALL_ENTRY
+    CALL [K_SYSCALL_ENTRY]
     CMPI R0 0x00
-    JNZR .error
+    JNZR [.error]
 
     POP R0
     POP R0
 
-    JMP 0x1000
+    JMP [0x1000]
 
 .error:
     RET
@@ -436,7 +436,7 @@ sys_exec:
 sys_exit:
     POP R0
     POP R0
-    JMP 0xE100
+    JMP [0xE100]
     RET
 
 ; Returns a random byte from MMIO RNG
@@ -449,5 +449,5 @@ sys_exit:
 sys_rand:
     LDI R6 0xF4
     LDI R7 0x00
-    LD R0 R6 R7 
+    LD R0 [R6:R7]
     RET

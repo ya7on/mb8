@@ -1,13 +1,25 @@
-use mb8_isa::{decode::decode, opcodes::Opcode, registers::Register};
+use mb8_isa::{decode::decode, opcodes::Opcode};
 
 use crate::{dev::bus::Bus, registers::Registers};
 
 /// MB8 Virtual Machine
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct VirtualMachine {
     pub devices: Bus,
     pub registers: Registers,
     pub halted: bool,
+    pub program_counter: u16,
+}
+
+impl Default for VirtualMachine {
+    fn default() -> Self {
+        Self {
+            devices: Bus::default(),
+            registers: Registers::default(),
+            halted: false,
+            program_counter: 0xE000,
+        }
+    }
 }
 
 impl VirtualMachine {
@@ -43,8 +55,8 @@ impl VirtualMachine {
     }
 
     pub fn step(&mut self) {
-        let pc = self.registers.read(Register::PC);
-        self.registers.write(Register::PC, pc.saturating_add(2));
+        let pc = self.program_counter;
+        self.program_counter = pc.saturating_add(2);
 
         let hi = self.devices.read(pc);
         let lo = self.devices.read(pc + 1);
@@ -86,13 +98,13 @@ mod tests {
     //     let mut vm = VirtualMachine::default();
     //     vm.load_rom(&[0x00, 0x00, 0x01, 0x00]);
     //     vm.run();
-    //     assert_eq!(vm.registers.read(Register::PC), 4);
+    //     assert_eq!(vm.program_counter, 4);
     // }
 
     // #[test]
     // fn test_end_of_memory() {
     //     let mut vm = VirtualMachine::default();
-    //     vm.registers.write(Register::PC, 4095);
+    //     vm.program_counter = 4095;
     //     vm.step();
     //     assert!(vm.halted);
     // }

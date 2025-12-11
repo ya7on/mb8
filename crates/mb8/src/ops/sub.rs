@@ -4,8 +4,8 @@ use crate::vm::VirtualMachine;
 
 impl VirtualMachine {
     pub fn sub(&mut self, dst: Register, src: Register) {
-        let a = self.registers.read(dst) as u8;
-        let b = self.registers.read(src) as u8;
+        let a = self.registers.read(dst);
+        let b = self.registers.read(src);
         let (result, overflow) = a.overflowing_sub(b);
 
         let mut f_register = 0;
@@ -19,8 +19,8 @@ impl VirtualMachine {
             f_register |= flags::N_FLAG;
         }
 
-        self.registers.write(dst, result as u16);
-        self.registers.write(Register::F, f_register as u16);
+        self.registers.write(dst, result);
+        self.registers.write(Register::F, f_register);
     }
 }
 
@@ -70,7 +70,7 @@ mod tests {
             src: Register::R1,
         });
         assert_eq!(vm.registers.read(Register::R0), 0);
-        assert_eq!(vm.registers.read(Register::F), flags::Z_FLAG as u16);
+        assert_eq!(vm.registers.read(Register::F), flags::Z_FLAG);
     }
 
     #[test]
@@ -86,7 +86,7 @@ mod tests {
         assert_eq!(vm.registers.read(Register::R0), 255);
         assert_eq!(
             vm.registers.read(Register::F),
-            (flags::N_FLAG | flags::C_FLAG) as u16
+            flags::N_FLAG | flags::C_FLAG
         );
     }
 
@@ -99,7 +99,7 @@ mod tests {
             dst: Register::R0,
             src: Register::R1,
         });
-        assert_eq!(vm.registers.read(Register::F), flags::Z_FLAG as u16);
+        assert_eq!(vm.registers.read(Register::F), flags::Z_FLAG);
     }
 
     #[test]
@@ -111,7 +111,7 @@ mod tests {
             dst: Register::R0,
             src: Register::R1,
         });
-        assert_eq!(vm.registers.read(Register::F), flags::C_FLAG as u16);
+        assert_eq!(vm.registers.read(Register::F), flags::C_FLAG);
     }
 
     #[test]
@@ -123,6 +123,6 @@ mod tests {
             dst: Register::R0,
             src: Register::R1,
         });
-        assert_eq!(vm.registers.read(Register::F), flags::N_FLAG as u16);
+        assert_eq!(vm.registers.read(Register::F), flags::N_FLAG);
     }
 }

@@ -19,7 +19,7 @@ We use [`customasm`](https://github.com/hlorenzi/customasm) to build all assembl
 
 Install once:
 ```
-cargo install customasm
+cargo install --git https://github.com/hlorenzi/customasm
 ```
 
 Build everything (kernel, user-space programs, tests):

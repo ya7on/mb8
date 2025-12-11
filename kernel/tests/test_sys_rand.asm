@@ -18,17 +18,17 @@ start:
 rand_loop:
 
     LDI R0 SYS_RAND
-    CALL K_SYSCALL_ENTRY    ; result returned in R0
+    CALL [K_SYSCALL_ENTRY]    ; result returned in R0
 
-    ST R0 R3 R4
+    ST [R3:R4] R0
 
 
     LDI R6 1
-    ADD R4 R6      
+    ADD R4 R6
 
-    LDI R6 0       
+    LDI R6 0
     CMP R4 R6
-    JNZR .skip_inc_high
+    JNZR [.skip_inc_high]
 
     LDI R6 1
     ADD R3 R6
@@ -40,7 +40,7 @@ rand_loop:
 
     LDI R6 0
     CMP R5 R6
-    JNZR rand_loop
+    JNZR [rand_loop]
 
     HALT
 

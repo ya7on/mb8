@@ -2,17 +2,31 @@
 
 #subruledef register
 {
-    R0 => 0x0
-    R1 => 0x1
-    R2 => 0x2
-    R3 => 0x3
-    R4 => 0x4
-    R5 => 0x5
-    R6 => 0x6
-    R7 => 0x7
-    SP => 0xD
-    PC => 0xE
-    F => 0xF
+    R0  => 0x0
+    R1  => 0x1
+    R2  => 0x2
+    R3  => 0x3
+    R4  => 0x4
+    R5  => 0x5
+    R6  => 0x6
+    R7  => 0x7
+    R8  => 0x8
+    R9  => 0x9
+    R10 => 0xA
+    R11 => 0xB
+    R12 => 0xC
+    R13 => 0xD
+    R14 => 0xE
+    R15 => 0xF
+
+    A   => 0x0
+    IL  => 0x9
+    IH  => 0xA
+    FPH => 0xB
+    FPL => 0xC
+    SPH => 0xD
+    SPL => 0xE
+    F   => 0xF
 }
 
 #ruledef mb8_isa
@@ -30,16 +44,16 @@
     SHL { dst: register } { src: register } => 0x17 @ dst @ src
     CMP { dst: register } { src: register } => 0x18 @ dst @ src
     LDI { dst: register } { value: u8 } => 0x2 @ dst @ value
-    JMP { hi: register } { lo: register } => 0x30 @ hi @ lo
+    JMP [{ hi: register }:{ lo: register }] => 0x30 @ hi @ lo
     JR { offset: i8 } => 0x31 @ offset
     JZR { offset: i8 } => 0x32 @ offset
     JNZR { offset: i8 } => 0x33 @ offset
     JCR { offset: i8 } => 0x34 @ offset
     JNCR { offset: i8 } => 0x35 @ offset
-    CALL { hi: register } { lo: register } => 0x40 @ hi @ lo
+    CALL [{ hi: register }:{ lo: register }] => 0x40 @ hi @ lo
     RET => 0x4100
     PUSH { src: register } => 0x42 @ src @ 0x0
     POP { dst: register } => 0x43 @ dst @ 0x0
-    LD { dst: register } { hi: register } { lo: register } => 0x5 @ dst @ hi @ lo
-    ST { dst: register } { hi: register } { lo: register } => 0x6 @ dst @ hi @ lo
+    LD { dst: register } [{ hi: register }:{ lo: register }] => 0x5 @ dst @ hi @ lo
+    ST [{ hi: register }:{ lo: register }] { dst: register } => 0x6 @ dst @ hi @ lo
 }

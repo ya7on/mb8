@@ -10,7 +10,7 @@
 }
 
 reset:
-    JMP K_KERNEL_INIT
+    JMP [K_KERNEL_INIT]
     HALT
 
 #include "syscalls.asm"

@@ -12,4 +12,4 @@ pub const STACK_BOTTOM: usize = 0xBF00;
 /// Represents the size of the ROM in bytes.
 pub const ROM_SIZE: usize = 0x1000;
 /// Represents the general purpose registers count of the CPU.
-pub const GENERAL_PURPOSE_REGISTERS_COUNT: usize = 8;
+pub const REGISTERS_COUNT: usize = 16;
