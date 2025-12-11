@@ -6,13 +6,15 @@ use std::{
 use mb8::vm;
 use minifb::{Key, KeyRepeat, Window};
 
+#[derive(Debug)]
 pub struct Keyboard {
-    left_shift: bool,
-    right_shift: bool,
+    pub left_shift: bool,
+    pub right_shift: bool,
     key_last_pressed: HashMap<Key, Instant>,
 }
 
 impl Keyboard {
+    #[must_use]
     pub fn new(l_shift: bool, r_shift: bool) -> Self {
         Self {
             left_shift: l_shift,
@@ -22,6 +24,7 @@ impl Keyboard {
     }
 
     #[allow(clippy::too_many_lines)]
+    #[must_use]
     pub fn map_key_to_char(key: Key, shift: bool) -> Option<u8> {
         let ch = match key {
             Key::Key0 => b'0',

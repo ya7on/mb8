@@ -1,9 +1,9 @@
 use clap::Parser;
 use mb8c::compile;
 
-mod config;
+pub mod config;
 mod filesystem;
-mod keyboard;
+pub mod keyboard;
 mod tty;
 mod vm;
 
