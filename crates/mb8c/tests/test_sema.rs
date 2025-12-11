@@ -1,6 +1,7 @@
+use chumsky::Parser;
 use mb8c::{
     error::CompileError,
-    parser::{ast::Type, base::Parser},
+    parser::{ast::Type, program::program_parser},
     semantic::analyze,
     tokenizer::lexer::Lexer,
 };
@@ -15,7 +16,8 @@ fn test_return_type() {
         }
         "#;
         let tokens = Lexer::new(src).tokenize().unwrap();
-        let ast = Parser::new(tokens).parse_program().unwrap();
+        let tokens = tokens.into_iter().map(|t| t.kind).collect::<Vec<_>>();
+        let ast = program_parser().parse(&tokens).unwrap();
         assert_eq!(
             analyze(&ast).unwrap_err(),
             CompileError::TypeMismatch {

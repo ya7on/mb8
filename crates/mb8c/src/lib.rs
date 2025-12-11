@@ -1,11 +1,10 @@
-use codegen::CodeGenerator;
-use ir::lower_program;
+use chumsky::Parser;
+use parser::program::program_parser;
 
 pub mod codegen;
 pub mod error;
 pub mod ir;
 pub mod parser;
-pub mod parser2;
 pub mod semantic;
 pub mod tokenizer;
 
@@ -16,15 +15,18 @@ pub mod tokenizer;
 pub fn compile(input: &str) -> error::CompileResult<()> {
     let mut lexer = tokenizer::lexer::Lexer::new(input);
     let tokens = lexer.tokenize()?;
-    let mut parser = parser::base::Parser::new(tokens);
-    let ast = parser.parse_program()?;
+    let kinds = tokens.into_iter().map(|t| t.kind).collect::<Vec<_>>();
+    let parser = program_parser();
+    let ast = parser.parse(&kinds);
 
-    semantic::analyze(&ast)?;
+    println!("AST {ast:?}");
 
-    let ir = lower_program(&ast)?;
+    // semantic::analyze(&ast)?;
 
-    let code = CodeGenerator::new(ir).generate()?;
-    println!("{code}");
+    // let ir = lower_program(&ast)?;
+
+    // let code = CodeGenerator::new(ir).generate()?;
+    // println!("{code}");
 
     Ok(())
 }

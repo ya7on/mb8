@@ -5,7 +5,7 @@ use crate::{
     tokenizer::token::{Keyword, TokenKind},
 };
 
-pub fn ty_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Type> {
+pub fn ty_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Type> + Clone {
     select! {
         TokenKind::Keyword(Keyword::Int) => Type::Int,
         TokenKind::Keyword(Keyword::Char) => Type::Char,

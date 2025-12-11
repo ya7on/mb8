@@ -1,11 +1,5 @@
 use crate::tokenizer::token::Operator;
 
-pub mod expr;
-pub mod function;
-pub mod helpers;
-pub mod program;
-pub mod stmt;
-
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Type {
     Void,
@@ -24,12 +18,12 @@ impl Type {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Program {
     pub functions: Vec<Function>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Function {
     pub name: String,
     pub return_type: Type,
@@ -37,7 +31,7 @@ pub struct Function {
     pub body: Stmt,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Stmt {
     Block(Vec<Stmt>),
     Declaration {
@@ -58,7 +52,7 @@ pub enum Stmt {
     },
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     IntLiteral(i16),
     BinaryOp {

@@ -2,7 +2,7 @@ use chumsky::{prelude::just, select, IterParser, Parser};
 
 use crate::{parser::ast::Function, tokenizer::token::TokenKind};
 
-use super::{stmt::stmt_parser, ty::ty_parser};
+use super::{ast::Stmt, stmt::stmt_parser, ty::ty_parser};
 
 pub fn function_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Function> {
     let param = ty_parser()
@@ -19,11 +19,13 @@ pub fn function_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Function>
     ty_parser()
         .then(select! { TokenKind::Ident(name) => name })
         .then(params)
-        .then(stmt_parser())
+        .then_ignore(just(TokenKind::LeftBrace))
+        .then(stmt_parser().repeated().collect())
+        .then_ignore(just(TokenKind::RightBrace))
         .map(|(((return_type, name), params), body)| Function {
             return_type,
             name,
             params,
-            body,
+            body: Stmt::Block(body),
         })
 }
