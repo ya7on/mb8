@@ -1,14 +1,12 @@
-
-use mb8_cli::filesystem::makefs;
 use mb8::vm::VirtualMachine;
-use tempfile::tempdir;
+use mb8_cli::filesystem::makefs;
 use std::fs;
-
+use tempfile::tempdir;
 
 #[test]
 fn test_single_small_file() {
-       let dir = tempdir().unwrap();
-    //create file 
+    let dir = tempdir().unwrap();
+    //create file
     let file_path = dir.path().join("hello.txt");
 
     // write to file
@@ -38,7 +36,6 @@ fn test_single_small_file() {
 
 #[test]
 fn test_two_files() {
-
     let dir = tempdir().unwrap();
     let a = dir.path().join("a.bin");
     let b = dir.path().join("b.bin");
@@ -55,18 +52,17 @@ fn test_two_files() {
     let start_block = disk_img[1];
     let size_blocks = disk_img[2];
 
-     let used_flag_b = disk_img[16];
+    let used_flag_b = disk_img[16];
     let start_block_b = disk_img[17];
     let size_blocks_b = disk_img[18];
 
     //Comparing disk block file a
     assert_eq!(used_flag, 1);
-    assert_eq!(start_block, 1); 
-    assert_eq!(size_blocks, 1); 
+    assert_eq!(start_block, 1);
+    assert_eq!(size_blocks, 1);
 
     //Comparing disk block file b
-    assert_eq!(used_flag_b, 1); 
-    assert_eq!(start_block_b, 2); 
-    assert_eq!(size_blocks_b, 1); 
+    assert_eq!(used_flag_b, 1);
+    assert_eq!(start_block_b, 2);
+    assert_eq!(size_blocks_b, 1);
 }
-
