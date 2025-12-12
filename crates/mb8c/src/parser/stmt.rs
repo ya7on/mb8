@@ -7,7 +7,8 @@ use crate::tokens::TokenKind;
 
 use super::{expr::expr_parser, ty::ty_parser};
 
-#[must_use] pub fn stmt_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Stmt> + Clone {
+#[must_use]
+pub fn stmt_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Stmt> + Clone {
     recursive(|stmt| {
         let return_parser = just(TokenKind::KeywordReturn)
             .ignore_then(expr_parser().or_not())

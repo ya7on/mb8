@@ -8,7 +8,8 @@ use crate::{
     tokens::TokenKind,
 };
 
-#[must_use] pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone {
+#[must_use]
+pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone {
     recursive(|expr| {
         let args = expr
             .clone()
@@ -72,8 +73,6 @@ use crate::{
                 rhs: Box::new(rhs),
             },
         );
-
-        
 
         select! {
             TokenKind::Ident(name) => name,

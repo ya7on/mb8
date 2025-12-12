@@ -1,4 +1,5 @@
 use chumsky::Parser;
+use error::CompileError;
 use logos::Logos;
 use parser::program::program_parser;
 use tokens::TokenKind;
@@ -15,13 +16,12 @@ pub mod tokens;
 ///
 /// # Errors
 /// Returns an error if the input string is not valid MB8C code.
-/// # Panics
-/// Panics if the input string is not valid MB8C code.
 pub fn compile(input: &str) -> error::CompileResult<()> {
-    #[allow(clippy::unwrap_used)]
     let tokens = TokenKind::lexer(input)
         .collect::<Result<Vec<_>, _>>()
-        .unwrap();
+        .map_err(|()| CompileError::InternalError {
+            message: "Unknown error".to_owned(),
+        })?;
     let parser = program_parser();
     let ast = parser.parse(&tokens);
 
