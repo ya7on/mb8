@@ -487,6 +487,7 @@ dependencies = [
  "mb8",
  "mb8c",
  "minifb",
+ "tempfile",
 ]
 
 [[package]]

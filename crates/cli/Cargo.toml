@@ -11,5 +11,8 @@ minifb = "0.28.0"
 mb8 = { path = "../mb8" }
 mb8c = { path = "../mb8c" }
 
+[dev-dependencies]
+tempfile = "3.23.0"
+
 [lints]
 workspace = true
