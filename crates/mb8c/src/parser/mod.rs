@@ -1,4 +1,3 @@
-pub mod ast;
 pub mod expr;
 pub mod function;
 pub mod program;

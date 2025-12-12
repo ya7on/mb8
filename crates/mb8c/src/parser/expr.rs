@@ -1,29 +1,45 @@
 use chumsky::{
     prelude::{just, recursive},
-    select, Parser,
+    select, IterParser, Parser,
 };
 
 use crate::{
-    parser::ast::Expr,
-    tokenizer::token::{Operator, TokenKind},
+    ast::{BinaryOp, Expr},
+    tokens::TokenKind,
 };
 
 pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone {
     recursive(|expr| {
-        let atom = select! {
-            TokenKind::Number(number) => Expr::IntLiteral(number),
-            TokenKind::Ident(name) => Expr::Var(name),
-        }
-        .or(expr.clone().delimited_by(
-            just(TokenKind::LeftParenthesis),
-            just(TokenKind::RightParenthesis),
-        ));
+        let args = expr
+            .clone()
+            .separated_by(just(TokenKind::Comma))
+            .collect::<Vec<_>>()
+            .delimited_by(
+                just(TokenKind::LeftParenthesis),
+                just(TokenKind::RightParenthesis),
+            );
 
-        let product = atom.clone().foldl(
-            (just(TokenKind::Operator(Operator::Asterisk))
-                .to(Operator::Asterisk)
-                .or(just(TokenKind::Operator(Operator::Slash)).to(Operator::Slash)))
-            .then(atom)
+        let call_expr = select! {
+            TokenKind::Ident(name) => name,
+        }
+        .then(args.clone())
+        .map(|(name, args)| Expr::Call { name, args });
+
+        let primary = call_expr
+            .or(select! {
+                TokenKind::Number(n) => Expr::IntLiteral(n),
+                TokenKind::Ident(name) => Expr::Var(name),
+            })
+            .or(expr.clone().delimited_by(
+                just(TokenKind::LeftParenthesis),
+                just(TokenKind::RightParenthesis),
+            ));
+
+        let product = primary.clone().foldl(
+            (just(TokenKind::OperatorAsterisk)
+                .to(BinaryOp::Mul)
+                .or(just(TokenKind::OperatorSlash).to(BinaryOp::Div)))
+            .then(primary.clone())
             .repeated(),
             |lhs, (op, rhs)| Expr::BinaryOp {
                 op,
@@ -33,9 +49,9 @@ pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone
         );
 
         let sum = product.clone().foldl(
-            (just(TokenKind::Operator(Operator::Plus))
-                .to(Operator::Plus)
-                .or(just(TokenKind::Operator(Operator::Minus)).to(Operator::Minus)))
+            (just(TokenKind::OperatorPlus)
+                .to(BinaryOp::Add)
+                .or(just(TokenKind::OperatorMinus).to(BinaryOp::Sub)))
             .then(product)
             .repeated(),
             |lhs, (op, rhs)| Expr::BinaryOp {
@@ -46,8 +62,8 @@ pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone
         );
 
         let equality = sum.clone().foldl(
-            just(TokenKind::Operator(Operator::EqEq))
-                .to(Operator::EqEq)
+            just(TokenKind::OperatorEqEq)
+                .to(BinaryOp::Eq)
                 .then(sum)
                 .repeated(),
             |lhs, (op, rhs)| Expr::BinaryOp {
@@ -60,7 +76,7 @@ pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone
         let assignment = select! {
             TokenKind::Ident(name) => name,
         }
-        .then_ignore(just(TokenKind::Operator(Operator::Eq)))
+        .then_ignore(just(TokenKind::OperatorEq))
         .then(expr.clone())
         .map(|(name, value)| Expr::Assign {
             name,

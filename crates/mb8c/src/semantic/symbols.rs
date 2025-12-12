@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use crate::{
+    ast::Type,
     error::{CompileError, CompileResult},
-    parser::ast::Type,
 };
 
 #[derive(Debug)]

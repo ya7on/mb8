@@ -2,16 +2,14 @@ use chumsky::prelude::just;
 use chumsky::IterParser;
 use chumsky::{prelude::recursive, select, Parser};
 
-use crate::{
-    parser::ast::Stmt,
-    tokenizer::token::{Keyword, Operator, TokenKind},
-};
+use crate::ast::Stmt;
+use crate::tokens::TokenKind;
 
 use super::{expr::expr_parser, ty::ty_parser};
 
 pub fn stmt_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Stmt> + Clone {
     recursive(|stmt| {
-        let return_parser = just(TokenKind::Keyword(Keyword::Return))
+        let return_parser = just(TokenKind::KeywordReturn)
             .ignore_then(expr_parser().or_not())
             .then_ignore(just(TokenKind::Semicolon))
             .map(|expr| Stmt::Return(expr));
@@ -19,37 +17,41 @@ pub fn stmt_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Stmt> + Clone
         let declaration_parser = ty_parser()
             .then(select! {TokenKind::Ident(name) => name})
             .then(
-                just(TokenKind::Operator(Operator::Eq))
+                just(TokenKind::OperatorEq)
                     .ignore_then(expr_parser())
                     .or_not(),
             )
             .then_ignore(just(TokenKind::Semicolon))
             .map(|((ty, name), init)| Stmt::Declaration { name, ty, init });
 
-        let if_parser = just(TokenKind::Keyword(Keyword::If))
+        let if_parser = just(TokenKind::KeywordIf)
             .ignore_then(expr_parser().delimited_by(
                 just(TokenKind::LeftParenthesis),
                 just(TokenKind::RightParenthesis),
             ))
             .then(
                 stmt.clone()
-                    .delimited_by(just(TokenKind::LeftBrace), just(TokenKind::RightBrace)),
+                    .delimited_by(just(TokenKind::LeftBrace), just(TokenKind::RightBrace))
+                    .repeated()
+                    .collect::<Vec<_>>(),
             )
             .then(
-                just(TokenKind::Keyword(Keyword::Else))
+                just(TokenKind::KeywordElse)
                     .ignore_then(
                         stmt.clone()
-                            .delimited_by(just(TokenKind::LeftBrace), just(TokenKind::RightBrace)),
+                            .delimited_by(just(TokenKind::LeftBrace), just(TokenKind::RightBrace))
+                            .repeated()
+                            .collect::<Vec<_>>(),
                     )
                     .or_not(),
             )
             .map(|((condition, then_branch), else_branch)| Stmt::If {
                 condition,
-                then_branch: Box::new(then_branch),
-                else_branch: else_branch.map(Box::new),
+                then_branch: Box::new(Stmt::Block(then_branch)),
+                else_branch: else_branch.map(Stmt::Block).map(Box::new),
             });
 
-        let while_parser = just(TokenKind::Keyword(Keyword::While))
+        let while_parser = just(TokenKind::KeywordWhile)
             .ignore_then(expr_parser())
             .then(
                 stmt.clone()
@@ -62,9 +64,14 @@ pub fn stmt_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Stmt> + Clone
                 body: Box::new(Stmt::Block(body)),
             });
 
+        let expr_parser = expr_parser()
+            .then_ignore(just(TokenKind::Semicolon))
+            .map(|expr| Stmt::Expression(expr));
+
         return_parser
             .or(declaration_parser)
             .or(if_parser)
             .or(while_parser)
+            .or(expr_parser)
     })
 }

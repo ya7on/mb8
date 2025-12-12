@@ -1,11 +1,10 @@
-use mb8c::tokenizer::{
-    lexer::Lexer,
-    token::{Keyword, Operator, TokenKind},
-};
+use logos::Logos;
+use mb8c::tokens::TokenKind;
 
 #[test]
 fn test_all_tokens() {
     let src = r#"
+        /* ignored comment */
         // number
         10
         // identifier
@@ -17,33 +16,31 @@ fn test_all_tokens() {
         // delimiters
         ( ) { } , ;
     "#;
-    let result = Lexer::new(src).tokenize();
+    let result = TokenKind::lexer(src)
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
     assert_eq!(
-        result
-            .unwrap()
-            .into_iter()
-            .map(|token| token.kind)
-            .collect::<Vec<_>>(),
+        result,
         vec![
             // number
             TokenKind::Number(10),
             // identifier
             TokenKind::Ident("identifier".to_owned()),
             // keywords
-            TokenKind::Keyword(Keyword::Int),
-            TokenKind::Keyword(Keyword::Char),
-            TokenKind::Keyword(Keyword::Void),
-            TokenKind::Keyword(Keyword::If),
-            TokenKind::Keyword(Keyword::Else),
-            TokenKind::Keyword(Keyword::While),
-            TokenKind::Keyword(Keyword::Return),
+            TokenKind::KeywordInt,
+            TokenKind::KeywordChar,
+            TokenKind::KeywordVoid,
+            TokenKind::KeywordIf,
+            TokenKind::KeywordElse,
+            TokenKind::KeywordWhile,
+            TokenKind::KeywordReturn,
             // operators
-            TokenKind::Operator(Operator::Plus),
-            TokenKind::Operator(Operator::Minus),
-            TokenKind::Operator(Operator::Asterisk),
-            TokenKind::Operator(Operator::Slash),
-            TokenKind::Operator(Operator::Eq),
-            TokenKind::Operator(Operator::EqEq),
+            TokenKind::OperatorPlus,
+            TokenKind::OperatorMinus,
+            TokenKind::OperatorAsterisk,
+            TokenKind::OperatorSlash,
+            TokenKind::OperatorEq,
+            TokenKind::OperatorEqEq,
             // delimiters
             TokenKind::LeftParenthesis,
             TokenKind::RightParenthesis,
@@ -51,8 +48,6 @@ fn test_all_tokens() {
             TokenKind::RightBrace,
             TokenKind::Comma,
             TokenKind::Semicolon,
-            // eof
-            TokenKind::Eof,
         ]
     );
 }

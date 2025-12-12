@@ -6,6 +6,7 @@ license.workspace = true
 
 [dependencies]
 chumsky = { version = "0.11.2" }
+logos = { version = "0.16.0" }
 mb8-isa = { path = "../mb8-isa" }
 
 [lints]

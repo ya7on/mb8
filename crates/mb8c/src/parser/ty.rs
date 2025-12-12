@@ -1,14 +1,11 @@
 use chumsky::{select, Parser};
 
-use crate::{
-    parser::ast::Type,
-    tokenizer::token::{Keyword, TokenKind},
-};
+use crate::{ast::Type, tokens::TokenKind};
 
 pub fn ty_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Type> + Clone {
     select! {
-        TokenKind::Keyword(Keyword::Int) => Type::Int,
-        TokenKind::Keyword(Keyword::Char) => Type::Char,
-        TokenKind::Keyword(Keyword::Void) => Type::Void,
+        TokenKind::KeywordInt => Type::Int,
+        TokenKind::KeywordChar => Type::Char,
+        TokenKind::KeywordVoid => Type::Void,
     }
 }

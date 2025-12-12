@@ -1,8 +1,11 @@
 use chumsky::{prelude::just, select, IterParser, Parser};
 
-use crate::{parser::ast::Function, tokenizer::token::TokenKind};
+use crate::{
+    ast::{Function, Stmt},
+    tokens::TokenKind,
+};
 
-use super::{ast::Stmt, stmt::stmt_parser, ty::ty_parser};
+use super::{stmt::stmt_parser, ty::ty_parser};
 
 pub fn function_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Function> {
     let param = ty_parser()

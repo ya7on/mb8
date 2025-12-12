@@ -1,6 +1,6 @@
-use chumsky::{prelude::just, IterParser, Parser};
+use chumsky::{prelude::end, IterParser, Parser};
 
-use crate::{parser::ast::Program, tokenizer::token::TokenKind};
+use crate::{ast::Program, tokens::TokenKind};
 
 use super::function::function_parser;
 
@@ -8,6 +8,6 @@ pub fn program_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Program> {
     function_parser()
         .repeated()
         .collect()
-        .then_ignore(just(TokenKind::Eof))
+        .then_ignore(end())
         .map(|functions| Program { functions })
 }

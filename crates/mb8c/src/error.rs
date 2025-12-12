@@ -1,4 +1,4 @@
-use crate::parser::ast::Type;
+use crate::ast::Type;
 
 pub type CompileResult<T, E = CompileError> = Result<T, E>;
 

@@ -1,20 +1,20 @@
+use chumsky::Parser;
+use logos::Logos;
 use mb8c::{
-    parser::{
-        ast::{Expr, Function, Program, Stmt, Type},
-        base::Parser,
-    },
-    tokenizer::{lexer::Lexer, token::Operator},
+    ast::{BinaryOp, Expr, Function, Program, Stmt, Type},
+    parser::program::program_parser,
+    tokens::TokenKind,
 };
 
 #[test]
 fn test_empty_program() {
     let src = r#""#;
-    let tokens = Lexer::new(src).tokenize().unwrap();
-    let mut program = Parser::new(tokens);
-    assert_eq!(
-        program.parse_program().unwrap(),
-        Program { functions: vec![] }
-    );
+    let tokens = TokenKind::lexer(src)
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    let parser = program_parser();
+    let program = parser.parse(&tokens);
+    assert_eq!(program.unwrap(), Program { functions: vec![] });
 }
 
 #[test]
@@ -25,10 +25,13 @@ fn test_return() {
             return 0;
         }
     "#;
-    let tokens = Lexer::new(src).tokenize().unwrap();
-    let mut program = Parser::new(tokens);
+    let tokens = TokenKind::lexer(src)
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    let parser = program_parser();
+    let program = parser.parse(&tokens);
     assert_eq!(
-        program.parse_program().unwrap(),
+        program.unwrap(),
         Program {
             functions: vec![Function {
                 name: "func".to_string(),
@@ -53,10 +56,13 @@ fn test_variables() {
             char b = 2;
         }
     "#;
-    let tokens = Lexer::new(src).tokenize().unwrap();
-    let mut program = Parser::new(tokens);
+    let tokens = TokenKind::lexer(src)
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    let parser = program_parser();
+    let program = parser.parse(&tokens);
     assert_eq!(
-        program.parse_program().unwrap(),
+        program.unwrap(),
         Program {
             functions: vec![Function {
                 name: "func".to_string(),
@@ -99,10 +105,13 @@ fn test_call() {
             func(2 * c);
         }
     "#;
-    let tokens = Lexer::new(src).tokenize().unwrap();
-    let mut program = Parser::new(tokens);
+    let tokens = TokenKind::lexer(src)
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
+    let parser = program_parser();
+    let program = parser.parse(&tokens);
     assert_eq!(
-        program.parse_program().unwrap(),
+        program.unwrap(),
         Program {
             functions: vec![Function {
                 name: "func".to_string(),
@@ -120,7 +129,7 @@ fn test_call() {
                     Stmt::Expression(Expr::Call {
                         name: "func".to_string(),
                         args: vec![Expr::BinaryOp {
-                            op: Operator::Plus,
+                            op: BinaryOp::Add,
                             lhs: Box::new(Expr::IntLiteral(2)),
                             rhs: Box::new(Expr::IntLiteral(2))
                         }],
@@ -128,7 +137,7 @@ fn test_call() {
                     Stmt::Expression(Expr::Call {
                         name: "func".to_string(),
                         args: vec![Expr::BinaryOp {
-                            op: Operator::Asterisk,
+                            op: BinaryOp::Mul,
                             lhs: Box::new(Expr::IntLiteral(2)),
                             rhs: Box::new(Expr::Var("c".to_string()))
                         }],
@@ -151,10 +160,13 @@ fn test_if_statement() {
             }
         }
         "#;
-        let tokens = Lexer::new(src).tokenize().unwrap();
-        let mut program = Parser::new(tokens);
+        let tokens = TokenKind::lexer(src)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let parser = program_parser();
+        let program = parser.parse(&tokens);
         assert_eq!(
-            program.parse_program().unwrap(),
+            program.unwrap(),
             Program {
                 functions: vec![Function {
                     name: "main".to_string(),
@@ -185,10 +197,13 @@ fn test_while_statement() {
             }
         }
         "#;
-        let tokens = Lexer::new(src).tokenize().unwrap();
-        let mut program = Parser::new(tokens);
+        let tokens = TokenKind::lexer(src)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let parser = program_parser();
+        let program = parser.parse(&tokens);
         assert_eq!(
-            program.parse_program().unwrap(),
+            program.unwrap(),
             Program {
                 functions: vec![Function {
                     name: "main".to_string(),

@@ -1,8 +1,8 @@
 use symbols::{FunctionSignature, Functions, Symbols};
 
 use crate::{
+    ast::{Expr, Function, Program, Stmt, Type},
     error::{CompileError, CompileResult},
-    parser::ast::{Expr, Function, Program, Stmt, Type},
 };
 
 pub mod symbols;

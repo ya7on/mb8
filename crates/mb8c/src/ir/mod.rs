@@ -1,8 +1,8 @@
 use builder::IRBuilder;
 
 use crate::{
+    ast::{Function, Program, Type},
     error::CompileResult,
-    parser::ast::{Function, Program, Type},
 };
 
 pub mod builder;

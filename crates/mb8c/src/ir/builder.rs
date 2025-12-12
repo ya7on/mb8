@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::parser::ast::Type;
+use crate::ast::Type;
 
 use super::{IRFunction, IRInstruction, IROpcode, LocalInfo, Reg};
 

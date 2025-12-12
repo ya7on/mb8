@@ -1,5 +1,3 @@
-use crate::tokenizer::token::Operator;
-
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Type {
     Void,
@@ -53,10 +51,19 @@ pub enum Stmt {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub enum BinaryOp {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Eq,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     IntLiteral(i16),
     BinaryOp {
-        op: Operator,
+        op: BinaryOp,
         lhs: Box<Expr>,
         rhs: Box<Expr>,
     },

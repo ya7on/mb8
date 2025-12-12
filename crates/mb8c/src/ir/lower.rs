@@ -1,7 +1,6 @@
 use crate::{
+    ast::{BinaryOp, Expr, Stmt},
     error::{CompileError, CompileResult},
-    parser::ast::{Expr, Stmt},
-    tokenizer::token::Operator,
 };
 
 use super::{builder::IRBuilder, BinOperation, IROpcode, Reg};
@@ -90,12 +89,11 @@ impl IRBuilder {
                 let res = self.new_reg();
 
                 let bin = match op {
-                    Operator::Plus => BinOperation::Add,
-                    Operator::Minus => BinOperation::Sub,
-                    Operator::Asterisk => BinOperation::Mul,
-                    Operator::Slash => BinOperation::Div,
-                    Operator::EqEq => BinOperation::Eq,
-                    Operator::Eq => unimplemented!(),
+                    BinaryOp::Add => BinOperation::Add,
+                    BinaryOp::Sub => BinOperation::Sub,
+                    BinaryOp::Mul => BinOperation::Mul,
+                    BinaryOp::Div => BinOperation::Div,
+                    BinaryOp::Eq => BinOperation::Eq,
                 };
 
                 self.emit(
@@ -177,7 +175,7 @@ impl IRBuilder {
                 if !matches!(
                     condition,
                     Expr::BinaryOp {
-                        op: Operator::EqEq,
+                        op: BinaryOp::Eq,
                         lhs: _,
                         rhs: _
                     }
@@ -228,7 +226,7 @@ impl IRBuilder {
                 if !matches!(
                     condition,
                     Expr::BinaryOp {
-                        op: Operator::EqEq,
+                        op: BinaryOp::Eq,
                         lhs: _,
                         rhs: _
                     }
