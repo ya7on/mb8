@@ -8,7 +8,7 @@ use mb8c::{
 
 #[test]
 fn test_empty_program() {
-    let src = r#""#;
+    let src = r"";
     let tokens = TokenKind::lexer(src)
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
@@ -19,12 +19,12 @@ fn test_empty_program() {
 
 #[test]
 fn test_return() {
-    let src = r#"
+    let src = r"
         int func() {
             return;
             return 0;
         }
-    "#;
+    ";
     let tokens = TokenKind::lexer(src)
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
@@ -48,14 +48,14 @@ fn test_return() {
 
 #[test]
 fn test_variables() {
-    let src = r#"
+    let src = r"
         int func() {
             int a;
             int a = 1;
             char b;
             char b = 2;
         }
-    "#;
+    ";
     let tokens = TokenKind::lexer(src)
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
@@ -97,14 +97,14 @@ fn test_variables() {
 
 #[test]
 fn test_call() {
-    let src = r#"
+    let src = r"
         int func() {
             func();
             func(a, b);
             func(2 + 2);
             func(2 * c);
         }
-    "#;
+    ";
     let tokens = TokenKind::lexer(src)
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
@@ -151,7 +151,7 @@ fn test_call() {
 #[test]
 fn test_if_statement() {
     {
-        let src = r#"
+        let src = r"
         int main() {
             if (1) {
                 return 1;
@@ -159,7 +159,7 @@ fn test_if_statement() {
                 return 2;
             }
         }
-        "#;
+        ";
         let tokens = TokenKind::lexer(src)
             .collect::<Result<Vec<_>, _>>()
             .unwrap();
@@ -190,13 +190,13 @@ fn test_if_statement() {
 #[test]
 fn test_while_statement() {
     {
-        let src = r#"
+        let src = r"
         int main() {
             while (1) {
                 return 1;
             }
         }
-        "#;
+        ";
         let tokens = TokenKind::lexer(src)
             .collect::<Result<Vec<_>, _>>()
             .unwrap();

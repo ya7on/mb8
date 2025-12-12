@@ -3,7 +3,7 @@ use mb8c::tokens::TokenKind;
 
 #[test]
 fn test_all_tokens() {
-    let src = r#"
+    let src = r"
         /* ignored comment */
         // number
         10
@@ -15,7 +15,7 @@ fn test_all_tokens() {
         + - * / = ==
         // delimiters
         ( ) { } , ;
-    "#;
+    ";
     let result = TokenKind::lexer(src)
         .collect::<Result<Vec<_>, _>>()
         .unwrap();

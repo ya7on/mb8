@@ -7,7 +7,7 @@ use crate::{
 
 use super::{stmt::stmt_parser, ty::ty_parser};
 
-pub fn function_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Function> {
+#[must_use] pub fn function_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Function> {
     let param = ty_parser()
         .then(select! { TokenKind::Ident(name) => name })
         .map(|(ty, name)| (name, ty));

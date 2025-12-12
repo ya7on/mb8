@@ -15,7 +15,10 @@ pub mod tokens;
 ///
 /// # Errors
 /// Returns an error if the input string is not valid MB8C code.
+/// # Panics
+/// Panics if the input string is not valid MB8C code.
 pub fn compile(input: &str) -> error::CompileResult<()> {
+    #[allow(clippy::unwrap_used)]
     let tokens = TokenKind::lexer(input)
         .collect::<Result<Vec<_>, _>>()
         .unwrap();

@@ -8,7 +8,7 @@ use crate::{
     tokens::TokenKind,
 };
 
-pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone {
+#[must_use] pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone {
     recursive(|expr| {
         let args = expr
             .clone()
@@ -73,7 +73,9 @@ pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone
             },
         );
 
-        let assignment = select! {
+        
+
+        select! {
             TokenKind::Ident(name) => name,
         }
         .then_ignore(just(TokenKind::OperatorEq))
@@ -82,8 +84,6 @@ pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone
             name,
             value: Box::new(value),
         })
-        .or(equality);
-
-        assignment
+        .or(equality)
     })
 }

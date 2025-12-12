@@ -7,12 +7,12 @@ use crate::tokens::TokenKind;
 
 use super::{expr::expr_parser, ty::ty_parser};
 
-pub fn stmt_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Stmt> + Clone {
+#[must_use] pub fn stmt_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Stmt> + Clone {
     recursive(|stmt| {
         let return_parser = just(TokenKind::KeywordReturn)
             .ignore_then(expr_parser().or_not())
             .then_ignore(just(TokenKind::Semicolon))
-            .map(|expr| Stmt::Return(expr));
+            .map(Stmt::Return);
 
         let declaration_parser = ty_parser()
             .then(select! {TokenKind::Ident(name) => name})
@@ -66,7 +66,7 @@ pub fn stmt_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Stmt> + Clone
 
         let expr_parser = expr_parser()
             .then_ignore(just(TokenKind::Semicolon))
-            .map(|expr| Stmt::Expression(expr));
+            .map(Stmt::Expression);
 
         return_parser
             .or(declaration_parser)
