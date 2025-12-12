@@ -1,5 +1,7 @@
 use chumsky::Parser;
+use codegen::CodeGenerator;
 use error::CompileError;
+use ir::lower_program;
 use logos::Logos;
 use parser::program::program_parser;
 use tokens::TokenKind;
@@ -23,16 +25,19 @@ pub fn compile(input: &str) -> error::CompileResult<()> {
             message: "Unknown error".to_owned(),
         })?;
     let parser = program_parser();
-    let ast = parser.parse(&tokens);
+    let ast = parser
+        .parse(&tokens)
+        .into_result()
+        .map_err(|_| CompileError::InternalError {
+            message: "Unknown error".to_owned(),
+        })?;
 
-    println!("AST {ast:?}");
+    semantic::analyze(&ast)?;
 
-    // semantic::analyze(&ast)?;
+    let ir = lower_program(&ast)?;
 
-    // let ir = lower_program(&ast)?;
-
-    // let code = CodeGenerator::new(ir).generate()?;
-    // println!("{code}");
+    let code = CodeGenerator::new(ir).generate()?;
+    println!("{code}");
 
     Ok(())
 }

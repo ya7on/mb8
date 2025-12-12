@@ -25,25 +25,23 @@ pub fn stmt_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Stmt> + Clone
             .then_ignore(just(TokenKind::Semicolon))
             .map(|((ty, name), init)| Stmt::Declaration { name, ty, init });
 
+        let block_parser = stmt
+            .clone()
+            .repeated()
+            .collect::<Vec<_>>()
+            .delimited_by(just(TokenKind::LeftBrace), just(TokenKind::RightBrace));
+
         let if_parser = just(TokenKind::KeywordIf)
             .ignore_then(expr_parser().delimited_by(
                 just(TokenKind::LeftParenthesis),
                 just(TokenKind::RightParenthesis),
             ))
             .then(
-                stmt.clone()
-                    .delimited_by(just(TokenKind::LeftBrace), just(TokenKind::RightBrace))
-                    .repeated()
-                    .collect::<Vec<_>>(),
+                block_parser.clone(),
             )
             .then(
                 just(TokenKind::KeywordElse)
-                    .ignore_then(
-                        stmt.clone()
-                            .delimited_by(just(TokenKind::LeftBrace), just(TokenKind::RightBrace))
-                            .repeated()
-                            .collect::<Vec<_>>(),
-                    )
+                    .ignore_then(block_parser.clone())
                     .or_not(),
             )
             .map(|((condition, then_branch), else_branch)| Stmt::If {
