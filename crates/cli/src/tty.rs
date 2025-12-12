@@ -153,6 +153,8 @@ fn draw_glyph(framebuffer: &mut [u32], fb_width: usize, x: usize, y: usize, ch: 
     }
 }
 
+#[derive(Debug)]
+#[must_use]
 pub struct Tty {
     buffer: Vec<char>,
     head: usize,
