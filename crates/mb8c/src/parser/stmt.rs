@@ -36,9 +36,7 @@ pub fn stmt_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Stmt> + Clone
                 just(TokenKind::LeftParenthesis),
                 just(TokenKind::RightParenthesis),
             ))
-            .then(
-                block_parser.clone(),
-            )
+            .then(block_parser.clone())
             .then(
                 just(TokenKind::KeywordElse)
                     .ignore_then(block_parser.clone())
