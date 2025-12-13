@@ -1,3 +1,5 @@
+use chumsky::error::Simple;
+use chumsky::extra::Err;
 use chumsky::prelude::just;
 use chumsky::IterParser;
 use chumsky::{prelude::recursive, select, Parser};
@@ -8,7 +10,8 @@ use crate::tokens::TokenKind;
 use super::{expr::expr_parser, ty::ty_parser};
 
 #[must_use]
-pub fn stmt_parser<'src>() -> impl Parser<'src, &'src [TokenKind], ASTStmt> + Clone {
+pub fn stmt_parser<'src>(
+) -> impl Parser<'src, &'src [TokenKind], ASTStmt, Err<Simple<'src, TokenKind>>> + Clone {
     recursive(|stmt| {
         let return_parser = just(TokenKind::KeywordReturn)
             .ignore_then(expr_parser().or_not())

@@ -1,3 +1,5 @@
+use crate::tokens::TokenKind;
+
 pub type CompileResult<T, E = CompileError> = Result<T, E>;
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -10,6 +12,15 @@ pub enum CompileError {
     UnexpectedToken {
         start: usize,
         end: usize,
-        token: String,
+    },
+    ParserError {
+        start: usize,
+        end: usize,
+        found: Option<TokenKind>,
+    },
+    UnknownSymbol {
+        start: usize,
+        end: usize,
+        symbol: String,
     },
 }

@@ -4,11 +4,9 @@ use crate::error::CompileError;
 
 fn map_err(err: &mut logos::Lexer<TokenKind>) -> CompileError {
     let span = err.span();
-    let token = err.slice().to_string();
     CompileError::UnexpectedToken {
         start: span.start,
         end: span.end,
-        token,
     }
 }
 

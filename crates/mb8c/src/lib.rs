@@ -9,7 +9,6 @@ pub mod codegen;
 pub mod error;
 pub mod hir;
 pub mod lower;
-pub mod old_semantic;
 pub mod parser;
 pub mod semantic;
 pub mod tokens;
@@ -18,15 +17,24 @@ pub mod tokens;
 ///
 /// # Errors
 /// Returns an error if the input string is not valid MB8C code.
-pub fn compile(input: &str) -> error::CompileResult<()> {
-    let tokens = TokenKind::lexer(input).collect::<Result<Vec<_>, _>>()?;
+pub fn compile(input: &str) -> error::CompileResult<(), Vec<CompileError>> {
+    let tokens = TokenKind::lexer(input)
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|err| vec![err])?;
     let parser = program_parser();
-    let ast = parser
-        .parse(&tokens)
-        .into_result()
-        .map_err(|_| CompileError::InternalError {
-            message: "Unknown error".to_owned(),
-        })?;
+    let ast = parser.parse(&tokens).into_result().map_err(|errors| {
+        let mut result = Vec::with_capacity(errors.len());
+        for err in errors {
+            let span = err.span();
+            let token = err.found();
+            result.push(CompileError::ParserError {
+                start: span.start,
+                end: span.end,
+                found: token.cloned(),
+            });
+        }
+        result
+    })?;
 
     println!("{ast:?}");
 

@@ -1,4 +1,6 @@
 use chumsky::{
+    error::Simple,
+    extra::Err,
     prelude::{just, recursive},
     select, IterParser, Parser,
 };
@@ -9,7 +11,8 @@ use crate::{
 };
 
 #[must_use]
-pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], ASTExpr> + Clone {
+pub fn expr_parser<'src>(
+) -> impl Parser<'src, &'src [TokenKind], ASTExpr, Err<Simple<'src, TokenKind>>> + Clone {
     recursive(|expr| {
         let args = expr
             .clone()

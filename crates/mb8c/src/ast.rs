@@ -1,3 +1,10 @@
+#[derive(Clone, Debug, PartialEq)]
+pub struct ASTNode<T> {
+    pub start: usize,
+    pub end: usize,
+    pub data: T,
+}
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ASTType {
     Void,

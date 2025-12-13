@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use crate::{error::CompileResult, hir::SymbolId};
+use crate::{
+    error::{CompileError, CompileResult},
+    hir::SymbolId,
+};
 
 #[derive(Debug, Default)]
 pub struct ScopeStack {
@@ -29,7 +32,11 @@ pub struct Scope {
 impl Scope {
     pub fn allocate(&mut self, name: String, id: SymbolId) -> CompileResult<()> {
         if self.symbols.contains_key(&name) {
-            Err(todo!())
+            Err(CompileError::UnknownSymbol {
+                start: 0,
+                end: 0,
+                symbol: name,
+            })
         } else {
             self.symbols.insert(name, id);
             Ok(())
