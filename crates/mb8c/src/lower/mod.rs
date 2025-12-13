@@ -1,7 +1,7 @@
 use builder::IRBuilder;
 
 use crate::{
-    ast::{Function, Program, Type},
+    ast::{ASTFunction, ASTProgram, ASTType},
     error::CompileResult,
 };
 
@@ -45,13 +45,13 @@ pub struct IRInstruction {
 #[derive(Debug)]
 pub struct LocalInfo {
     pub name: String,
-    pub ty: Type,
+    pub ty: ASTType,
 }
 
 #[derive(Debug)]
 pub struct IRFunction {
     pub name: String,
-    pub return_type: Type,
+    pub return_type: ASTType,
     pub locals: Vec<LocalInfo>,
     pub code: Vec<IRInstruction>,
 }
@@ -60,7 +60,7 @@ pub struct IRFunction {
 ///
 /// # Errors
 /// Returns an error if the function cannot be lowered.
-pub fn lower_function(function: &Function) -> CompileResult<IRFunction> {
+pub fn lower_function(function: &ASTFunction) -> CompileResult<IRFunction> {
     let mut builder = IRBuilder::new(function.name.clone(), function.return_type);
 
     for (name, ty) in &function.params {
@@ -76,6 +76,6 @@ pub fn lower_function(function: &Function) -> CompileResult<IRFunction> {
 ///
 /// # Errors
 /// Returns an error if the function cannot be lowered.
-pub fn lower_program(program: &Program) -> CompileResult<Vec<IRFunction>> {
+pub fn lower_program(program: &ASTProgram) -> CompileResult<Vec<IRFunction>> {
     program.functions.iter().map(lower_function).collect()
 }

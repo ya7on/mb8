@@ -1,5 +1,5 @@
 use crate::{
-    ast::{BinaryOp, Expr, Stmt},
+    ast::{ASTBinaryOp, ASTExpr, ASTStmt, ASTUnaryOp},
     error::{CompileError, CompileResult},
 };
 
@@ -11,15 +11,15 @@ impl IRBuilder {
     /// # Errors
     /// Returns a `CompileError` if the expression cannot be lowered.
     #[allow(clippy::too_many_lines)]
-    pub fn lower_expr(&mut self, expr: &Expr) -> CompileResult<Reg> {
+    pub fn lower_expr(&mut self, expr: &ASTExpr) -> CompileResult<Reg> {
         match expr {
-            Expr::IntLiteral(n) => {
+            ASTExpr::IntLiteral(n) => {
                 let reg = self.new_reg();
                 self.emit(IROpcode::LoadImm { imm: *n as i64 }, Some(reg), None, None);
                 Ok(reg)
             }
 
-            Expr::Var(name) => {
+            ASTExpr::Var(name) => {
                 let local =
                     *self
                         .locals_map
@@ -41,7 +41,7 @@ impl IRBuilder {
                 Ok(reg)
             }
 
-            Expr::Assign { name, value } => {
+            ASTExpr::Assign { name, value } => {
                 let rhs_reg = self.lower_expr(value)?;
                 let local =
                     *self
@@ -64,13 +64,16 @@ impl IRBuilder {
                 Ok(rhs_reg)
             }
 
-            Expr::Negation(inner) => {
+            ASTExpr::UnaryOp {
+                op: ASTUnaryOp::Neg,
+                expr,
+            } => {
                 let zero_reg = {
                     let r = self.new_reg();
                     self.emit(IROpcode::LoadImm { imm: 0 }, Some(r), None, None);
                     r
                 };
-                let x_reg = self.lower_expr(inner)?;
+                let x_reg = self.lower_expr(expr)?;
                 let res = self.new_reg();
                 self.emit(
                     IROpcode::Bin {
@@ -83,17 +86,17 @@ impl IRBuilder {
                 Ok(res)
             }
 
-            Expr::BinaryOp { op, lhs, rhs } => {
+            ASTExpr::BinaryOp { op, lhs, rhs } => {
                 let l_reg = self.lower_expr(lhs)?;
                 let r_reg = self.lower_expr(rhs)?;
                 let res = self.new_reg();
 
                 let bin = match op {
-                    BinaryOp::Add => BinOperation::Add,
-                    BinaryOp::Sub => BinOperation::Sub,
-                    BinaryOp::Mul => BinOperation::Mul,
-                    BinaryOp::Div => BinOperation::Div,
-                    BinaryOp::Eq => BinOperation::Eq,
+                    ASTBinaryOp::Add => BinOperation::Add,
+                    ASTBinaryOp::Sub => BinOperation::Sub,
+                    ASTBinaryOp::Mul => BinOperation::Mul,
+                    ASTBinaryOp::Div => BinOperation::Div,
+                    ASTBinaryOp::Eq => BinOperation::Eq,
                 };
 
                 self.emit(
@@ -105,7 +108,7 @@ impl IRBuilder {
                 Ok(res)
             }
 
-            Expr::Call { name, args } => {
+            ASTExpr::Call { name, args } => {
                 let mut arg_regs = Vec::new();
                 for arg in args {
                     let reg = self.lower_expr(arg)?;
@@ -133,20 +136,20 @@ impl IRBuilder {
     /// # Errors
     /// Returns an error if the statement cannot be lowered.
     #[allow(clippy::too_many_lines)]
-    pub fn lower_stmt(&mut self, stmt: &Stmt) -> CompileResult<()> {
+    pub fn lower_stmt(&mut self, stmt: &ASTStmt) -> CompileResult<()> {
         match stmt {
-            Stmt::Block(stmts) => {
+            ASTStmt::Block(stmts) => {
                 for stmt in stmts {
                     self.lower_stmt(stmt)?;
                 }
             }
 
-            Stmt::Return(expr_opt) => {
+            ASTStmt::Return(expr_opt) => {
                 let reg_opt = expr_opt.as_ref().map(|e| self.lower_expr(e)).transpose()?;
                 self.emit(IROpcode::Return, reg_opt, None, None);
             }
 
-            Stmt::Declaration { name, ty, init } => {
+            ASTStmt::Declaration { name, ty, init } => {
                 let local = self.add_local(name.clone(), *ty);
                 if let Some(expr) = init {
                     let v = self.lower_expr(expr)?;
@@ -162,11 +165,11 @@ impl IRBuilder {
                 }
             }
 
-            Stmt::Expression(expr) => {
+            ASTStmt::Expression(expr) => {
                 self.lower_expr(expr)?;
             }
 
-            Stmt::If {
+            ASTStmt::If {
                 condition,
                 then_branch,
                 else_branch,
@@ -174,8 +177,8 @@ impl IRBuilder {
                 let result = self.lower_expr(condition)?;
                 if !matches!(
                     condition,
-                    Expr::BinaryOp {
-                        op: BinaryOp::Eq,
+                    ASTExpr::BinaryOp {
+                        op: ASTBinaryOp::Eq,
                         lhs: _,
                         rhs: _
                     }
@@ -216,7 +219,7 @@ impl IRBuilder {
                 }
             }
 
-            Stmt::While { condition, body } => {
+            ASTStmt::While { condition, body } => {
                 let loop_label = self.new_label();
                 let exit_label = self.new_label();
 
@@ -225,8 +228,8 @@ impl IRBuilder {
                 let result = self.lower_expr(condition)?;
                 if !matches!(
                     condition,
-                    Expr::BinaryOp {
-                        op: BinaryOp::Eq,
+                    ASTExpr::BinaryOp {
+                        op: ASTBinaryOp::Eq,
                         lhs: _,
                         rhs: _
                     }

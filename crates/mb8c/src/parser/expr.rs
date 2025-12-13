@@ -4,12 +4,12 @@ use chumsky::{
 };
 
 use crate::{
-    ast::{BinaryOp, Expr},
+    ast::{ASTBinaryOp, ASTExpr},
     tokens::TokenKind,
 };
 
 #[must_use]
-pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone {
+pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], ASTExpr> + Clone {
     recursive(|expr| {
         let args = expr
             .clone()
@@ -24,12 +24,12 @@ pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone
             TokenKind::Ident(name) => name,
         }
         .then(args.clone())
-        .map(|(name, args)| Expr::Call { name, args });
+        .map(|(name, args)| ASTExpr::Call { name, args });
 
         let primary = call_expr
             .or(select! {
-                TokenKind::Number(n) => Expr::IntLiteral(n),
-                TokenKind::Ident(name) => Expr::Var(name),
+                TokenKind::Number(n) => ASTExpr::IntLiteral(n),
+                TokenKind::Ident(name) => ASTExpr::Var(name),
             })
             .or(expr.clone().delimited_by(
                 just(TokenKind::LeftParenthesis),
@@ -38,11 +38,11 @@ pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone
 
         let product = primary.clone().foldl(
             (just(TokenKind::OperatorAsterisk)
-                .to(BinaryOp::Mul)
-                .or(just(TokenKind::OperatorSlash).to(BinaryOp::Div)))
+                .to(ASTBinaryOp::Mul)
+                .or(just(TokenKind::OperatorSlash).to(ASTBinaryOp::Div)))
             .then(primary.clone())
             .repeated(),
-            |lhs, (op, rhs)| Expr::BinaryOp {
+            |lhs, (op, rhs)| ASTExpr::BinaryOp {
                 op,
                 lhs: Box::new(lhs),
                 rhs: Box::new(rhs),
@@ -51,11 +51,11 @@ pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone
 
         let sum = product.clone().foldl(
             (just(TokenKind::OperatorPlus)
-                .to(BinaryOp::Add)
-                .or(just(TokenKind::OperatorMinus).to(BinaryOp::Sub)))
+                .to(ASTBinaryOp::Add)
+                .or(just(TokenKind::OperatorMinus).to(ASTBinaryOp::Sub)))
             .then(product)
             .repeated(),
-            |lhs, (op, rhs)| Expr::BinaryOp {
+            |lhs, (op, rhs)| ASTExpr::BinaryOp {
                 op,
                 lhs: Box::new(lhs),
                 rhs: Box::new(rhs),
@@ -64,10 +64,10 @@ pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone
 
         let equality = sum.clone().foldl(
             just(TokenKind::OperatorEqEq)
-                .to(BinaryOp::Eq)
+                .to(ASTBinaryOp::Eq)
                 .then(sum)
                 .repeated(),
-            |lhs, (op, rhs)| Expr::BinaryOp {
+            |lhs, (op, rhs)| ASTExpr::BinaryOp {
                 op,
                 lhs: Box::new(lhs),
                 rhs: Box::new(rhs),
@@ -79,7 +79,7 @@ pub fn expr_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Expr> + Clone
         }
         .then_ignore(just(TokenKind::OperatorEq))
         .then(expr.clone())
-        .map(|(name, value)| Expr::Assign {
+        .map(|(name, value)| ASTExpr::Assign {
             name,
             value: Box::new(value),
         })

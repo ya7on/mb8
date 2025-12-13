@@ -1,7 +1,7 @@
 use chumsky::Parser;
 use logos::Logos;
 use mb8c::{
-    ast::{BinaryOp, Expr, Function, Program, Stmt, Type},
+    ast::{ASTBinaryOp, ASTExpr, ASTFunction, ASTProgram, ASTStmt, ASTType},
     parser::program::program_parser,
     tokens::TokenKind,
 };
@@ -14,7 +14,7 @@ fn test_empty_program() {
         .unwrap();
     let parser = program_parser();
     let program = parser.parse(&tokens);
-    assert_eq!(program.unwrap(), Program { functions: vec![] });
+    assert_eq!(program.unwrap(), ASTProgram { functions: vec![] });
 }
 
 #[test]
@@ -32,14 +32,14 @@ fn test_return() {
     let program = parser.parse(&tokens);
     assert_eq!(
         program.unwrap(),
-        Program {
-            functions: vec![Function {
+        ASTProgram {
+            functions: vec![ASTFunction {
                 name: "func".to_string(),
-                return_type: Type::Int,
+                return_type: ASTType::Int,
                 params: vec![],
-                body: Stmt::Block(vec![
-                    Stmt::Return(None),
-                    Stmt::Return(Some(Expr::IntLiteral(0)))
+                body: ASTStmt::Block(vec![
+                    ASTStmt::Return(None),
+                    ASTStmt::Return(Some(ASTExpr::IntLiteral(0)))
                 ])
             }]
         }
@@ -63,31 +63,31 @@ fn test_variables() {
     let program = parser.parse(&tokens);
     assert_eq!(
         program.unwrap(),
-        Program {
-            functions: vec![Function {
+        ASTProgram {
+            functions: vec![ASTFunction {
                 name: "func".to_string(),
-                return_type: Type::Int,
+                return_type: ASTType::Int,
                 params: vec![],
-                body: Stmt::Block(vec![
-                    Stmt::Declaration {
+                body: ASTStmt::Block(vec![
+                    ASTStmt::Declaration {
                         name: "a".to_string(),
-                        ty: Type::Int,
+                        ty: ASTType::Int,
                         init: None,
                     },
-                    Stmt::Declaration {
+                    ASTStmt::Declaration {
                         name: "a".to_string(),
-                        ty: Type::Int,
-                        init: Some(Expr::IntLiteral(1)),
+                        ty: ASTType::Int,
+                        init: Some(ASTExpr::IntLiteral(1)),
                     },
-                    Stmt::Declaration {
+                    ASTStmt::Declaration {
                         name: "b".to_string(),
-                        ty: Type::Char,
+                        ty: ASTType::Char,
                         init: None,
                     },
-                    Stmt::Declaration {
+                    ASTStmt::Declaration {
                         name: "b".to_string(),
-                        ty: Type::Char,
-                        init: Some(Expr::IntLiteral(2)),
+                        ty: ASTType::Char,
+                        init: Some(ASTExpr::IntLiteral(2)),
                     },
                 ])
             }]
@@ -112,34 +112,34 @@ fn test_call() {
     let program = parser.parse(&tokens);
     assert_eq!(
         program.unwrap(),
-        Program {
-            functions: vec![Function {
+        ASTProgram {
+            functions: vec![ASTFunction {
                 name: "func".to_string(),
-                return_type: Type::Int,
+                return_type: ASTType::Int,
                 params: vec![],
-                body: Stmt::Block(vec![
-                    Stmt::Expression(Expr::Call {
+                body: ASTStmt::Block(vec![
+                    ASTStmt::Expression(ASTExpr::Call {
                         name: "func".to_string(),
                         args: vec![]
                     }),
-                    Stmt::Expression(Expr::Call {
+                    ASTStmt::Expression(ASTExpr::Call {
                         name: "func".to_string(),
-                        args: vec![Expr::Var("a".to_string()), Expr::Var("b".to_string())]
+                        args: vec![ASTExpr::Var("a".to_string()), ASTExpr::Var("b".to_string())]
                     }),
-                    Stmt::Expression(Expr::Call {
+                    ASTStmt::Expression(ASTExpr::Call {
                         name: "func".to_string(),
-                        args: vec![Expr::BinaryOp {
-                            op: BinaryOp::Add,
-                            lhs: Box::new(Expr::IntLiteral(2)),
-                            rhs: Box::new(Expr::IntLiteral(2))
+                        args: vec![ASTExpr::BinaryOp {
+                            op: ASTBinaryOp::Add,
+                            lhs: Box::new(ASTExpr::IntLiteral(2)),
+                            rhs: Box::new(ASTExpr::IntLiteral(2))
                         }],
                     }),
-                    Stmt::Expression(Expr::Call {
+                    ASTStmt::Expression(ASTExpr::Call {
                         name: "func".to_string(),
-                        args: vec![Expr::BinaryOp {
-                            op: BinaryOp::Mul,
-                            lhs: Box::new(Expr::IntLiteral(2)),
-                            rhs: Box::new(Expr::Var("c".to_string()))
+                        args: vec![ASTExpr::BinaryOp {
+                            op: ASTBinaryOp::Mul,
+                            lhs: Box::new(ASTExpr::IntLiteral(2)),
+                            rhs: Box::new(ASTExpr::Var("c".to_string()))
                         }],
                     })
                 ])
@@ -167,18 +167,18 @@ fn test_if_statement() {
         let program = parser.parse(&tokens);
         assert_eq!(
             program.unwrap(),
-            Program {
-                functions: vec![Function {
+            ASTProgram {
+                functions: vec![ASTFunction {
                     name: "main".to_string(),
-                    return_type: Type::Int,
+                    return_type: ASTType::Int,
                     params: vec![],
-                    body: Stmt::Block(vec![Stmt::If {
-                        condition: Expr::IntLiteral(1),
-                        then_branch: Box::new(Stmt::Block(vec![Stmt::Return(Some(
-                            Expr::IntLiteral(1)
+                    body: ASTStmt::Block(vec![ASTStmt::If {
+                        condition: ASTExpr::IntLiteral(1),
+                        then_branch: Box::new(ASTStmt::Block(vec![ASTStmt::Return(Some(
+                            ASTExpr::IntLiteral(1)
                         ))])),
-                        else_branch: Some(Box::new(Stmt::Block(vec![Stmt::Return(Some(
-                            Expr::IntLiteral(2)
+                        else_branch: Some(Box::new(ASTStmt::Block(vec![ASTStmt::Return(Some(
+                            ASTExpr::IntLiteral(2)
                         ))])))
                     },])
                 }]
@@ -204,14 +204,16 @@ fn test_while_statement() {
         let program = parser.parse(&tokens);
         assert_eq!(
             program.unwrap(),
-            Program {
-                functions: vec![Function {
+            ASTProgram {
+                functions: vec![ASTFunction {
                     name: "main".to_string(),
-                    return_type: Type::Int,
+                    return_type: ASTType::Int,
                     params: vec![],
-                    body: Stmt::Block(vec![Stmt::While {
-                        condition: Expr::IntLiteral(1),
-                        body: Box::new(Stmt::Block(vec![Stmt::Return(Some(Expr::IntLiteral(1)))])),
+                    body: ASTStmt::Block(vec![ASTStmt::While {
+                        condition: ASTExpr::IntLiteral(1),
+                        body: Box::new(ASTStmt::Block(vec![ASTStmt::Return(Some(
+                            ASTExpr::IntLiteral(1)
+                        ))])),
                     }])
                 }]
             }

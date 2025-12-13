@@ -2,18 +2,18 @@ use chumsky::prelude::just;
 use chumsky::IterParser;
 use chumsky::{prelude::recursive, select, Parser};
 
-use crate::ast::Stmt;
+use crate::ast::ASTStmt;
 use crate::tokens::TokenKind;
 
 use super::{expr::expr_parser, ty::ty_parser};
 
 #[must_use]
-pub fn stmt_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Stmt> + Clone {
+pub fn stmt_parser<'src>() -> impl Parser<'src, &'src [TokenKind], ASTStmt> + Clone {
     recursive(|stmt| {
         let return_parser = just(TokenKind::KeywordReturn)
             .ignore_then(expr_parser().or_not())
             .then_ignore(just(TokenKind::Semicolon))
-            .map(Stmt::Return);
+            .map(ASTStmt::Return);
 
         let declaration_parser = ty_parser()
             .then(select! {TokenKind::Ident(name) => name})
@@ -23,7 +23,7 @@ pub fn stmt_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Stmt> + Clone
                     .or_not(),
             )
             .then_ignore(just(TokenKind::Semicolon))
-            .map(|((ty, name), init)| Stmt::Declaration { name, ty, init });
+            .map(|((ty, name), init)| ASTStmt::Declaration { name, ty, init });
 
         let block_parser = stmt
             .clone()
@@ -42,10 +42,10 @@ pub fn stmt_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Stmt> + Clone
                     .ignore_then(block_parser.clone())
                     .or_not(),
             )
-            .map(|((condition, then_branch), else_branch)| Stmt::If {
+            .map(|((condition, then_branch), else_branch)| ASTStmt::If {
                 condition,
-                then_branch: Box::new(Stmt::Block(then_branch)),
-                else_branch: else_branch.map(Stmt::Block).map(Box::new),
+                then_branch: Box::new(ASTStmt::Block(then_branch)),
+                else_branch: else_branch.map(ASTStmt::Block).map(Box::new),
             });
 
         let while_parser = just(TokenKind::KeywordWhile)
@@ -56,14 +56,14 @@ pub fn stmt_parser<'src>() -> impl Parser<'src, &'src [TokenKind], Stmt> + Clone
                     .collect()
                     .delimited_by(just(TokenKind::LeftBrace), just(TokenKind::RightBrace)),
             )
-            .map(|(condition, body)| Stmt::While {
+            .map(|(condition, body)| ASTStmt::While {
                 condition,
-                body: Box::new(Stmt::Block(body)),
+                body: Box::new(ASTStmt::Block(body)),
             });
 
         let expr_parser = expr_parser()
             .then_ignore(just(TokenKind::Semicolon))
-            .map(Stmt::Expression);
+            .map(ASTStmt::Expression);
 
         return_parser
             .or(declaration_parser)

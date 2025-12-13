@@ -1,7 +1,7 @@
 use chumsky::Parser;
 use logos::Logos;
 use mb8c::{
-    ast::Type, error::CompileError, parser::program::program_parser, semantic::analyze,
+    ast::ASTType, error::CompileError, old_semantic::analyze, parser::program::program_parser,
     tokens::TokenKind,
 };
 
@@ -21,8 +21,8 @@ fn test_return_type() {
         assert_eq!(
             analyze(&ast).unwrap_err(),
             CompileError::TypeMismatch {
-                expected: Type::Void,
-                found: Type::Int
+                expected: ASTType::Void,
+                found: ASTType::Int
             }
         );
     }
@@ -42,8 +42,8 @@ fn test_return_type() {
         assert_eq!(
             analyze(&ast).unwrap_err(),
             CompileError::TypeMismatch {
-                expected: Type::Void,
-                found: Type::Char
+                expected: ASTType::Void,
+                found: ASTType::Char
             }
         );
     }
@@ -77,8 +77,8 @@ fn test_return_type() {
         assert_eq!(
             analyze(&ast).unwrap_err(),
             CompileError::TypeMismatch {
-                expected: Type::Int,
-                found: Type::Void
+                expected: ASTType::Int,
+                found: ASTType::Void
             }
         );
     }
@@ -98,8 +98,8 @@ fn test_return_type() {
         assert_eq!(
             analyze(&ast).unwrap_err(),
             CompileError::TypeMismatch {
-                expected: Type::Int,
-                found: Type::Char
+                expected: ASTType::Int,
+                found: ASTType::Char
             }
         );
     }

@@ -2,7 +2,7 @@ use mb8::Mb8Asm;
 
 use crate::{
     error::{CompileError, CompileResult},
-    ir::{BinOperation, IRFunction, IROpcode, Reg},
+    lower::{BinOperation, IRFunction, IROpcode, Reg},
 };
 
 pub mod mb8;

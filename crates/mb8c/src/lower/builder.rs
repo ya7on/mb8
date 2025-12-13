@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::ast::Type;
+use crate::ast::ASTType;
 
 use super::{IRFunction, IRInstruction, IROpcode, LocalInfo, Reg};
 
@@ -14,7 +14,7 @@ pub struct IRBuilder {
 
 impl IRBuilder {
     #[must_use]
-    pub fn new(name: String, return_type: Type) -> Self {
+    pub fn new(name: String, return_type: ASTType) -> Self {
         Self {
             func: IRFunction {
                 name,
@@ -55,7 +55,7 @@ impl IRBuilder {
         });
     }
 
-    pub fn add_local(&mut self, name: String, ty: Type) -> u32 {
+    pub fn add_local(&mut self, name: String, ty: ASTType) -> u32 {
         let id = self.func.locals.len() as u32;
         self.func.locals.push(LocalInfo {
             name: name.clone(),

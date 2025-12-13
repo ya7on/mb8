@@ -1,36 +1,15 @@
-use crate::ast::Type;
-
 pub type CompileResult<T, E = CompileError> = Result<T, E>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub enum CompileError {
+    #[default]
+    Unknown,
     InternalError {
         message: String,
     },
     UnexpectedToken {
-        line: usize,
-        column: usize,
-    },
-    ParseError {
-        line: usize,
-        column: usize,
-        message: String,
-    },
-    DuplicateFunction {
-        name: String,
-    },
-    DuplicateVariable {
-        name: String,
-    },
-    TypeMismatch {
-        expected: Type,
-        found: Type,
-    },
-    UndefinedSymbol {
-        name: String,
-    },
-    InvalidArgumentCount {
-        expected: usize,
-        found: usize,
+        start: usize,
+        end: usize,
+        token: String,
     },
 }

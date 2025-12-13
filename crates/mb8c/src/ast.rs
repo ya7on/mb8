@@ -1,57 +1,57 @@
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub enum Type {
+pub enum ASTType {
     Void,
     Char,
     Int,
 }
 
-impl Type {
+impl ASTType {
     #[must_use]
     pub fn size_in_bytes(&self) -> u8 {
         match self {
-            Type::Void => 0,
-            Type::Char => 1,
-            Type::Int => 2,
+            ASTType::Void => 0,
+            ASTType::Char => 1,
+            ASTType::Int => 2,
         }
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Program {
-    pub functions: Vec<Function>,
+pub struct ASTProgram {
+    pub functions: Vec<ASTFunction>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Function {
+pub struct ASTFunction {
     pub name: String,
-    pub return_type: Type,
-    pub params: Vec<(String, Type)>,
-    pub body: Stmt,
+    pub return_type: ASTType,
+    pub params: Vec<(String, ASTType)>,
+    pub body: ASTStmt,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Stmt {
-    Block(Vec<Stmt>),
+pub enum ASTStmt {
+    Block(Vec<ASTStmt>),
     Declaration {
         name: String,
-        ty: Type,
-        init: Option<Expr>,
+        ty: ASTType,
+        init: Option<ASTExpr>,
     },
-    Return(Option<Expr>),
-    Expression(Expr),
+    Return(Option<ASTExpr>),
+    Expression(ASTExpr),
     If {
-        condition: Expr,
-        then_branch: Box<Stmt>,
-        else_branch: Option<Box<Stmt>>,
+        condition: ASTExpr,
+        then_branch: Box<ASTStmt>,
+        else_branch: Option<Box<ASTStmt>>,
     },
     While {
-        condition: Expr,
-        body: Box<Stmt>,
+        condition: ASTExpr,
+        body: Box<ASTStmt>,
     },
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum BinaryOp {
+pub enum ASTBinaryOp {
     Add,
     Sub,
     Mul,
@@ -60,21 +60,29 @@ pub enum BinaryOp {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Expr {
+pub enum ASTUnaryOp {
+    Neg,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum ASTExpr {
     IntLiteral(i16),
     BinaryOp {
-        op: BinaryOp,
-        lhs: Box<Expr>,
-        rhs: Box<Expr>,
+        op: ASTBinaryOp,
+        lhs: Box<ASTExpr>,
+        rhs: Box<ASTExpr>,
     },
-    Negation(Box<Expr>),
+    UnaryOp {
+        op: ASTUnaryOp,
+        expr: Box<ASTExpr>,
+    },
     Var(String),
     Assign {
         name: String,
-        value: Box<Expr>,
+        value: Box<ASTExpr>,
     },
     Call {
         name: String,
-        args: Vec<Expr>,
+        args: Vec<ASTExpr>,
     },
 }

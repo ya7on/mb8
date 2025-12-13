@@ -1,6 +1,19 @@
 use logos::Logos;
 
+use crate::error::CompileError;
+
+fn map_err(err: &mut logos::Lexer<TokenKind>) -> CompileError {
+    let span = err.span();
+    let token = err.slice().to_string();
+    CompileError::UnexpectedToken {
+        start: span.start,
+        end: span.end,
+        token,
+    }
+}
+
 #[derive(Logos, Debug, PartialEq, Clone)]
+#[logos(error(CompileError, map_err))]
 pub enum TokenKind {
     #[regex(r"[ \t\n\r]+", logos::skip)]
     #[regex(r"//[^\n]*", logos::skip, allow_greedy = true)]
