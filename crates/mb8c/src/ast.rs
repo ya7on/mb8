@@ -1,8 +1,7 @@
 #[derive(Clone, Debug, PartialEq)]
-pub struct ASTNode<T> {
+pub struct Span {
     pub start: usize,
     pub end: usize,
-    pub data: T,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -34,6 +33,7 @@ pub struct ASTFunction {
     pub return_type: ASTType,
     pub params: Vec<(String, ASTType)>,
     pub body: ASTStmt,
+    pub span: Span,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -43,17 +43,26 @@ pub enum ASTStmt {
         name: String,
         ty: ASTType,
         init: Option<ASTExpr>,
+        span: Span,
     },
-    Return(Option<ASTExpr>),
-    Expression(ASTExpr),
+    Return {
+        expr: Option<ASTExpr>,
+        span: Span,
+    },
+    Expression {
+        expr: ASTExpr,
+        span: Span,
+    },
     If {
         condition: ASTExpr,
         then_branch: Box<ASTStmt>,
         else_branch: Option<Box<ASTStmt>>,
+        span: Span,
     },
     While {
         condition: ASTExpr,
         body: Box<ASTStmt>,
+        span: Span,
     },
 }
 
@@ -73,23 +82,33 @@ pub enum ASTUnaryOp {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ASTExpr {
-    IntLiteral(i16),
+    IntLiteral {
+        value: i16,
+        span: Span,
+    },
     BinaryOp {
         op: ASTBinaryOp,
         lhs: Box<ASTExpr>,
         rhs: Box<ASTExpr>,
+        span: Span,
     },
     UnaryOp {
         op: ASTUnaryOp,
         expr: Box<ASTExpr>,
+        span: Span,
     },
-    Var(String),
+    Var {
+        name: String,
+        span: Span,
+    },
     Assign {
         name: String,
         value: Box<ASTExpr>,
+        span: Span,
     },
     Call {
         name: String,
         args: Vec<ASTExpr>,
+        span: Span,
     },
 }

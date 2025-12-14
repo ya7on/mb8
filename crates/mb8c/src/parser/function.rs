@@ -1,7 +1,7 @@
 use chumsky::{error::Simple, extra::Err, prelude::just, select, IterParser, Parser};
 
 use crate::{
-    ast::{ASTFunction, ASTStmt},
+    ast::{ASTFunction, ASTStmt, Span},
     tokens::TokenKind,
 };
 
@@ -27,10 +27,17 @@ pub fn function_parser<'src>(
         .then_ignore(just(TokenKind::LeftBrace))
         .then(stmt_parser().repeated().collect())
         .then_ignore(just(TokenKind::RightBrace))
-        .map(|(((return_type, name), params), body)| ASTFunction {
-            return_type,
-            name,
-            params,
-            body: ASTStmt::Block(body),
+        .map_with(|(((return_type, name), params), body), extra| {
+            let span = extra.span();
+            ASTFunction {
+                return_type,
+                name,
+                params,
+                body: ASTStmt::Block(body),
+                span: Span {
+                    start: span.start,
+                    end: span.end,
+                },
+            }
         })
 }

@@ -1,0 +1,208 @@
+use crate::{
+    ast::{ASTBinaryOp, ASTExpr, ASTUnaryOp},
+    error::{CompileError, CompileResult},
+    hir::{HIRBinaryOp, HIRExpr, HIRUnaryOp, Literal, TypeId},
+    semantic::{context::Context, helpers::fetch_expr_type, symbols::SymbolKind, types::TypeKind},
+};
+
+pub fn analyze_expr(
+    ctx: &mut Context,
+    expr: &ASTExpr,
+    expected_ty: TypeId,
+) -> CompileResult<HIRExpr> {
+    match expr {
+        ASTExpr::IntLiteral { span: _, value } => {
+            // TODO
+            Ok(HIRExpr::Literal {
+                literal: Literal::Int(*value),
+                ty: expected_ty,
+            })
+        }
+        ASTExpr::BinaryOp {
+            op,
+            lhs,
+            rhs,
+            span: _,
+        } => {
+            let lhs_expr = analyze_expr(ctx, lhs, expected_ty)?;
+            let rhs_expr = analyze_expr(ctx, rhs, expected_ty)?;
+            let op = match op {
+                ASTBinaryOp::Add => HIRBinaryOp::Add,
+                ASTBinaryOp::Sub => HIRBinaryOp::Sub,
+                ASTBinaryOp::Mul => HIRBinaryOp::Mul,
+                ASTBinaryOp::Div => HIRBinaryOp::Div,
+                ASTBinaryOp::Eq => HIRBinaryOp::Eq,
+            };
+
+            let lhs_ty = fetch_expr_type(&lhs_expr);
+            let rhs_ty = fetch_expr_type(&rhs_expr);
+
+            if lhs_ty != rhs_ty {
+                return Err(CompileError::TypeMismatch {
+                    expected: lhs_ty,
+                    actual: rhs_ty,
+                    start: 0,
+                    end: 0,
+                });
+            }
+
+            Ok(HIRExpr::Binary {
+                op,
+                lhs: Box::new(lhs_expr),
+                rhs: Box::new(rhs_expr),
+                ty: lhs_ty,
+            })
+        }
+        ASTExpr::UnaryOp {
+            op: ASTUnaryOp::Neg,
+            expr,
+            span: _,
+        } => {
+            let expr = analyze_expr(ctx, expr, expected_ty)?;
+            let ty = fetch_expr_type(&expr);
+            Ok(HIRExpr::Unary {
+                op: HIRUnaryOp::Neg,
+                expr: Box::new(expr),
+                ty,
+            })
+        }
+        ASTExpr::Var { name, span } => {
+            let symbol_id = ctx.scope.lookup(name).ok_or(CompileError::UnknownSymbol {
+                start: span.start,
+                end: span.end,
+                symbol: name.clone(),
+            })?;
+            let symbol = ctx
+                .symbols
+                .lookup(symbol_id)
+                .ok_or(CompileError::UnknownSymbol {
+                    start: span.start,
+                    end: span.end,
+                    symbol: name.clone(),
+                })?;
+
+            if symbol.ty != expected_ty {
+                return Err(CompileError::TypeMismatch {
+                    expected: expected_ty,
+                    actual: symbol.ty,
+                    start: span.start,
+                    end: span.end,
+                });
+            }
+
+            Ok(HIRExpr::Var {
+                symbol: symbol_id,
+                ty: symbol.ty,
+            })
+        }
+        ASTExpr::Assign { name, value, span } => {
+            let symbol_id = ctx.scope.lookup(name).ok_or(CompileError::UnknownSymbol {
+                start: span.start,
+                end: span.end,
+                symbol: name.clone(),
+            })?;
+            let symbol = ctx
+                .symbols
+                .lookup(symbol_id)
+                .ok_or(CompileError::UnknownSymbol {
+                    start: span.start,
+                    end: span.end,
+                    symbol: name.clone(),
+                })?;
+
+            let value = analyze_expr(ctx, value, symbol.ty)?;
+            let value_ty = fetch_expr_type(&value);
+
+            if symbol.ty != value_ty {
+                return Err(CompileError::TypeMismatch {
+                    expected: value_ty,
+                    actual: symbol.ty,
+                    start: span.start,
+                    end: span.end,
+                });
+            }
+
+            Ok(HIRExpr::Assign {
+                symbol: symbol_id,
+                value: Box::new(value),
+                ty: value_ty,
+            })
+        }
+        ASTExpr::Call { name, args, span } => {
+            let symbol_id = ctx.scope.lookup(name).ok_or(CompileError::UnknownSymbol {
+                start: span.start,
+                end: span.end,
+                symbol: name.clone(),
+            })?;
+            let symbol = ctx
+                .symbols
+                .lookup(symbol_id)
+                .ok_or(CompileError::UnknownSymbol {
+                    start: span.start,
+                    end: span.end,
+                    symbol: name.clone(),
+                })?;
+
+            if symbol.kind != SymbolKind::Function {
+                return Err(CompileError::SymbolIsNotCallable {
+                    start: span.start,
+                    end: span.end,
+                    symbol: name.clone(),
+                });
+            }
+
+            let ty = ctx
+                .types
+                .lookup(symbol.ty)
+                .ok_or(CompileError::UnknownSymbol {
+                    start: span.start,
+                    end: span.end,
+                    symbol: name.clone(),
+                })?
+                .clone();
+            let TypeKind::Function { params, ret } = ty.clone() else {
+                return Err(CompileError::SymbolIsNotCallable {
+                    start: span.start,
+                    end: span.end,
+                    symbol: name.clone(),
+                });
+            };
+
+            if args.len() != params.len() {
+                return Err(CompileError::WrongArgumentsCount {
+                    actual: args.len(),
+                    expected: params.len(),
+                    start: span.start,
+                    end: span.end,
+                });
+            }
+
+            let mut hir_args = Vec::with_capacity(args.len());
+
+            for i in 0..args.len() {
+                let arg = args[i].clone();
+                let param = params[i];
+
+                let hir_arg = analyze_expr(ctx, &arg, param)?;
+                let arg_ty = fetch_expr_type(&hir_arg);
+
+                if arg_ty != param {
+                    return Err(CompileError::WrongArgumentsCount {
+                        actual: args.len(),
+                        expected: params.len(),
+                        start: span.start,
+                        end: span.end,
+                    });
+                }
+
+                hir_args.push(hir_arg);
+            }
+
+            Ok(HIRExpr::Call {
+                func: symbol_id,
+                args: hir_args,
+                ty: ret,
+            })
+        }
+    }
+}

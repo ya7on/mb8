@@ -19,6 +19,10 @@ impl TypeTable {
             id
         }
     }
+
+    pub fn lookup(&self, type_id: TypeId) -> Option<&TypeKind> {
+        self.types.get(type_id.0)
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone)]

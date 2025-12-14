@@ -36,17 +36,46 @@ fn main() {
                                     .with_label(Label::new((filename, start..end)))
                                     .with_message("Unexpected token")
                             }
+                            CompileError::UnknownSymbol { start, end, symbol } => {
+                                Report::build(ReportKind::Error, (filename, start..end))
+                                    .with_code(2)
+                                    .with_label(Label::new((filename, start..end)))
+                                    .with_message(format!("Unknown symbol '{symbol}'"))
+                            }
+                            CompileError::DuplicateSymbol { start, end, symbol } => {
+                                Report::build(ReportKind::Error, (filename, start..end))
+                                    .with_code(3)
+                                    .with_label(Label::new((filename, start..end)))
+                                    .with_message(format!("Duplicate symbol '{symbol}'"))
+                            }
+                            CompileError::TypeMismatch {
+                                expected,
+                                actual,
+                                start,
+                                end,
+                            } => Report::build(ReportKind::Error, (filename, start..end))
+                                .with_code(4)
+                                .with_label(Label::new((filename, start..end)))
+                                .with_message(format!(
+                                    "Type mismatch: expected {expected:?}, found {actual:?}"
+                                )),
+                            CompileError::SymbolIsNotCallable { symbol, start, end } => {
+                                Report::build(ReportKind::Error, (filename, start..end))
+                                    .with_code(5)
+                                    .with_label(Label::new((filename, start..end)))
+                                    .with_message(format!("Symbol {symbol} is not callable"))
+                            }
                             CompileError::ParserError {
                                 start,
                                 end,
                                 found: Some(found),
                             } => Report::build(ReportKind::Error, (filename, start..end))
-                                .with_code(1)
+                                .with_code(6)
                                 .with_label(Label::new((filename, start..end)))
                                 .with_message(format!("Unexpected {found:?}")),
-                            _ => Report::build(ReportKind::Error, (filename, 0..0))
-                                .with_code(1)
-                                .with_message("Unknown error"),
+                            err => Report::build(ReportKind::Error, (filename, 0..0))
+                                .with_code(0)
+                                .with_message(format!("Unknown error: {err:?}")),
                         };
 
                         report

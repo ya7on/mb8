@@ -4,7 +4,7 @@ use chumsky::prelude::just;
 use chumsky::IterParser;
 use chumsky::{prelude::recursive, select, Parser};
 
-use crate::ast::ASTStmt;
+use crate::ast::{ASTStmt, Span};
 use crate::tokens::TokenKind;
 
 use super::{expr::expr_parser, ty::ty_parser};
@@ -16,7 +16,16 @@ pub fn stmt_parser<'src>(
         let return_parser = just(TokenKind::KeywordReturn)
             .ignore_then(expr_parser().or_not())
             .then_ignore(just(TokenKind::Semicolon))
-            .map(ASTStmt::Return);
+            .map_with(|expr, extra| {
+                let span = extra.span();
+                ASTStmt::Return {
+                    expr,
+                    span: Span {
+                        start: span.start,
+                        end: span.end,
+                    },
+                }
+            });
 
         let declaration_parser = ty_parser()
             .then(select! {TokenKind::Ident(name) => name})
@@ -26,7 +35,18 @@ pub fn stmt_parser<'src>(
                     .or_not(),
             )
             .then_ignore(just(TokenKind::Semicolon))
-            .map(|((ty, name), init)| ASTStmt::Declaration { name, ty, init });
+            .map_with(|((ty, name), init), extra| {
+                let span = extra.span();
+                ASTStmt::Declaration {
+                    name,
+                    ty,
+                    init,
+                    span: Span {
+                        start: span.start,
+                        end: span.end,
+                    },
+                }
+            });
 
         let block_parser = stmt
             .clone()
@@ -45,10 +65,17 @@ pub fn stmt_parser<'src>(
                     .ignore_then(block_parser.clone())
                     .or_not(),
             )
-            .map(|((condition, then_branch), else_branch)| ASTStmt::If {
-                condition,
-                then_branch: Box::new(ASTStmt::Block(then_branch)),
-                else_branch: else_branch.map(ASTStmt::Block).map(Box::new),
+            .map_with(|((condition, then_branch), else_branch), extra| {
+                let span = extra.span();
+                ASTStmt::If {
+                    condition,
+                    then_branch: Box::new(ASTStmt::Block(then_branch)),
+                    else_branch: else_branch.map(ASTStmt::Block).map(Box::new),
+                    span: Span {
+                        start: span.start,
+                        end: span.end,
+                    },
+                }
             });
 
         let while_parser = just(TokenKind::KeywordWhile)
@@ -59,14 +86,30 @@ pub fn stmt_parser<'src>(
                     .collect()
                     .delimited_by(just(TokenKind::LeftBrace), just(TokenKind::RightBrace)),
             )
-            .map(|(condition, body)| ASTStmt::While {
-                condition,
-                body: Box::new(ASTStmt::Block(body)),
+            .map_with(|(condition, body), extra| {
+                let span = extra.span();
+                ASTStmt::While {
+                    condition,
+                    body: Box::new(ASTStmt::Block(body)),
+                    span: Span {
+                        start: span.start,
+                        end: span.end,
+                    },
+                }
             });
 
         let expr_parser = expr_parser()
             .then_ignore(just(TokenKind::Semicolon))
-            .map(ASTStmt::Expression);
+            .map_with(|expr, extra| {
+                let span = extra.span();
+                ASTStmt::Expression {
+                    expr,
+                    span: Span {
+                        start: span.start,
+                        end: span.end,
+                    },
+                }
+            });
 
         return_parser
             .or(declaration_parser)

@@ -8,7 +8,6 @@ pub mod ast;
 pub mod codegen;
 pub mod error;
 pub mod hir;
-pub mod lower;
 pub mod parser;
 pub mod semantic;
 pub mod tokens;
@@ -36,11 +35,11 @@ pub fn compile(input: &str) -> error::CompileResult<(), Vec<CompileError>> {
         result
     })?;
 
-    println!("{ast:?}");
+    let hir = semantic::analyze(&ast).map_err(|err| vec![err])?;
+
+    println!("{hir:?}");
 
     Ok(())
-
-    // semantic::analyze(&ast)?;
 
     // let ir = lower_program(&ast)?;
 

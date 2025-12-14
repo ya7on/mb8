@@ -1,4 +1,4 @@
-use crate::tokens::TokenKind;
+use crate::{hir::TypeId, tokens::TokenKind};
 
 pub type CompileResult<T, E = CompileError> = Result<T, E>;
 
@@ -22,5 +22,27 @@ pub enum CompileError {
         start: usize,
         end: usize,
         symbol: String,
+    },
+    DuplicateSymbol {
+        start: usize,
+        end: usize,
+        symbol: String,
+    },
+    TypeMismatch {
+        expected: TypeId,
+        actual: TypeId,
+        start: usize,
+        end: usize,
+    },
+    SymbolIsNotCallable {
+        symbol: String,
+        start: usize,
+        end: usize,
+    },
+    WrongArgumentsCount {
+        expected: usize,
+        actual: usize,
+        start: usize,
+        end: usize,
     },
 }

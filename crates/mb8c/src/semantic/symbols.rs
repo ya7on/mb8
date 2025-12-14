@@ -11,16 +11,20 @@ impl SymbolTable {
         self.symbols.push(symbol);
         SymbolId(id)
     }
+
+    pub fn lookup(&self, symbol_id: SymbolId) -> Option<Symbol> {
+        self.symbols.get(symbol_id.0).cloned()
+    }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SymbolKind {
     Variable,
     Function,
     Parameter,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Symbol {
     pub name: String,
     pub kind: SymbolKind,

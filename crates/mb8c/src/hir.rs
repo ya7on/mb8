@@ -5,23 +5,20 @@ pub struct HIRProgram {
 
 #[derive(Debug)]
 pub struct HIRFunction {
-    pub id: FunctionId,
+    pub id: SymbolId,
     pub params: Vec<SymbolId>,
     pub body: Vec<HIRStmt>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct SymbolId(pub usize);
 
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
 pub struct TypeId(pub usize);
 
 #[derive(Debug)]
-pub struct FunctionId();
-
-#[derive(Debug)]
 pub enum Literal {
-    Int(i32),
+    Int(i16),
 }
 
 #[derive(Debug)]
@@ -32,17 +29,17 @@ pub enum HIRStmt {
         ty: TypeId,
         init: Option<HIRExpr>,
     },
+    Return(Option<HIRExpr>),
+    Expression(HIRExpr),
     If {
-        cond: Box<HIRExpr>,
-        then: Box<HIRStmt>,
-        else_: Option<Box<HIRStmt>>,
+        condition: Box<HIRExpr>,
+        then_branch: Box<HIRStmt>,
+        else_branch: Option<Box<HIRStmt>>,
     },
     While {
-        cond: Box<HIRExpr>,
+        condition: Box<HIRExpr>,
         body: Box<HIRStmt>,
     },
-    Return(Option<HIRExpr>),
-    Expr(HIRExpr),
 }
 
 #[derive(Debug)]
@@ -51,6 +48,7 @@ pub enum HIRBinaryOp {
     Sub,
     Mul,
     Div,
+    Eq,
 }
 
 #[derive(Debug)]
@@ -80,8 +78,13 @@ pub enum HIRExpr {
         ty: TypeId,
     },
     Call {
-        func: FunctionId,
+        func: SymbolId,
         args: Vec<HIRExpr>,
+        ty: TypeId,
+    },
+    Assign {
+        symbol: SymbolId,
+        value: Box<HIRExpr>,
         ty: TypeId,
     },
 }
