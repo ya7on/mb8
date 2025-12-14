@@ -1,4 +1,8 @@
-use chumsky::Parser;
+use chumsky::{
+    input::{Input, Stream},
+    span::SimpleSpan,
+    Parser,
+};
 use error::CompileError;
 use logos::Logos;
 use lower::lower;
@@ -21,22 +25,30 @@ pub mod tokens;
 /// Returns an error if the input string is not valid MB8C code.
 pub fn compile(input: &str) -> error::CompileResult<(), Vec<CompileError>> {
     let tokens = TokenKind::lexer(input)
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|err| vec![err])?;
-    let parser = program_parser();
-    let ast = parser.parse(&tokens).into_result().map_err(|errors| {
-        let mut result = Vec::with_capacity(errors.len());
-        for err in errors {
-            let span = err.span();
-            let token = err.found();
-            result.push(CompileError::ParserError {
-                start: span.start,
-                end: span.end,
-                found: token.cloned(),
-            });
-        }
-        result
-    })?;
+        .spanned()
+        .map(|(tok, span)| match tok {
+            Ok(tok) => (tok, SimpleSpan::from(span)),
+            Err(_err) => panic!("XYU"),
+        });
+    let token_stream =
+        Stream::from_iter(tokens).map((0..input.len()).into(), |(t, s): (_, _)| (t, s));
+
+    let ast = program_parser()
+        .parse(token_stream)
+        .into_result()
+        .map_err(|errors| {
+            let mut result = Vec::with_capacity(errors.len());
+            for err in errors {
+                let span = err.span();
+                let token = err.found();
+                result.push(CompileError::ParserError {
+                    start: span.start,
+                    end: span.end,
+                    found: token.cloned(),
+                });
+            }
+            result
+        })?;
 
     let hir = semantic::analyze(&ast).map_err(|err| vec![err])?;
 

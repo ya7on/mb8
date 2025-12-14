@@ -198,9 +198,9 @@ pub fn analyze_expr(
                 let arg_ty = fetch_expr_type(&hir_arg);
 
                 if arg_ty != param {
-                    return Err(CompileError::WrongArgumentsCount {
-                        actual: args.len(),
-                        expected: params.len(),
+                    return Err(CompileError::TypeMismatch {
+                        expected: ctx.types.lookup(param).cloned().unwrap_or_default(),
+                        actual: ctx.types.lookup(arg_ty).cloned().unwrap_or_default(),
                         start: span.start,
                         end: span.end,
                     });

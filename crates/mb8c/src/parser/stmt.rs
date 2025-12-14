@@ -1,6 +1,8 @@
 use chumsky::error::Simple;
 use chumsky::extra::Err;
+use chumsky::input::ValueInput;
 use chumsky::prelude::just;
+use chumsky::span::SimpleSpan;
 use chumsky::IterParser;
 use chumsky::{prelude::recursive, select, Parser};
 
@@ -10,14 +12,16 @@ use crate::tokens::TokenKind;
 use super::{expr::expr_parser, ty::ty_parser};
 
 #[must_use]
-pub fn stmt_parser<'src>(
-) -> impl Parser<'src, &'src [TokenKind], ASTStmt, Err<Simple<'src, TokenKind>>> + Clone {
+pub fn stmt_parser<'src, I>() -> impl Parser<'src, I, ASTStmt, Err<Simple<'src, TokenKind>>> + Clone
+where
+    I: ValueInput<'src, Token = TokenKind, Span = SimpleSpan>,
+{
     recursive(|stmt| {
         let return_parser = just(TokenKind::KeywordReturn)
             .ignore_then(expr_parser().or_not())
             .then_ignore(just(TokenKind::Semicolon))
             .map_with(|expr, extra| {
-                let span = extra.span();
+                let span: SimpleSpan = extra.span();
                 ASTStmt::Return {
                     expr,
                     span: Span {
@@ -36,7 +40,7 @@ pub fn stmt_parser<'src>(
             )
             .then_ignore(just(TokenKind::Semicolon))
             .map_with(|((ty, name), init), extra| {
-                let span = extra.span();
+                let span: SimpleSpan = extra.span();
                 ASTStmt::Declaration {
                     name,
                     ty,
@@ -66,7 +70,7 @@ pub fn stmt_parser<'src>(
                     .or_not(),
             )
             .map_with(|((condition, then_branch), else_branch), extra| {
-                let span = extra.span();
+                let span: SimpleSpan = extra.span();
                 ASTStmt::If {
                     condition,
                     then_branch: Box::new(ASTStmt::Block(then_branch)),
@@ -87,7 +91,7 @@ pub fn stmt_parser<'src>(
                     .delimited_by(just(TokenKind::LeftBrace), just(TokenKind::RightBrace)),
             )
             .map_with(|(condition, body), extra| {
-                let span = extra.span();
+                let span: SimpleSpan = extra.span();
                 ASTStmt::While {
                     condition,
                     body: Box::new(ASTStmt::Block(body)),
@@ -101,7 +105,7 @@ pub fn stmt_parser<'src>(
         let expr_parser = expr_parser()
             .then_ignore(just(TokenKind::Semicolon))
             .map_with(|expr, extra| {
-                let span = extra.span();
+                let span: SimpleSpan = extra.span();
                 ASTStmt::Expression {
                     expr,
                     span: Span {

@@ -1,4 +1,4 @@
-use ariadne::{Label, Report, ReportKind, Source};
+use ariadne::{Color, Label, Report, ReportKind, Source};
 use clap::Parser;
 use mb8c::{compile, error::CompileError};
 
@@ -35,19 +35,25 @@ fn main() {
                             CompileError::UnexpectedToken { start, end } => {
                                 Report::build(ReportKind::Error, (filename, start..end))
                                     .with_code(1)
-                                    .with_label(Label::new((filename, start..end)))
+                                    .with_label(
+                                        Label::new((filename, start..end)).with_color(Color::Red),
+                                    )
                                     .with_message("Unexpected token")
                             }
                             CompileError::UnknownSymbol { start, end, symbol } => {
                                 Report::build(ReportKind::Error, (filename, start..end))
                                     .with_code(2)
-                                    .with_label(Label::new((filename, start..end)))
+                                    .with_label(
+                                        Label::new((filename, start..end)).with_color(Color::Red),
+                                    )
                                     .with_message(format!("Unknown symbol '{symbol}'"))
                             }
                             CompileError::DuplicateSymbol { start, end, symbol } => {
                                 Report::build(ReportKind::Error, (filename, start..end))
                                     .with_code(3)
-                                    .with_label(Label::new((filename, start..end)))
+                                    .with_label(
+                                        Label::new((filename, start..end)).with_color(Color::Red),
+                                    )
                                     .with_message(format!("Duplicate symbol '{symbol}'"))
                             }
                             CompileError::TypeMismatch {
@@ -57,14 +63,18 @@ fn main() {
                                 end,
                             } => Report::build(ReportKind::Error, (filename, start..end))
                                 .with_code(4)
-                                .with_label(Label::new((filename, start..end)))
+                                .with_label(
+                                    Label::new((filename, start..end)).with_color(Color::Red),
+                                )
                                 .with_message(format!(
                                     "Type mismatch: expected {expected:?}, found {actual:?}"
                                 )),
                             CompileError::SymbolIsNotCallable { symbol, start, end } => {
                                 Report::build(ReportKind::Error, (filename, start..end))
                                     .with_code(5)
-                                    .with_label(Label::new((filename, start..end)))
+                                    .with_label(
+                                        Label::new((filename, start..end)).with_color(Color::Red),
+                                    )
                                     .with_message(format!("Symbol {symbol} is not callable"))
                             }
                             CompileError::ParserError {
@@ -73,8 +83,23 @@ fn main() {
                                 found: Some(found),
                             } => Report::build(ReportKind::Error, (filename, start..end))
                                 .with_code(6)
-                                .with_label(Label::new((filename, start..end)))
+                                .with_label(
+                                    Label::new((filename, start..end)).with_color(Color::Red),
+                                )
                                 .with_message(format!("Unexpected {found:?}")),
+                            CompileError::WrongArgumentsCount {
+                                actual,
+                                expected,
+                                start,
+                                end,
+                            } => Report::build(ReportKind::Error, (filename, start..end))
+                                .with_code(7)
+                                .with_label(
+                                    Label::new((filename, start..end)).with_color(Color::Red),
+                                )
+                                .with_message(format!(
+                                    "Wrong argument count: expected {expected} found {actual}"
+                                )),
                             err => Report::build(ReportKind::Error, (filename, 0..0))
                                 .with_code(0)
                                 .with_message(format!("Unknown error: {err:?}")),

@@ -1,6 +1,7 @@
 use chumsky::{
     error::Simple,
     extra::Err,
+    input::ValueInput,
     prelude::{just, recursive},
     select,
     span::SimpleSpan,
@@ -14,8 +15,10 @@ use crate::{
 
 #[must_use]
 #[allow(clippy::too_many_lines)]
-pub fn expr_parser<'src>(
-) -> impl Parser<'src, &'src [TokenKind], ASTExpr, Err<Simple<'src, TokenKind>>> + Clone {
+pub fn expr_parser<'src, I>() -> impl Parser<'src, I, ASTExpr, Err<Simple<'src, TokenKind>>> + Clone
+where
+    I: ValueInput<'src, Token = TokenKind, Span = SimpleSpan>,
+{
     recursive(|expr| {
         let args = expr
             .clone()

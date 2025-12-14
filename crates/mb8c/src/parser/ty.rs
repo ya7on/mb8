@@ -1,10 +1,12 @@
-use chumsky::{error::Simple, extra::Err, select, Parser};
+use chumsky::{error::Simple, extra::Err, input::ValueInput, select, span::SimpleSpan, Parser};
 
 use crate::{ast::ASTType, tokens::TokenKind};
 
 #[must_use]
-pub fn ty_parser<'src>(
-) -> impl Parser<'src, &'src [TokenKind], ASTType, Err<Simple<'src, TokenKind>>> + Clone {
+pub fn ty_parser<'src, I>() -> impl Parser<'src, I, ASTType, Err<Simple<'src, TokenKind>>> + Clone
+where
+    I: ValueInput<'src, Token = TokenKind, Span = SimpleSpan>,
+{
     select! {
         TokenKind::KeywordInt => ASTType::Int,
         TokenKind::KeywordChar => ASTType::Char,

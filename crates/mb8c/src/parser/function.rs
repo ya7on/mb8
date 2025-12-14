@@ -1,4 +1,7 @@
-use chumsky::{error::Simple, extra::Err, prelude::just, select, IterParser, Parser};
+use chumsky::{
+    error::Simple, extra::Err, input::ValueInput, prelude::just, select, span::SimpleSpan,
+    IterParser, Parser,
+};
 
 use crate::{
     ast::{ASTFunction, ASTStmt, Span},
@@ -8,8 +11,10 @@ use crate::{
 use super::{stmt::stmt_parser, ty::ty_parser};
 
 #[must_use]
-pub fn function_parser<'src>(
-) -> impl Parser<'src, &'src [TokenKind], ASTFunction, Err<Simple<'src, TokenKind>>> {
+pub fn function_parser<'src, I>() -> impl Parser<'src, I, ASTFunction, Err<Simple<'src, TokenKind>>>
+where
+    I: ValueInput<'src, Token = TokenKind, Span = SimpleSpan>,
+{
     let param = ty_parser()
         .then(select! { TokenKind::Ident(name) => name })
         .map(|(ty, name)| (name, ty));
@@ -28,7 +33,7 @@ pub fn function_parser<'src>(
         .then(stmt_parser().repeated().collect())
         .then_ignore(just(TokenKind::RightBrace))
         .map_with(|(((return_type, name), params), body), extra| {
-            let span = extra.span();
+            let span: SimpleSpan = extra.span();
             ASTFunction {
                 return_type,
                 name,
