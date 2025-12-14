@@ -5,6 +5,7 @@ use crate::{
 
 use super::types::TypeKind;
 
+#[must_use]
 pub fn lower_type(ty: ASTType) -> TypeKind {
     match ty {
         ASTType::Void => TypeKind::Void,
@@ -13,13 +14,14 @@ pub fn lower_type(ty: ASTType) -> TypeKind {
     }
 }
 
+#[must_use]
 pub fn fetch_expr_type(expr: &HIRExpr) -> TypeId {
     match expr {
-        HIRExpr::Var { ty, .. } => ty.clone(),
-        HIRExpr::Literal { ty, .. } => ty.clone(),
-        HIRExpr::Binary { ty, .. } => ty.clone(),
-        HIRExpr::Unary { ty, .. } => ty.clone(),
-        HIRExpr::Call { ty, .. } => ty.clone(),
-        HIRExpr::Assign { ty, .. } => ty.clone(),
+        HIRExpr::Var { ty, .. }
+        | HIRExpr::Literal { ty, .. }
+        | HIRExpr::Binary { ty, .. }
+        | HIRExpr::Unary { ty, .. }
+        | HIRExpr::Call { ty, .. }
+        | HIRExpr::Assign { ty, .. } => *ty,
     }
 }

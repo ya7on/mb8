@@ -21,10 +21,14 @@ impl ScopeStack {
         self.stack.pop();
     }
 
+    /// # Panics
+    /// If there is no active scope
     pub fn current(&mut self) -> &mut Scope {
+        #[allow(clippy::unwrap_used)]
         self.stack.last_mut().unwrap()
     }
 
+    #[must_use]
     pub fn lookup(&self, name: &str) -> Option<SymbolId> {
         self.stack
             .iter()
@@ -39,16 +43,17 @@ pub struct Scope {
 }
 
 impl Scope {
-    pub fn allocate(&mut self, name: String, id: SymbolId, span: Span) -> CompileResult<()> {
+    /// # Errors
+    /// Returns error if there are more than one allocated symbol
+    pub fn allocate(&mut self, name: String, id: SymbolId, span: &Span) -> CompileResult<()> {
         if self.symbols.contains_key(&name) {
-            Err(CompileError::DuplicateSymbol {
+            return Err(CompileError::DuplicateSymbol {
                 start: span.start,
                 end: span.end,
                 symbol: name,
-            })
-        } else {
-            self.symbols.insert(name, id);
-            Ok(())
+            });
         }
+        self.symbols.insert(name, id);
+        Ok(())
     }
 }

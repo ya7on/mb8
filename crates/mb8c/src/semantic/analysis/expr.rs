@@ -5,6 +5,11 @@ use crate::{
     semantic::{context::Context, helpers::fetch_expr_type, symbols::SymbolKind, types::TypeKind},
 };
 
+/// Analyze AST Expression and lower it to HIR typed expression
+///
+/// # Errors
+/// Returns error if there are semantic issues
+#[allow(clippy::too_many_lines)]
 pub fn analyze_expr(
     ctx: &mut Context,
     expr: &ASTExpr,

@@ -2,6 +2,10 @@ use crate::{ast::ASTProgram, error::CompileResult, hir::HIRProgram, semantic::co
 
 use super::function::{analyze_function, collect_function};
 
+/// Analyze AST program and lower it to HIR
+///
+/// # Errors
+/// Returns error if there are semantic issues
 pub fn analyze_program(ctx: &mut Context, program: &ASTProgram) -> CompileResult<HIRProgram> {
     let mut hir = HIRProgram {
         functions: Vec::with_capacity(program.functions.len()),

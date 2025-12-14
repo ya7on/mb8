@@ -8,6 +8,7 @@ pub mod ast;
 pub mod codegen;
 pub mod error;
 pub mod hir;
+pub mod lower;
 pub mod parser;
 pub mod semantic;
 pub mod tokens;

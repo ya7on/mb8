@@ -12,6 +12,10 @@ use crate::{
 
 use super::stmt::analyze_stmt;
 
+/// First iteration through AST functions to collect their names
+///
+/// # Errors
+/// Returns error if there are semantic issues
 pub fn collect_function(ctx: &mut Context, function: &ASTFunction) -> CompileResult<()> {
     let params = function
         .params
@@ -28,11 +32,15 @@ pub fn collect_function(ctx: &mut Context, function: &ASTFunction) -> CompileRes
     });
 
     let scope = ctx.scope.current();
-    scope.allocate(function.name.clone(), symbol, function.span.clone())?;
+    scope.allocate(function.name.clone(), symbol, &function.span)?;
 
     Ok(())
 }
 
+/// Deep analysis of AST function and loweing it to HIR
+///
+/// # Errors
+/// Returns error if there are semantic issues
 pub fn analyze_function(ctx: &mut Context, function: &ASTFunction) -> CompileResult<HIRFunction> {
     let scope = ctx.scope.enter();
 
@@ -45,7 +53,7 @@ pub fn analyze_function(ctx: &mut Context, function: &ASTFunction) -> CompileRes
             kind: SymbolKind::Parameter,
             ty: type_id,
         });
-        scope.allocate(name.to_owned(), symbol, function.span.clone())?;
+        scope.allocate(name.to_owned(), symbol, &function.span)?;
         params.push(symbol);
     }
 

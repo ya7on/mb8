@@ -12,6 +12,9 @@ use crate::{
 
 use super::expr::analyze_expr;
 
+/// # Errors
+/// Returns error if there are semantic issues
+#[allow(clippy::too_many_lines)]
 pub fn analyze_stmt(
     ctx: &mut Context,
     stmt: &ASTStmt,
@@ -41,7 +44,7 @@ pub fn analyze_stmt(
                 ty: type_id,
                 kind: SymbolKind::Variable,
             });
-            scope.allocate(name.to_owned(), symbol_id, span.to_owned())?;
+            scope.allocate(name.to_owned(), symbol_id, span)?;
 
             let init = if let Some(expr) = init {
                 let value = analyze_expr(ctx, expr, type_id)?;

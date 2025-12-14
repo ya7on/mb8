@@ -13,6 +13,7 @@ use crate::{
 };
 
 #[must_use]
+#[allow(clippy::too_many_lines)]
 pub fn expr_parser<'src>(
 ) -> impl Parser<'src, &'src [TokenKind], ASTExpr, Err<Simple<'src, TokenKind>>> + Clone {
     recursive(|expr| {

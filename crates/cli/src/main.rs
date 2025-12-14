@@ -78,6 +78,7 @@ fn main() {
                                 .with_message(format!("Unknown error: {err:?}")),
                         };
 
+                        #[allow(clippy::unwrap_used)]
                         report
                             .finish()
                             .print((filename, Source::from(code.clone())))
