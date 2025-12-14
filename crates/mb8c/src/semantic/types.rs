@@ -20,7 +20,8 @@ impl TypeTable {
         }
     }
 
-    #[must_use] pub fn lookup(&self, type_id: TypeId) -> Option<&TypeKind> {
+    #[must_use]
+    pub fn lookup(&self, type_id: TypeId) -> Option<&TypeKind> {
         self.types.get(type_id.0)
     }
 }

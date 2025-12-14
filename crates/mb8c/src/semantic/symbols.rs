@@ -12,7 +12,8 @@ impl SymbolTable {
         SymbolId(id)
     }
 
-    #[must_use] pub fn lookup(&self, symbol_id: SymbolId) -> Option<Symbol> {
+    #[must_use]
+    pub fn lookup(&self, symbol_id: SymbolId) -> Option<Symbol> {
         self.symbols.get(symbol_id.0).cloned()
     }
 }
