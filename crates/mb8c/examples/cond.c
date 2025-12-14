@@ -1,16 +1,7 @@
-int func(int a, int b) {
-    int y = func(1,2);
-    if (1 == 2) {
-        return 9;
-    }
-    return 1;
-}
-
-int main() {
-    int a = 1;
+void func(int a) {
     if (a) {
-        return 1;
+        return;
     } else {
-        return 0;
+        return;
     }
 }

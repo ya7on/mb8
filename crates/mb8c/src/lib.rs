@@ -1,6 +1,7 @@
 use chumsky::Parser;
 use error::CompileError;
 use logos::Logos;
+use lower::lower;
 use parser::program::program_parser;
 use tokens::TokenKind;
 
@@ -8,6 +9,7 @@ pub mod ast;
 pub mod codegen;
 pub mod error;
 pub mod hir;
+pub mod ir;
 pub mod lower;
 pub mod parser;
 pub mod semantic;
@@ -38,7 +40,7 @@ pub fn compile(input: &str) -> error::CompileResult<(), Vec<CompileError>> {
 
     let hir = semantic::analyze(&ast).map_err(|err| vec![err])?;
 
-    println!("{hir:?}");
+    lower(&hir).map_err(|err| vec![err])?;
 
     Ok(())
 

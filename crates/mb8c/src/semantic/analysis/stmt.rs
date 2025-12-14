@@ -51,8 +51,8 @@ pub fn analyze_stmt(
                 let expr_type_id = fetch_expr_type(&value);
                 if expr_type_id != type_id {
                     return Err(CompileError::TypeMismatch {
-                        expected: type_id,
-                        actual: expr_type_id,
+                        expected: ctx.types.lookup(type_id).cloned().unwrap_or_default(),
+                        actual: ctx.types.lookup(expr_type_id).cloned().unwrap_or_default(),
                         start: span.start,
                         end: span.end,
                     });
@@ -75,8 +75,8 @@ pub fn analyze_stmt(
                 let type_id = fetch_expr_type(&value);
                 if type_id != expected_ty {
                     return Err(CompileError::TypeMismatch {
-                        expected: expected_ty,
-                        actual: type_id,
+                        expected: ctx.types.lookup(expected_ty).cloned().unwrap_or_default(),
+                        actual: ctx.types.lookup(type_id).cloned().unwrap_or_default(),
                         start: span.start,
                         end: span.end,
                     });
@@ -87,8 +87,8 @@ pub fn analyze_stmt(
                 let type_id = ctx.types.entry(TypeKind::Void);
                 if type_id != expected_ty {
                     return Err(CompileError::TypeMismatch {
-                        expected: expected_ty,
-                        actual: type_id,
+                        expected: ctx.types.lookup(expected_ty).cloned().unwrap_or_default(),
+                        actual: ctx.types.lookup(type_id).cloned().unwrap_or_default(),
                         start: span.start,
                         end: span.end,
                     });

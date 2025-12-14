@@ -16,8 +16,23 @@ pub fn analyze_expr(
     expected_ty: TypeId,
 ) -> CompileResult<HIRExpr> {
     match expr {
-        ASTExpr::IntLiteral { span: _, value } => {
-            // TODO
+        ASTExpr::IntLiteral { span, value } => {
+            let ty = ctx
+                .types
+                .lookup(expected_ty)
+                .ok_or(CompileError::InternalError {
+                    message: "Cannot infer return type".to_owned(),
+                })?;
+
+            if !matches!(ty, TypeKind::Char | TypeKind::Int) {
+                return Err(CompileError::TypeMismatch {
+                    expected: ctx.types.lookup(expected_ty).cloned().unwrap_or_default(),
+                    actual: TypeKind::Int,
+                    start: span.start,
+                    end: span.end,
+                });
+            };
+
             Ok(HIRExpr::Literal {
                 literal: Literal::Int(*value),
                 ty: expected_ty,
@@ -44,8 +59,8 @@ pub fn analyze_expr(
 
             if lhs_ty != rhs_ty {
                 return Err(CompileError::TypeMismatch {
-                    expected: lhs_ty,
-                    actual: rhs_ty,
+                    expected: ctx.types.lookup(lhs_ty).cloned().unwrap_or_default(),
+                    actual: ctx.types.lookup(rhs_ty).cloned().unwrap_or_default(),
                     start: 0,
                     end: 0,
                 });
@@ -86,15 +101,6 @@ pub fn analyze_expr(
                     symbol: name.clone(),
                 })?;
 
-            if symbol.ty != expected_ty {
-                return Err(CompileError::TypeMismatch {
-                    expected: expected_ty,
-                    actual: symbol.ty,
-                    start: span.start,
-                    end: span.end,
-                });
-            }
-
             Ok(HIRExpr::Var {
                 symbol: symbol_id,
                 ty: symbol.ty,
@@ -120,8 +126,8 @@ pub fn analyze_expr(
 
             if symbol.ty != value_ty {
                 return Err(CompileError::TypeMismatch {
-                    expected: value_ty,
-                    actual: symbol.ty,
+                    expected: ctx.types.lookup(value_ty).cloned().unwrap_or_default(),
+                    actual: ctx.types.lookup(symbol.ty).cloned().unwrap_or_default(),
                     start: span.start,
                     end: span.end,
                 });

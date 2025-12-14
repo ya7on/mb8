@@ -26,10 +26,14 @@ impl TypeTable {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Hash, Clone)]
+#[derive(Debug, Eq, PartialEq, Hash, Clone, Default)]
 pub enum TypeKind {
+    #[default]
     Void,
     Int,
     Char,
-    Function { params: Vec<TypeId>, ret: TypeId },
+    Function {
+        params: Vec<TypeId>,
+        ret: TypeId,
+    },
 }

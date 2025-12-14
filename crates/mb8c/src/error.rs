@@ -1,4 +1,4 @@
-use crate::{hir::TypeId, tokens::TokenKind};
+use crate::{semantic::types::TypeKind, tokens::TokenKind};
 
 pub type CompileResult<T, E = CompileError> = Result<T, E>;
 
@@ -29,8 +29,8 @@ pub enum CompileError {
         symbol: String,
     },
     TypeMismatch {
-        expected: TypeId,
-        actual: TypeId,
+        expected: TypeKind,
+        actual: TypeKind,
         start: usize,
         end: usize,
     },
