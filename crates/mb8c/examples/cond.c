@@ -1,7 +1,8 @@
-void func(int a) {
+static int func(int a) {
+    a = 1;
     if (a) {
-        return;
+        return 1;
     } else {
-        return;
+        return 1;
     }
 }

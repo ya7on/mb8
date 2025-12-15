@@ -15,7 +15,6 @@ fn map_err(err: &mut logos::Lexer<TokenKind>) -> CompileError {
 pub enum TokenKind {
     #[regex(r"[ \t\n\r]+", logos::skip)]
     #[regex(r"//[^\n]*", logos::skip, allow_greedy = true)]
-    #[regex(r"/\*([^*]|\*+[^*/])*\*+/", logos::skip)]
     _Skip,
 
     /// Identifier (e.g. variable name)
@@ -29,21 +28,39 @@ pub enum TokenKind {
     /// Void
     #[token("void")]
     KeywordVoid,
-    /// Char. 8-bit type
-    #[token("char")]
-    KeywordChar,
-    /// Integer. 16-bit type
-    #[token("int")]
-    KeywordInt,
+    /// 8-bit unsigned integer
+    #[token("u8")]
+    KeywordU8,
+    /// program
+    #[token("program")]
+    KeywordProgram,
+    /// function
+    #[token("function")]
+    KeywordFunction,
+    /// var
+    #[token("var")]
+    KeywordVar,
+    /// begin
+    #[token("begin")]
+    KeywordBegin,
+    /// end
+    #[token("end")]
+    KeywordEnd,
     /// If
     #[token("if")]
     KeywordIf,
+    /// Then
+    #[token("then")]
+    KeywordThen,
     /// Else
     #[token("else")]
     KeywordElse,
     /// While
     #[token("while")]
     KeywordWhile,
+    /// Do
+    #[token("do")]
+    KeywordDo,
     /// Return
     #[token("return")]
     KeywordReturn,
@@ -69,12 +86,6 @@ pub enum TokenKind {
     OperatorEqEq,
 
     /* Delimiters */
-    /// Left brace {
-    #[token("{")]
-    LeftBrace,
-    /// Right brace }
-    #[token("}")]
-    RightBrace,
     /// Left parenthesis (
     #[token("(")]
     LeftParenthesis,
@@ -84,6 +95,9 @@ pub enum TokenKind {
     /// Comma ,
     #[token(",")]
     Comma,
+    /// Colon ;
+    #[token(":")]
+    Colon,
     /// Semicolon ;
     #[token(";")]
     Semicolon,

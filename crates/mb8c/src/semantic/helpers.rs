@@ -9,8 +9,7 @@ use super::types::TypeKind;
 pub fn lower_type(ty: ASTType) -> TypeKind {
     match ty {
         ASTType::Void => TypeKind::Void,
-        ASTType::Char => TypeKind::Char,
-        ASTType::Int => TypeKind::Int,
+        ASTType::Unsigned8 => TypeKind::Unsigned8,
     }
 }
 

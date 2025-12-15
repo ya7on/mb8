@@ -30,8 +30,8 @@ impl TypeTable {
 pub enum TypeKind {
     #[default]
     Void,
-    Int,
-    Char,
+    Bool,
+    Unsigned8,
     Function {
         params: Vec<TypeId>,
         ret: TypeId,

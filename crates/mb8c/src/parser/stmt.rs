@@ -4,12 +4,12 @@ use chumsky::input::ValueInput;
 use chumsky::prelude::just;
 use chumsky::span::SimpleSpan;
 use chumsky::IterParser;
-use chumsky::{prelude::recursive, select, Parser};
+use chumsky::{prelude::recursive, Parser};
 
 use crate::ast::{ASTStmt, Span};
 use crate::tokens::TokenKind;
 
-use super::{expr::expr_parser, ty::ty_parser};
+use super::expr::expr_parser;
 
 #[must_use]
 pub fn stmt_parser<'src, I>() -> impl Parser<'src, I, ASTStmt, Err<Simple<'src, TokenKind>>> + Clone
@@ -31,38 +31,18 @@ where
                 }
             });
 
-        let declaration_parser = ty_parser()
-            .then(select! {TokenKind::Ident(name) => name})
-            .then(
-                just(TokenKind::OperatorEq)
-                    .ignore_then(expr_parser())
-                    .or_not(),
-            )
-            .then_ignore(just(TokenKind::Semicolon))
-            .map_with(|((ty, name), init), extra| {
-                let span: SimpleSpan = extra.span();
-                ASTStmt::Declaration {
-                    name,
-                    ty,
-                    init,
-                    span: Span {
-                        start: span.start,
-                        end: span.end,
-                    },
-                }
-            });
-
         let block_parser = stmt
             .clone()
             .repeated()
             .collect::<Vec<_>>()
-            .delimited_by(just(TokenKind::LeftBrace), just(TokenKind::RightBrace));
+            .delimited_by(just(TokenKind::KeywordBegin), just(TokenKind::KeywordEnd));
 
         let if_parser = just(TokenKind::KeywordIf)
             .ignore_then(expr_parser().delimited_by(
                 just(TokenKind::LeftParenthesis),
                 just(TokenKind::RightParenthesis),
             ))
+            .then_ignore(just(TokenKind::KeywordThen))
             .then(block_parser.clone())
             .then(
                 just(TokenKind::KeywordElse)
@@ -84,11 +64,12 @@ where
 
         let while_parser = just(TokenKind::KeywordWhile)
             .ignore_then(expr_parser())
+            .then_ignore(just(TokenKind::KeywordDo))
             .then(
                 stmt.clone()
                     .repeated()
                     .collect()
-                    .delimited_by(just(TokenKind::LeftBrace), just(TokenKind::RightBrace)),
+                    .delimited_by(just(TokenKind::KeywordBegin), just(TokenKind::KeywordEnd)),
             )
             .map_with(|(condition, body), extra| {
                 let span: SimpleSpan = extra.span();
@@ -115,10 +96,6 @@ where
                 }
             });
 
-        return_parser
-            .or(declaration_parser)
-            .or(if_parser)
-            .or(while_parser)
-            .or(expr_parser)
+        return_parser.or(if_parser).or(while_parser).or(expr_parser)
     })
 }

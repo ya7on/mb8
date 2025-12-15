@@ -2,12 +2,7 @@ use crate::{
     ast::ASTStmt,
     error::{CompileError, CompileResult},
     hir::{HIRStmt, TypeId},
-    semantic::{
-        context::Context,
-        helpers::{fetch_expr_type, lower_type},
-        symbols::{Symbol, SymbolKind},
-        types::TypeKind,
-    },
+    semantic::{context::Context, helpers::fetch_expr_type, types::TypeKind},
 };
 
 use super::expr::analyze_expr;
@@ -29,44 +24,6 @@ pub fn analyze_stmt(
             }
             ctx.scope.exit();
             Ok(HIRStmt::Block(result))
-        }
-        ASTStmt::Declaration {
-            name,
-            ty,
-            init,
-            span,
-        } => {
-            let scope = ctx.scope.current();
-
-            let type_id = ctx.types.entry(lower_type(*ty));
-            let symbol_id = ctx.symbols.allocate(Symbol {
-                name: name.to_owned(),
-                ty: type_id,
-                kind: SymbolKind::Variable,
-            });
-            scope.allocate(name.to_owned(), symbol_id, span)?;
-
-            let init = if let Some(expr) = init {
-                let value = analyze_expr(ctx, expr, type_id)?;
-                let expr_type_id = fetch_expr_type(&value);
-                if expr_type_id != type_id {
-                    return Err(CompileError::TypeMismatch {
-                        expected: ctx.types.lookup(type_id).cloned().unwrap_or_default(),
-                        actual: ctx.types.lookup(expr_type_id).cloned().unwrap_or_default(),
-                        start: span.start,
-                        end: span.end,
-                    });
-                }
-                Some(value)
-            } else {
-                None
-            };
-
-            Ok(HIRStmt::Declaration {
-                symbol: symbol_id,
-                ty: type_id,
-                init,
-            })
         }
         ASTStmt::Return { expr, span } => {
             let value = if let Some(expr) = expr {
@@ -107,14 +64,25 @@ pub fn analyze_stmt(
             condition,
             then_branch,
             else_branch,
-            span: _,
+            span,
         } => {
-            let condition = analyze_expr(ctx, condition, expected_ty)?;
+            let bool = ctx.types.entry(TypeKind::Bool);
+            let condition = analyze_expr(ctx, condition, bool)?;
             let then_branch = analyze_stmt(ctx, then_branch, expected_ty)?;
             let else_branch = else_branch
                 .clone()
                 .map(|expr| analyze_stmt(ctx, &expr, expected_ty))
                 .transpose()?;
+
+            let condition_ty = fetch_expr_type(&condition);
+            if condition_ty != bool {
+                return Err(CompileError::TypeMismatch {
+                    expected: TypeKind::Bool,
+                    actual: ctx.types.lookup(condition_ty).cloned().unwrap_or_default(),
+                    start: span.start,
+                    end: span.end,
+                });
+            }
 
             Ok(HIRStmt::If {
                 condition: Box::new(condition),
@@ -125,10 +93,21 @@ pub fn analyze_stmt(
         ASTStmt::While {
             condition,
             body,
-            span: _,
+            span,
         } => {
-            let condition = analyze_expr(ctx, condition, expected_ty)?;
+            let bool = ctx.types.entry(TypeKind::Bool);
+            let condition = analyze_expr(ctx, condition, bool)?;
             let body = analyze_stmt(ctx, body, expected_ty)?;
+
+            let condition_ty = fetch_expr_type(&condition);
+            if condition_ty != bool {
+                return Err(CompileError::TypeMismatch {
+                    expected: TypeKind::Bool,
+                    actual: ctx.types.lookup(condition_ty).cloned().unwrap_or_default(),
+                    start: span.start,
+                    end: span.end,
+                });
+            }
 
             Ok(HIRStmt::While {
                 condition: Box::new(condition),

@@ -1,0 +1,15 @@
+function add(a: u8, b: u8): u8;
+begin
+  return a + b;
+end
+
+function main(): u8;
+var
+  a: u8;
+  b: u8;
+  sum: u8;
+begin
+  a = 1;
+  b = 2;
+  sum = add(a, b);
+end

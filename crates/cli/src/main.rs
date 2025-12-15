@@ -25,7 +25,7 @@ fn main() {
             };
             match compile(&code) {
                 Ok(()) => {
-                    println!("Successfuly compiled")
+                    println!("Successfuly compiled");
                 }
                 Err(errors) => {
                     let filename = source.to_str().unwrap_or("unknown");

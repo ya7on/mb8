@@ -16,28 +16,10 @@ pub fn analyze_expr(
     expected_ty: TypeId,
 ) -> CompileResult<HIRExpr> {
     match expr {
-        ASTExpr::IntLiteral { span, value } => {
-            let ty = ctx
-                .types
-                .lookup(expected_ty)
-                .ok_or(CompileError::InternalError {
-                    message: "Cannot infer return type".to_owned(),
-                })?;
-
-            if !matches!(ty, TypeKind::Char | TypeKind::Int) {
-                return Err(CompileError::TypeMismatch {
-                    expected: ctx.types.lookup(expected_ty).cloned().unwrap_or_default(),
-                    actual: TypeKind::Int,
-                    start: span.start,
-                    end: span.end,
-                });
-            };
-
-            Ok(HIRExpr::Literal {
-                literal: Literal::Int(*value),
-                ty: expected_ty,
-            })
-        }
+        ASTExpr::IntLiteral { span: _, value } => Ok(HIRExpr::Literal {
+            literal: Literal::Int(*value),
+            ty: ctx.types.entry(TypeKind::Unsigned8),
+        }),
         ASTExpr::BinaryOp {
             op,
             lhs,
@@ -66,11 +48,19 @@ pub fn analyze_expr(
                 });
             }
 
+            let return_type = match op {
+                HIRBinaryOp::Add => lhs_ty,
+                HIRBinaryOp::Sub => lhs_ty,
+                HIRBinaryOp::Mul => lhs_ty,
+                HIRBinaryOp::Div => lhs_ty,
+                HIRBinaryOp::Eq => ctx.types.entry(TypeKind::Bool),
+            };
+
             Ok(HIRExpr::Binary {
                 op,
                 lhs: Box::new(lhs_expr),
                 rhs: Box::new(rhs_expr),
-                ty: lhs_ty,
+                ty: return_type,
             })
         }
         ASTExpr::UnaryOp {

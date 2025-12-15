@@ -8,8 +8,7 @@ where
     I: ValueInput<'src, Token = TokenKind, Span = SimpleSpan>,
 {
     select! {
-        TokenKind::KeywordInt => ASTType::Int,
-        TokenKind::KeywordChar => ASTType::Char,
         TokenKind::KeywordVoid => ASTType::Void,
+        TokenKind::KeywordU8 => ASTType::Unsigned8,
     }
 }

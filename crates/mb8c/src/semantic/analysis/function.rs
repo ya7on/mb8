@@ -57,6 +57,18 @@ pub fn analyze_function(ctx: &mut Context, function: &ASTFunction) -> CompileRes
         params.push(symbol);
     }
 
+    // Collects local vaers
+    for (name, ty) in &function.vars {
+        let type_id = ctx.types.entry(lower_type(*ty));
+        let symbol = ctx.symbols.allocate(Symbol {
+            name: name.to_owned(),
+            kind: SymbolKind::Variable,
+            ty: type_id,
+        });
+        scope.allocate(name.to_owned(), symbol, &function.span)?;
+        params.push(symbol);
+    }
+
     let return_type_id = ctx.types.entry(lower_type(function.return_type));
 
     let body = analyze_stmt(ctx, &function.body, return_type_id)?;

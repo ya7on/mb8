@@ -7,19 +7,7 @@ pub struct Span {
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ASTType {
     Void,
-    Char,
-    Int,
-}
-
-impl ASTType {
-    #[must_use]
-    pub fn size_in_bytes(&self) -> u8 {
-        match self {
-            ASTType::Void => 0,
-            ASTType::Char => 1,
-            ASTType::Int => 2,
-        }
-    }
+    Unsigned8,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -32,6 +20,7 @@ pub struct ASTFunction {
     pub name: String,
     pub return_type: ASTType,
     pub params: Vec<(String, ASTType)>,
+    pub vars: Vec<(String, ASTType)>,
     pub body: ASTStmt,
     pub span: Span,
 }
@@ -39,12 +28,6 @@ pub struct ASTFunction {
 #[derive(Clone, Debug, PartialEq)]
 pub enum ASTStmt {
     Block(Vec<ASTStmt>),
-    Declaration {
-        name: String,
-        ty: ASTType,
-        init: Option<ASTExpr>,
-        span: Span,
-    },
     Return {
         expr: Option<ASTExpr>,
         span: Span,
