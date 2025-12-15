@@ -24,11 +24,6 @@ pub enum Literal {
 #[derive(Debug)]
 pub enum HIRStmt {
     Block(Vec<HIRStmt>),
-    Declaration {
-        symbol: SymbolId,
-        ty: TypeId,
-        init: Option<HIRExpr>,
-    },
     Return(Option<HIRExpr>),
     Expression(HIRExpr),
     If {

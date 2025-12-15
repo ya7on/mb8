@@ -73,9 +73,13 @@ pub fn analyze_function(ctx: &mut Context, function: &ASTFunction) -> CompileRes
 
     let body = analyze_stmt(ctx, &function.body, return_type_id)?;
 
-    Ok(HIRFunction {
+    let hir = HIRFunction {
         id: SymbolId(1),
         params,
         body: vec![body],
-    })
+    };
+
+    // TODO: Control flow checks
+
+    Ok(hir)
 }

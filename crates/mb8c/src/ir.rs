@@ -1,13 +1,18 @@
 #[derive(Debug)]
-pub struct VirtualRegister(pub usize);
+pub struct IRFunction {
+    pub basic_blocks: Vec<BasicBlock>,
+}
 
 #[derive(Debug)]
+pub struct VirtualRegister(pub usize);
+
+#[derive(Debug, Clone, Copy)]
 pub struct BasicBlockId(pub usize);
 
 #[derive(Debug)]
 pub struct BasicBlock {
     pub id: BasicBlockId,
-    pub next_id: BasicBlockId,
+    pub terminator: BasicBlockTerminator,
     pub instructions: Vec<IRInstruction>,
 }
 

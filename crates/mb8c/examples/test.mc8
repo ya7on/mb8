@@ -3,7 +3,7 @@ begin
   return a + b;
 end
 
-function main(): u8;
+function main(): void;
 var
   a: u8;
   b: u8;
