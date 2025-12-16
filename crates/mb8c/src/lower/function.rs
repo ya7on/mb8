@@ -116,11 +116,33 @@ pub fn lower_stmt(
 
             Ok((any_branch.then_some(merge_block), result))
         }
-        HIRStmt::While {
-            condition: _,
-            body: _,
-        } => {
-            todo!()
+        HIRStmt::While { condition, body } => {
+            let body_block = ctx.bb();
+            let exit_block = ctx.bb();
+
+            let (vreg, instructions) = lower_expr(condition)?;
+            for instruction in instructions {
+                builder.emit(instruction);
+            }
+
+            let (body_block, blocks) = lower_stmt(ctx, body_block, body)?;
+            result.extend(blocks);
+            let Some(body_block) = body_block else {
+                return Ok((None, result));
+            };
+            let body_block_id = body_block.id();
+            result.push(body_block.build(BasicBlockTerminator::Branch {
+                condition: vreg,
+                then_branch: body_block_id,
+                else_branch: exit_block.id(),
+            }));
+            result.push(builder.build(BasicBlockTerminator::Branch {
+                condition: vreg,
+                then_branch: body_block_id,
+                else_branch: exit_block.id(),
+            }));
+
+            Ok((Some(exit_block), result))
         }
     }
 }

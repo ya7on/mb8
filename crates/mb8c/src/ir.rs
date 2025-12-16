@@ -3,7 +3,7 @@ pub struct IRFunction {
     pub basic_blocks: Vec<BasicBlock>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct VirtualRegister(pub usize);
 
 #[derive(Debug, Clone, Copy)]
