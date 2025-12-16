@@ -27,7 +27,7 @@ pub fn analyze_stmt(
         }
         ASTStmt::Return { expr, span } => {
             let value = if let Some(expr) = expr {
-                let value = analyze_expr(ctx, expr, expected_ty)?;
+                let value = analyze_expr(ctx, expr)?;
 
                 let type_id = fetch_expr_type(&value);
                 if type_id != expected_ty {
@@ -57,7 +57,7 @@ pub fn analyze_stmt(
             Ok(HIRStmt::Return(value))
         }
         ASTStmt::Expression { expr, span: _ } => {
-            let value = analyze_expr(ctx, expr, expected_ty)?;
+            let value = analyze_expr(ctx, expr)?;
             Ok(HIRStmt::Expression(value))
         }
         ASTStmt::If {
@@ -67,7 +67,7 @@ pub fn analyze_stmt(
             span,
         } => {
             let bool = ctx.types.entry(TypeKind::Bool);
-            let condition = analyze_expr(ctx, condition, bool)?;
+            let condition = analyze_expr(ctx, condition)?;
             let then_branch = analyze_stmt(ctx, then_branch, expected_ty)?;
             let else_branch = else_branch
                 .clone()
@@ -96,7 +96,7 @@ pub fn analyze_stmt(
             span,
         } => {
             let bool = ctx.types.entry(TypeKind::Bool);
-            let condition = analyze_expr(ctx, condition, bool)?;
+            let condition = analyze_expr(ctx, condition)?;
             let body = analyze_stmt(ctx, body, expected_ty)?;
 
             let condition_ty = fetch_expr_type(&condition);

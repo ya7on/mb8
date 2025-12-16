@@ -8,6 +8,7 @@ mod keyboard;
 mod tty;
 mod vm;
 
+#[allow(clippy::too_many_lines)]
 fn main() {
     let cli = config::Cli::parse();
 

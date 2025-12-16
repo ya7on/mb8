@@ -7,6 +7,8 @@ use crate::{
 
 use super::bb::BasicBlockBuilder;
 
+/// # Errors
+/// Returns a `CompileError` if there was an lowering error
 pub fn lower_function(function: &HIRFunction) -> CompileResult<IRFunction> {
     let mut ctx = LowerContext::default();
 
@@ -29,6 +31,9 @@ pub fn lower_function(function: &HIRFunction) -> CompileResult<IRFunction> {
     Ok(IRFunction { basic_blocks })
 }
 
+/// # Errors
+/// Returns a `CompileError` if there was an lowering error
+#[allow(clippy::too_many_lines)]
 pub fn lower_stmt(
     ctx: &mut LowerContext,
     mut builder: BasicBlockBuilder,
@@ -147,6 +152,8 @@ pub fn lower_stmt(
     }
 }
 
+/// # Errors
+/// Returns a `CompileError` if there was an lowering error
 pub fn lower_expr(_expr: &HIRExpr) -> CompileResult<(VirtualRegister, Vec<IRInstruction>)> {
     todo!()
 }

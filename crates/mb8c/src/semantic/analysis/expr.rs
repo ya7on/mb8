@@ -1,7 +1,7 @@
 use crate::{
     ast::{ASTBinaryOp, ASTExpr, ASTUnaryOp},
     error::{CompileError, CompileResult},
-    hir::{HIRBinaryOp, HIRExpr, HIRUnaryOp, Literal, TypeId},
+    hir::{HIRBinaryOp, HIRExpr, HIRUnaryOp, Literal},
     semantic::{context::Context, helpers::fetch_expr_type, symbols::SymbolKind, types::TypeKind},
 };
 
@@ -10,11 +10,7 @@ use crate::{
 /// # Errors
 /// Returns error if there are semantic issues
 #[allow(clippy::too_many_lines)]
-pub fn analyze_expr(
-    ctx: &mut Context,
-    expr: &ASTExpr,
-    expected_ty: TypeId,
-) -> CompileResult<HIRExpr> {
+pub fn analyze_expr(ctx: &mut Context, expr: &ASTExpr) -> CompileResult<HIRExpr> {
     match expr {
         ASTExpr::IntLiteral { span: _, value } => Ok(HIRExpr::Literal {
             literal: Literal::Int(*value),
@@ -26,8 +22,8 @@ pub fn analyze_expr(
             rhs,
             span: _,
         } => {
-            let lhs_expr = analyze_expr(ctx, lhs, expected_ty)?;
-            let rhs_expr = analyze_expr(ctx, rhs, expected_ty)?;
+            let lhs_expr = analyze_expr(ctx, lhs)?;
+            let rhs_expr = analyze_expr(ctx, rhs)?;
             let op = match op {
                 ASTBinaryOp::Add => HIRBinaryOp::Add,
                 ASTBinaryOp::Sub => HIRBinaryOp::Sub,
@@ -49,10 +45,7 @@ pub fn analyze_expr(
             }
 
             let return_type = match op {
-                HIRBinaryOp::Add => lhs_ty,
-                HIRBinaryOp::Sub => lhs_ty,
-                HIRBinaryOp::Mul => lhs_ty,
-                HIRBinaryOp::Div => lhs_ty,
+                HIRBinaryOp::Add | HIRBinaryOp::Sub | HIRBinaryOp::Mul | HIRBinaryOp::Div => lhs_ty,
                 HIRBinaryOp::Eq => ctx.types.entry(TypeKind::Bool),
             };
 
@@ -68,7 +61,7 @@ pub fn analyze_expr(
             expr,
             span: _,
         } => {
-            let expr = analyze_expr(ctx, expr, expected_ty)?;
+            let expr = analyze_expr(ctx, expr)?;
             let ty = fetch_expr_type(&expr);
             Ok(HIRExpr::Unary {
                 op: HIRUnaryOp::Neg,
@@ -111,7 +104,7 @@ pub fn analyze_expr(
                     symbol: name.clone(),
                 })?;
 
-            let value = analyze_expr(ctx, value, symbol.ty)?;
+            let value = analyze_expr(ctx, value)?;
             let value_ty = fetch_expr_type(&value);
 
             if symbol.ty != value_ty {
@@ -184,7 +177,7 @@ pub fn analyze_expr(
                 let arg = args[i].clone();
                 let param = params[i];
 
-                let hir_arg = analyze_expr(ctx, &arg, param)?;
+                let hir_arg = analyze_expr(ctx, &arg)?;
                 let arg_ty = fetch_expr_type(&hir_arg);
 
                 if arg_ty != param {

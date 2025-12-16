@@ -23,13 +23,14 @@ pub mod tokens;
 ///
 /// # Errors
 /// Returns an error if the input string is not valid MB8C code.
+///
+/// # Panics
+/// TODO
 pub fn compile(input: &str) -> error::CompileResult<(), Vec<CompileError>> {
-    let tokens = TokenKind::lexer(input)
-        .spanned()
-        .map(|(tok, span)| match tok {
-            Ok(tok) => (tok, SimpleSpan::from(span)),
-            Err(_err) => panic!("XYU"),
-        });
+    let tokens = TokenKind::lexer(input).spanned().map(|(tok, span)| {
+        #[allow(clippy::expect_used)]
+        (tok.expect("XYU"), SimpleSpan::from(span))
+    });
     let token_stream =
         Stream::from_iter(tokens).map((0..input.len()).into(), |(t, s): (_, _)| (t, s));
 
