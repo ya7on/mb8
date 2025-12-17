@@ -4,13 +4,21 @@ pub struct HIRProgram {
 }
 
 #[derive(Debug)]
-pub struct HIRFunction {
-    pub id: SymbolId,
-    pub params: Vec<SymbolId>,
-    pub body: Vec<HIRStmt>,
+pub struct HIRFunctionParam {
+    pub symbol: SymbolId,
+    pub offset: usize,
+    pub size: usize,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
+pub struct HIRFunction {
+    pub id: SymbolId,
+    pub params: Vec<HIRFunctionParam>,
+    pub body: Vec<HIRStmt>,
+    pub params_size: usize,
+}
+
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct SymbolId(pub usize);
 
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
@@ -34,6 +42,11 @@ pub enum HIRStmt {
     While {
         condition: Box<HIRExpr>,
         body: Box<HIRStmt>,
+    },
+    Assign {
+        symbol: SymbolId,
+        ty: TypeId,
+        value: HIRExpr,
     },
 }
 
@@ -75,11 +88,6 @@ pub enum HIRExpr {
     Call {
         func: SymbolId,
         args: Vec<HIRExpr>,
-        ty: TypeId,
-    },
-    Assign {
-        symbol: SymbolId,
-        value: Box<HIRExpr>,
         ty: TypeId,
     },
 }

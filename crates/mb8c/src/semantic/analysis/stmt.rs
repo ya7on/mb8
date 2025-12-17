@@ -114,5 +114,38 @@ pub fn analyze_stmt(
                 body: Box::new(body),
             })
         }
+        ASTStmt::Assign { name, value, span } => {
+            let symbol_id = ctx.scope.lookup(name).ok_or(CompileError::UnknownSymbol {
+                start: span.start,
+                end: span.end,
+                symbol: name.clone(),
+            })?;
+            let symbol = ctx
+                .symbols
+                .lookup(symbol_id)
+                .ok_or(CompileError::UnknownSymbol {
+                    start: span.start,
+                    end: span.end,
+                    symbol: name.clone(),
+                })?;
+
+            let value = analyze_expr(ctx, value)?;
+            let value_ty = fetch_expr_type(&value);
+
+            if symbol.ty != value_ty {
+                return Err(CompileError::TypeMismatch {
+                    expected: ctx.types.lookup(value_ty).cloned().unwrap_or_default(),
+                    actual: ctx.types.lookup(symbol.ty).cloned().unwrap_or_default(),
+                    start: span.start,
+                    end: span.end,
+                });
+            }
+
+            Ok(HIRStmt::Assign {
+                symbol: symbol_id,
+                value,
+                ty: value_ty,
+            })
+        }
     }
 }

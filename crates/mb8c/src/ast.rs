@@ -47,6 +47,11 @@ pub enum ASTStmt {
         body: Box<ASTStmt>,
         span: Span,
     },
+    Assign {
+        name: String,
+        value: ASTExpr,
+        span: Span,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -82,11 +87,6 @@ pub enum ASTExpr {
     },
     Var {
         name: String,
-        span: Span,
-    },
-    Assign {
-        name: String,
-        value: Box<ASTExpr>,
         span: Span,
     },
     Call {

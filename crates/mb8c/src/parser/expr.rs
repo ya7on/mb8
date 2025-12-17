@@ -134,22 +134,6 @@ where
             },
         );
 
-        select! {
-            TokenKind::Ident(name) => name,
-        }
-        .then_ignore(just(TokenKind::OperatorEq))
-        .then(expr.clone())
-        .map_with(|(name, value), extra| {
-            let span: SimpleSpan = extra.span();
-            ASTExpr::Assign {
-                name,
-                value: Box::new(value),
-                span: Span {
-                    start: span.start,
-                    end: span.end,
-                },
-            }
-        })
-        .or(equality)
+        equality
     })
 }

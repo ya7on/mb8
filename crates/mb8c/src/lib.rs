@@ -53,7 +53,9 @@ pub fn compile(input: &str) -> error::CompileResult<(), Vec<CompileError>> {
 
     let hir = semantic::analyze(&ast).map_err(|err| vec![err])?;
 
-    lower(&hir).map_err(|err| vec![err])?;
+    println!("{hir:?}");
+
+    // let ir = lower(&hir).map_err(|err| vec![err])?;
 
     Ok(())
 

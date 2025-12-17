@@ -1,10 +1,18 @@
 #[derive(Debug)]
+pub struct IRProgram {
+    pub functions: Vec<IRFunction>,
+}
+
+#[derive(Debug)]
 pub struct IRFunction {
     pub basic_blocks: Vec<BasicBlock>,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct VirtualRegister(pub usize);
+pub struct VirtualRegister {
+    pub id: usize,
+    pub size: u8,
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct BasicBlockId(pub usize);
@@ -33,5 +41,21 @@ pub enum BasicBlockTerminator {
 
 #[derive(Debug)]
 pub enum IRInstruction {
-    Call,
+    LoadImm {
+        register: VirtualRegister,
+        value: u8,
+    },
+    Store {
+        register: VirtualRegister,
+        offset: usize,
+    },
+    Load {
+        register: VirtualRegister,
+        offset: usize,
+    },
+    Add {
+        dst: VirtualRegister,
+        lhs: VirtualRegister,
+        rhs: VirtualRegister,
+    },
 }

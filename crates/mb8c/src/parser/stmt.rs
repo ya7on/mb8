@@ -3,8 +3,8 @@ use chumsky::extra::Err;
 use chumsky::input::ValueInput;
 use chumsky::prelude::just;
 use chumsky::span::SimpleSpan;
-use chumsky::IterParser;
 use chumsky::{prelude::recursive, Parser};
+use chumsky::{select, IterParser};
 
 use crate::ast::{ASTStmt, Span};
 use crate::tokens::TokenKind;
@@ -83,6 +83,22 @@ where
                 }
             });
 
+        let assign_parser = select! { TokenKind::Ident(name) => name }
+            .then_ignore(just(TokenKind::OperatorEq))
+            .then(expr_parser())
+            .then_ignore(just(TokenKind::Semicolon))
+            .map_with(|(name, value), extra| {
+                let span: SimpleSpan = extra.span();
+                ASTStmt::Assign {
+                    name,
+                    value,
+                    span: Span {
+                        start: span.start,
+                        end: span.end,
+                    },
+                }
+            });
+
         let expr_parser = expr_parser()
             .then_ignore(just(TokenKind::Semicolon))
             .map_with(|expr, extra| {
@@ -96,6 +112,10 @@ where
                 }
             });
 
-        return_parser.or(if_parser).or(while_parser).or(expr_parser)
+        return_parser
+            .or(if_parser)
+            .or(while_parser)
+            .or(assign_parser)
+            .or(expr_parser)
     })
 }

@@ -20,7 +20,6 @@ pub fn fetch_expr_type(expr: &HIRExpr) -> TypeId {
         | HIRExpr::Literal { ty, .. }
         | HIRExpr::Binary { ty, .. }
         | HIRExpr::Unary { ty, .. }
-        | HIRExpr::Call { ty, .. }
-        | HIRExpr::Assign { ty, .. } => *ty,
+        | HIRExpr::Call { ty, .. } => *ty,
     }
 }
