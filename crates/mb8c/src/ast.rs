@@ -71,7 +71,7 @@ pub enum ASTUnaryOp {
 #[derive(Clone, Debug, PartialEq)]
 pub enum ASTExpr {
     IntLiteral {
-        value: i16,
+        value: u16,
         span: Span,
     },
     BinaryOp {

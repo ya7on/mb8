@@ -1,6 +1,6 @@
 use crate::hir::{SymbolId, TypeId};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct SymbolTable {
     pub symbols: Vec<Symbol>,
 }

@@ -82,4 +82,9 @@ pub enum IRInstruction {
         dst: VirtualRegister,
         src: VirtualRegister,
     },
+    Call {
+        result: VirtualRegister,
+        label: String,
+        args: Vec<VirtualRegister>,
+    },
 }

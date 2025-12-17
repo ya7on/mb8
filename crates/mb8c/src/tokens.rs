@@ -18,11 +18,11 @@ pub enum TokenKind {
     _Skip,
 
     /// Identifier (e.g. variable name)
-    #[regex(r"[a-zA-Z]+", |lex| lex.slice().to_string())]
+    #[regex(r"[a-zA-Z_]+", |lex| lex.slice().to_string())]
     Ident(String),
     /// Number (e.g. 123)
-    #[regex("[0-9]+", |lex| lex.slice().parse::<i16>().ok())]
-    Number(i16),
+    #[regex("[0-9]+", |lex| lex.slice().parse::<u16>().ok())]
+    Number(u16),
 
     /* Keywords */
     /// Void
@@ -31,9 +31,6 @@ pub enum TokenKind {
     /// 8-bit unsigned integer
     #[token("u8")]
     KeywordU8,
-    /// program
-    #[token("program")]
-    KeywordProgram,
     /// function
     #[token("function")]
     KeywordFunction,
@@ -101,4 +98,73 @@ pub enum TokenKind {
     /// Semicolon ;
     #[token(";")]
     Semicolon,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tokens() {
+        let input = r#"
+        // comments
+        // if then begin end -- ignored
+
+        // ident
+        name AbCdEf u_n_d_e_r_l_i_n_e
+        // numer
+        1 1337 228
+        // negative
+        -111
+
+        // types
+        void u8
+        // keywords
+        function var begin end
+        if then
+        while do
+        return
+        + - * / = ==
+        ( ) , : ;
+        "#;
+
+        let result = TokenKind::lexer(input)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        assert_eq!(
+            result,
+            vec![
+                TokenKind::Ident("name".to_string()),
+                TokenKind::Ident("AbCdEf".to_string()),
+                TokenKind::Ident("u_n_d_e_r_l_i_n_e".to_string()),
+                TokenKind::Number(1),
+                TokenKind::Number(1337),
+                TokenKind::Number(228),
+                TokenKind::OperatorMinus,
+                TokenKind::Number(111),
+                TokenKind::KeywordVoid,
+                TokenKind::KeywordU8,
+                TokenKind::KeywordFunction,
+                TokenKind::KeywordVar,
+                TokenKind::KeywordBegin,
+                TokenKind::KeywordEnd,
+                TokenKind::KeywordIf,
+                TokenKind::KeywordThen,
+                TokenKind::KeywordWhile,
+                TokenKind::KeywordDo,
+                TokenKind::KeywordReturn,
+                TokenKind::OperatorPlus,
+                TokenKind::OperatorMinus,
+                TokenKind::OperatorAsterisk,
+                TokenKind::OperatorSlash,
+                TokenKind::OperatorEq,
+                TokenKind::OperatorEqEq,
+                TokenKind::LeftParenthesis,
+                TokenKind::RightParenthesis,
+                TokenKind::Comma,
+                TokenKind::Colon,
+                TokenKind::Semicolon
+            ]
+        );
+    }
 }

@@ -1,4 +1,6 @@
-use crate::{ast::ASTProgram, error::CompileResult, hir::HIRProgram, semantic::SemanticAnalysis};
+use crate::{ast::ASTProgram, error::CompileResult, hir::HIRProgram};
+
+use super::SemanticAnalysis;
 
 impl SemanticAnalysis {
     /// Analyze AST program and lower it to HIR

@@ -1,176 +1,231 @@
 use crate::{
-    ast::ASTStmt,
+    ast::{ASTExpr, ASTStmt, Span},
     error::{CompileError, CompileResult},
     hir::{HIRStmt, TypeId},
-    semantic::{helpers::fetch_expr_type, types::TypeKind, SemanticAnalysis},
+    semantic::{helpers::fetch_expr_type, types::TypeKind},
 };
 
+use super::SemanticAnalysis;
+
 impl SemanticAnalysis {
+    fn analyze_block_stmt(
+        &mut self,
+        expected_ty: TypeId,
+        stmts: &[ASTStmt],
+    ) -> CompileResult<HIRStmt> {
+        let mut result = Vec::new();
+        self.ctx.scope.enter();
+        for stmt in stmts {
+            result.push(self.analyze_stmt(stmt, expected_ty)?);
+        }
+        self.ctx.scope.exit();
+        Ok(HIRStmt::Block(result))
+    }
+
+    fn analyze_return_stmt(
+        &mut self,
+        expected_ty: TypeId,
+        expr: Option<&ASTExpr>,
+        span: &Span,
+    ) -> CompileResult<HIRStmt> {
+        let value = if let Some(expr) = expr {
+            let value = self.analyze_expr(expr)?;
+
+            let type_id = fetch_expr_type(&value);
+            if type_id != expected_ty {
+                return Err(CompileError::TypeMismatch {
+                    expected: self
+                        .ctx
+                        .types
+                        .lookup(expected_ty)
+                        .cloned()
+                        .unwrap_or_default(),
+                    actual: self.ctx.types.lookup(type_id).cloned().unwrap_or_default(),
+                    start: span.start,
+                    end: span.end,
+                });
+            }
+
+            Some(value)
+        } else {
+            let type_id = self.ctx.types.entry(TypeKind::Void);
+            if type_id != expected_ty {
+                return Err(CompileError::TypeMismatch {
+                    expected: self
+                        .ctx
+                        .types
+                        .lookup(expected_ty)
+                        .cloned()
+                        .unwrap_or_default(),
+                    actual: self.ctx.types.lookup(type_id).cloned().unwrap_or_default(),
+                    start: span.start,
+                    end: span.end,
+                });
+            }
+
+            None
+        };
+
+        Ok(HIRStmt::Return(value))
+    }
+
+    fn analyze_expr_stmt(
+        &mut self,
+        _expected_ty: TypeId,
+        expr: &ASTExpr,
+        _span: &Span,
+    ) -> CompileResult<HIRStmt> {
+        let value = self.analyze_expr(expr)?;
+        Ok(HIRStmt::Expression(value))
+    }
+
+    fn analyze_if_stmt(
+        &mut self,
+        expected_ty: TypeId,
+        condition: &ASTExpr,
+        then_branch: &ASTStmt,
+        else_branch: Option<&ASTStmt>,
+        span: &Span,
+    ) -> CompileResult<HIRStmt> {
+        let bool = self.ctx.types.entry(TypeKind::Bool);
+        let condition = self.analyze_expr(condition)?;
+        let then_branch = self.analyze_stmt(then_branch, expected_ty)?;
+        let else_branch = else_branch
+            .map(|expr| self.analyze_stmt(expr, expected_ty))
+            .transpose()?;
+
+        let condition_ty = fetch_expr_type(&condition);
+        if condition_ty != bool {
+            return Err(CompileError::TypeMismatch {
+                expected: TypeKind::Bool,
+                actual: self
+                    .ctx
+                    .types
+                    .lookup(condition_ty)
+                    .cloned()
+                    .unwrap_or_default(),
+                start: span.start,
+                end: span.end,
+            });
+        }
+
+        Ok(HIRStmt::If {
+            condition: Box::new(condition),
+            then_branch: Box::new(then_branch),
+            else_branch: else_branch.map(Box::new),
+        })
+    }
+
+    fn analyze_while_stmt(
+        &mut self,
+        expected_ty: TypeId,
+        condition: &ASTExpr,
+        body: &ASTStmt,
+        span: &Span,
+    ) -> CompileResult<HIRStmt> {
+        let bool = self.ctx.types.entry(TypeKind::Bool);
+        let condition = self.analyze_expr(condition)?;
+        let body = self.analyze_stmt(body, expected_ty)?;
+
+        let condition_ty = fetch_expr_type(&condition);
+        if condition_ty != bool {
+            return Err(CompileError::TypeMismatch {
+                expected: TypeKind::Bool,
+                actual: self
+                    .ctx
+                    .types
+                    .lookup(condition_ty)
+                    .cloned()
+                    .unwrap_or_default(),
+                start: span.start,
+                end: span.end,
+            });
+        }
+
+        Ok(HIRStmt::While {
+            condition: Box::new(condition),
+            body: Box::new(body),
+        })
+    }
+
+    fn analyze_assign_stmt(
+        &mut self,
+        _expected_ty: TypeId,
+        name: &str,
+        value: &ASTExpr,
+        span: &Span,
+    ) -> CompileResult<HIRStmt> {
+        let symbol_id = self
+            .ctx
+            .scope
+            .lookup(name)
+            .ok_or(CompileError::UnknownSymbol {
+                start: span.start,
+                end: span.end,
+                symbol: name.to_owned(),
+            })?;
+        let symbol = self
+            .ctx
+            .symbols
+            .lookup(symbol_id)
+            .ok_or(CompileError::UnknownSymbol {
+                start: span.start,
+                end: span.end,
+                symbol: name.to_owned(),
+            })?;
+
+        let value = self.analyze_expr(value)?;
+        let value_ty = fetch_expr_type(&value);
+
+        if symbol.ty != value_ty {
+            return Err(CompileError::TypeMismatch {
+                expected: self.ctx.types.lookup(value_ty).cloned().unwrap_or_default(),
+                actual: self
+                    .ctx
+                    .types
+                    .lookup(symbol.ty)
+                    .cloned()
+                    .unwrap_or_default(),
+                start: span.start,
+                end: span.end,
+            });
+        }
+
+        Ok(HIRStmt::Assign {
+            symbol: symbol_id,
+            value,
+            ty: value_ty,
+        })
+    }
+
     /// # Errors
     /// Returns error if there are semantic issues
-    #[allow(clippy::too_many_lines)]
     pub fn analyze_stmt(&mut self, stmt: &ASTStmt, expected_ty: TypeId) -> CompileResult<HIRStmt> {
         match stmt {
-            ASTStmt::Block(stmts) => {
-                let mut result = Vec::new();
-                self.ctx.scope.enter();
-                for stmt in stmts {
-                    result.push(self.analyze_stmt(stmt, expected_ty)?);
-                }
-                self.ctx.scope.exit();
-                Ok(HIRStmt::Block(result))
-            }
+            ASTStmt::Block(stmts) => self.analyze_block_stmt(expected_ty, stmts),
             ASTStmt::Return { expr, span } => {
-                let value = if let Some(expr) = expr {
-                    let value = self.analyze_expr(expr)?;
-
-                    let type_id = fetch_expr_type(&value);
-                    if type_id != expected_ty {
-                        return Err(CompileError::TypeMismatch {
-                            expected: self
-                                .ctx
-                                .types
-                                .lookup(expected_ty)
-                                .cloned()
-                                .unwrap_or_default(),
-                            actual: self.ctx.types.lookup(type_id).cloned().unwrap_or_default(),
-                            start: span.start,
-                            end: span.end,
-                        });
-                    }
-
-                    Some(value)
-                } else {
-                    let type_id = self.ctx.types.entry(TypeKind::Void);
-                    if type_id != expected_ty {
-                        return Err(CompileError::TypeMismatch {
-                            expected: self
-                                .ctx
-                                .types
-                                .lookup(expected_ty)
-                                .cloned()
-                                .unwrap_or_default(),
-                            actual: self.ctx.types.lookup(type_id).cloned().unwrap_or_default(),
-                            start: span.start,
-                            end: span.end,
-                        });
-                    }
-
-                    None
-                };
-
-                Ok(HIRStmt::Return(value))
+                self.analyze_return_stmt(expected_ty, expr.as_ref(), span)
             }
-            ASTStmt::Expression { expr, span: _ } => {
-                let value = self.analyze_expr(expr)?;
-                Ok(HIRStmt::Expression(value))
-            }
+            ASTStmt::Expression { expr, span } => self.analyze_expr_stmt(expected_ty, expr, span),
             ASTStmt::If {
                 condition,
                 then_branch,
                 else_branch,
                 span,
-            } => {
-                let bool = self.ctx.types.entry(TypeKind::Bool);
-                let condition = self.analyze_expr(condition)?;
-                let then_branch = self.analyze_stmt(then_branch, expected_ty)?;
-                let else_branch = else_branch
-                    .clone()
-                    .map(|expr| self.analyze_stmt(&expr, expected_ty))
-                    .transpose()?;
-
-                let condition_ty = fetch_expr_type(&condition);
-                if condition_ty != bool {
-                    return Err(CompileError::TypeMismatch {
-                        expected: TypeKind::Bool,
-                        actual: self
-                            .ctx
-                            .types
-                            .lookup(condition_ty)
-                            .cloned()
-                            .unwrap_or_default(),
-                        start: span.start,
-                        end: span.end,
-                    });
-                }
-
-                Ok(HIRStmt::If {
-                    condition: Box::new(condition),
-                    then_branch: Box::new(then_branch),
-                    else_branch: else_branch.map(Box::new),
-                })
-            }
+            } => self.analyze_if_stmt(
+                expected_ty,
+                condition,
+                then_branch,
+                else_branch.as_deref(),
+                span,
+            ),
             ASTStmt::While {
                 condition,
                 body,
                 span,
-            } => {
-                let bool = self.ctx.types.entry(TypeKind::Bool);
-                let condition = self.analyze_expr(condition)?;
-                let body = self.analyze_stmt(body, expected_ty)?;
-
-                let condition_ty = fetch_expr_type(&condition);
-                if condition_ty != bool {
-                    return Err(CompileError::TypeMismatch {
-                        expected: TypeKind::Bool,
-                        actual: self
-                            .ctx
-                            .types
-                            .lookup(condition_ty)
-                            .cloned()
-                            .unwrap_or_default(),
-                        start: span.start,
-                        end: span.end,
-                    });
-                }
-
-                Ok(HIRStmt::While {
-                    condition: Box::new(condition),
-                    body: Box::new(body),
-                })
-            }
+            } => self.analyze_while_stmt(expected_ty, condition, body, span),
             ASTStmt::Assign { name, value, span } => {
-                let symbol_id = self
-                    .ctx
-                    .scope
-                    .lookup(name)
-                    .ok_or(CompileError::UnknownSymbol {
-                        start: span.start,
-                        end: span.end,
-                        symbol: name.clone(),
-                    })?;
-                let symbol =
-                    self.ctx
-                        .symbols
-                        .lookup(symbol_id)
-                        .ok_or(CompileError::UnknownSymbol {
-                            start: span.start,
-                            end: span.end,
-                            symbol: name.clone(),
-                        })?;
-
-                let value = self.analyze_expr(value)?;
-                let value_ty = fetch_expr_type(&value);
-
-                if symbol.ty != value_ty {
-                    return Err(CompileError::TypeMismatch {
-                        expected: self.ctx.types.lookup(value_ty).cloned().unwrap_or_default(),
-                        actual: self
-                            .ctx
-                            .types
-                            .lookup(symbol.ty)
-                            .cloned()
-                            .unwrap_or_default(),
-                        start: span.start,
-                        end: span.end,
-                    });
-                }
-
-                Ok(HIRStmt::Assign {
-                    symbol: symbol_id,
-                    value,
-                    ty: value_ty,
-                })
+                self.analyze_assign_stmt(expected_ty, name, value, span)
             }
         }
     }

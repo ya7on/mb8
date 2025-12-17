@@ -26,7 +26,7 @@ pub struct TypeId(pub usize);
 
 #[derive(Debug)]
 pub enum Literal {
-    Int(i16),
+    Int(u16),
 }
 
 #[derive(Debug)]

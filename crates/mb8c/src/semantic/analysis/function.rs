@@ -6,9 +6,10 @@ use crate::{
         helpers::lower_type,
         symbols::{Symbol, SymbolKind},
         types::TypeKind,
-        SemanticAnalysis,
     },
 };
+
+use super::SemanticAnalysis;
 
 impl SemanticAnalysis {
     /// First iteration through AST functions to collect their names

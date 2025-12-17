@@ -96,12 +96,26 @@ pub fn lower_expr(
             }
             Ok((dst, instructions))
         }
-        HIRExpr::Call {
-            func: _,
-            args: _,
-            ty: _,
-        } => {
-            todo!()
+        HIRExpr::Call { func, args, ty } => {
+            let type_kind = ctx.types.lookup(*ty).ok_or_else(|| todo!())?;
+            let dst = ctx.vreg(type_kind.size());
+
+            let mut instructions = Vec::new();
+            let mut regs = Vec::with_capacity(args.len());
+            for arg in args {
+                let (reg, instr) = lower_expr(ctx, arg)?;
+                instructions.extend(instr);
+                regs.push(reg);
+            }
+
+            let func = ctx.symbols.lookup(*func).ok_or_else(|| todo!())?;
+            instructions.push(IRInstruction::Call {
+                result: dst,
+                label: func.name,
+                args: regs,
+            });
+
+            Ok((dst, instructions))
         }
     }
 }

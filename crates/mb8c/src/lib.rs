@@ -7,7 +7,7 @@ use error::CompileError;
 use logos::Logos;
 use lower::lower;
 use parser::program::program_parser;
-use semantic::SemanticAnalysis;
+use semantic::analysis::SemanticAnalysis;
 use tokens::TokenKind;
 
 pub mod ast;
