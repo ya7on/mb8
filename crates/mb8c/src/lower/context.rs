@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     hir::{HIRFunctionParam, SymbolId},
     ir::{BasicBlockId, VirtualRegister},
-    semantic::types::TypeTable,
+    semantic::{context::SemanticContext, types::TypeTable},
 };
 
 use super::bb::BasicBlockBuilder;
@@ -23,11 +23,11 @@ pub struct LowerContext {
 }
 
 impl LowerContext {
-    pub fn new(params: &[HIRFunctionParam]) -> Self {
+    pub fn new(params: &[HIRFunctionParam], hir_ctx: &SemanticContext) -> Self {
         Self {
             next_bb: 0,
             next_register: 0,
-            types: TypeTable::default(),
+            types: hir_ctx.types.clone(),
             storage: params
                 .iter()
                 .map(|param| {

@@ -58,4 +58,28 @@ pub enum IRInstruction {
         lhs: VirtualRegister,
         rhs: VirtualRegister,
     },
+    Sub {
+        dst: VirtualRegister,
+        lhs: VirtualRegister,
+        rhs: VirtualRegister,
+    },
+    Mul {
+        dst: VirtualRegister,
+        lhs: VirtualRegister,
+        rhs: VirtualRegister,
+    },
+    Div {
+        dst: VirtualRegister,
+        lhs: VirtualRegister,
+        rhs: VirtualRegister,
+    },
+    Cmp {
+        dst: VirtualRegister,
+        lhs: VirtualRegister,
+        rhs: VirtualRegister,
+    },
+    Neg {
+        dst: VirtualRegister,
+        src: VirtualRegister,
+    },
 }

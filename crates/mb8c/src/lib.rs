@@ -7,6 +7,7 @@ use error::CompileError;
 use logos::Logos;
 use lower::lower;
 use parser::program::program_parser;
+use semantic::SemanticAnalysis;
 use tokens::TokenKind;
 
 pub mod ast;
@@ -51,11 +52,14 @@ pub fn compile(input: &str) -> error::CompileResult<(), Vec<CompileError>> {
             result
         })?;
 
-    let hir = semantic::analyze(&ast).map_err(|err| vec![err])?;
+    let mut semantic_analyzer = SemanticAnalysis::default();
+    let hir = semantic_analyzer
+        .analyze_program(&ast)
+        .map_err(|err| vec![err])?;
 
-    println!("{hir:?}");
+    let ir = lower(semantic_analyzer.ctx, &hir).map_err(|err| vec![err])?;
 
-    // let ir = lower(&hir).map_err(|err| vec![err])?;
+    println!("{ir:?}");
 
     Ok(())
 

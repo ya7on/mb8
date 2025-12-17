@@ -3,14 +3,18 @@ use crate::{
     hir::HIRFunction,
     ir::{BasicBlockTerminator, IRFunction},
     lower::context::LowerContext,
+    semantic::context::SemanticContext,
 };
 
 use super::stmt::lower_stmt;
 
 /// # Errors
 /// Returns a `CompileError` if there was an lowering error
-pub fn lower_function(function: &HIRFunction) -> CompileResult<IRFunction> {
-    let mut ctx = LowerContext::new(function.params.as_ref());
+pub fn lower_function(
+    hir_ctx: &SemanticContext,
+    function: &HIRFunction,
+) -> CompileResult<IRFunction> {
+    let mut ctx = LowerContext::new(function.params.as_ref(), hir_ctx);
 
     let mut basic_blocks = Vec::new();
     let mut current = Some(ctx.bb());

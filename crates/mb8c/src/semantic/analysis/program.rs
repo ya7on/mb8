@@ -1,26 +1,28 @@
-use crate::{ast::ASTProgram, error::CompileResult, hir::HIRProgram, semantic::context::Context};
+use crate::{ast::ASTProgram, error::CompileResult, hir::HIRProgram, semantic::SemanticAnalysis};
 
-use super::function::{analyze_function, collect_function};
+impl SemanticAnalysis {
+    /// Analyze AST program and lower it to HIR
+    ///
+    /// # Errors
+    /// Returns error if there are semantic issues
+    pub fn analyze_program(&mut self, program: &ASTProgram) -> CompileResult<HIRProgram> {
+        self.ctx.scope.enter();
 
-/// Analyze AST program and lower it to HIR
-///
-/// # Errors
-/// Returns error if there are semantic issues
-pub fn analyze_program(ctx: &mut Context, program: &ASTProgram) -> CompileResult<HIRProgram> {
-    let mut hir = HIRProgram {
-        functions: Vec::with_capacity(program.functions.len()),
-    };
+        let mut hir = HIRProgram {
+            functions: Vec::with_capacity(program.functions.len()),
+        };
 
-    // 1st iteration. collect function names
-    for function in &program.functions {
-        collect_function(ctx, function)?;
+        // 1st iteration. collect function names
+        for function in &program.functions {
+            self.collect_function(function)?;
+        }
+
+        // 2nd iteration
+        for function in &program.functions {
+            let hir_function = self.analyze_function(function)?;
+            hir.functions.push(hir_function);
+        }
+
+        Ok(hir)
     }
-
-    // 2nd iteration
-    for function in &program.functions {
-        let hir_function = analyze_function(ctx, function)?;
-        hir.functions.push(hir_function);
-    }
-
-    Ok(hir)
 }

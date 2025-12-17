@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::hir::TypeId;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct TypeTable {
     types: Vec<TypeKind>,
     index: HashMap<TypeKind, TypeId>,

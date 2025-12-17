@@ -1,6 +1,6 @@
 use crate::{
     error::CompileResult,
-    hir::{HIRBinaryOp, HIRExpr, Literal},
+    hir::{HIRBinaryOp, HIRExpr, HIRUnaryOp, Literal},
     ir::{IRInstruction, VirtualRegister},
 };
 
@@ -34,6 +34,8 @@ pub fn lower_expr(
                     }];
                     Ok((vreg, instructions))
                 }
+                // TODO: Add String literal
+                #[allow(unreachable_patterns)]
                 _ => {
                     unreachable!()
                 }
@@ -59,16 +61,46 @@ pub fn lower_expr(
                     lhs: lhs_reg,
                     rhs: rhs_reg,
                 }],
-                _ => todo!(),
+                HIRBinaryOp::Sub => vec![IRInstruction::Sub {
+                    dst: dst_reg,
+                    lhs: lhs_reg,
+                    rhs: rhs_reg,
+                }],
+                HIRBinaryOp::Mul => vec![IRInstruction::Mul {
+                    dst: dst_reg,
+                    lhs: lhs_reg,
+                    rhs: rhs_reg,
+                }],
+                HIRBinaryOp::Div => vec![IRInstruction::Div {
+                    dst: dst_reg,
+                    lhs: lhs_reg,
+                    rhs: rhs_reg,
+                }],
+                HIRBinaryOp::Eq => vec![IRInstruction::Cmp {
+                    dst: dst_reg,
+                    lhs: lhs_reg,
+                    rhs: rhs_reg,
+                }],
             };
             result.extend(instructions);
 
             Ok((dst_reg, result))
         }
-        HIRExpr::Unary { op, expr, ty } => {
-            todo!()
+        HIRExpr::Unary { op, expr, ty: _ } => {
+            let (src, mut instructions) = lower_expr(ctx, expr)?;
+            let dst = ctx.vreg(src.size);
+            match op {
+                HIRUnaryOp::Neg => {
+                    instructions.push(IRInstruction::Neg { dst, src });
+                }
+            }
+            Ok((dst, instructions))
         }
-        HIRExpr::Call { func, args, ty } => {
+        HIRExpr::Call {
+            func: _,
+            args: _,
+            ty: _,
+        } => {
             todo!()
         }
     }
