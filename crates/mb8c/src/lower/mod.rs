@@ -12,11 +12,11 @@ pub mod stmt;
 
 /// # Errors
 /// Returns a `CompileError` if there was an lowering error
-pub fn lower(hir_ctx: SemanticContext, hir: &HIRProgram) -> CompileResult<IRProgram> {
+pub fn lower(hir_ctx: &SemanticContext, hir: &HIRProgram) -> CompileResult<IRProgram> {
     let mut functions = Vec::with_capacity(hir.functions.len());
 
     for function in &hir.functions {
-        functions.push(lower_function(&hir_ctx, function)?);
+        functions.push(lower_function(hir_ctx, function)?);
     }
 
     Ok(IRProgram { functions })

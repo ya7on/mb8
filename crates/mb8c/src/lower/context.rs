@@ -23,7 +23,7 @@ pub struct LowerContext {
 }
 
 impl LowerContext {
-    pub fn new(params: &[HIRFunctionParam], hir_ctx: &SemanticContext) -> Self {
+    #[must_use] pub fn new(params: &[HIRFunctionParam], hir_ctx: &SemanticContext) -> Self {
         Self {
             next_bb: 0,
             next_register: 0,
@@ -55,7 +55,7 @@ impl LowerContext {
         VirtualRegister { id, size }
     }
 
-    pub fn lookup_name(&self, name: &SymbolId) -> Option<&StoredSymbol> {
+    #[must_use] pub fn lookup_name(&self, name: &SymbolId) -> Option<&StoredSymbol> {
         self.storage.get(name)
     }
 }
