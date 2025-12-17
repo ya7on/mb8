@@ -11,5 +11,9 @@ var
 begin
   a = 1;
   b = 2;
-  add(a, b);
+  if (a == b) then
+  begin
+    add(a, b);
+  end
+  add(b, a);
 end

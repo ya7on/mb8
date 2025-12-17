@@ -13,6 +13,7 @@ pub struct HIRFunctionParam {
 #[derive(Debug)]
 pub struct HIRFunction {
     pub id: SymbolId,
+    pub name: String,
     pub params: Vec<HIRFunctionParam>,
     pub body: Vec<HIRStmt>,
     pub params_size: usize,

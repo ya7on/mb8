@@ -32,5 +32,8 @@ pub fn lower_function(
         basic_blocks.push(current.build(BasicBlockTerminator::Ret { value: None }));
     }
 
-    Ok(IRFunction { basic_blocks })
+    Ok(IRFunction {
+        name: function.name.clone(),
+        basic_blocks,
+    })
 }

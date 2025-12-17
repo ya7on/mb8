@@ -3,6 +3,7 @@ use chumsky::{
     span::SimpleSpan,
     Parser,
 };
+use codegen::targets::mb8::Mb8Codegen;
 use error::CompileError;
 use logos::Logos;
 use lower::lower;
@@ -19,6 +20,11 @@ pub mod lower;
 pub mod parser;
 pub mod semantic;
 pub mod tokens;
+
+#[derive(Debug)]
+pub enum Targets {
+    Mb8,
+}
 
 /// Compile the input string into an executable program.
 ///
@@ -59,14 +65,10 @@ pub fn compile(input: &str) -> error::CompileResult<(), Vec<CompileError>> {
 
     let ir = lower(&semantic_analyzer.ctx, &hir).map_err(|err| vec![err])?;
 
-    println!("{ir:?}");
+    let code = Mb8Codegen::default()
+        .codegen(&ir)
+        .map_err(|err| vec![err])?;
+    println!("{code}");
 
     Ok(())
-
-    // let ir = lower_program(&ast)?;
-
-    // let code = CodeGenerator::new(ir).generate()?;
-    // println!("{code}");
-
-    // Ok(())
 }

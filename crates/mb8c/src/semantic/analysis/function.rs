@@ -88,6 +88,7 @@ impl SemanticAnalysis {
 
         let hir = HIRFunction {
             id: SymbolId(1),
+            name: function.name.clone(),
             params,
             body: vec![body],
             params_size: size,

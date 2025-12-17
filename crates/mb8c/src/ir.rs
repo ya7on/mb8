@@ -5,6 +5,7 @@ pub struct IRProgram {
 
 #[derive(Debug)]
 pub struct IRFunction {
+    pub name: String,
     pub basic_blocks: Vec<BasicBlock>,
 }
 
