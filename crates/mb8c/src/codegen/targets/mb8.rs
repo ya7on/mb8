@@ -59,33 +59,62 @@ impl Mb8Codegen {
 
     fn codegen_instruction(&mut self, instruction: &IRInstruction) -> CompileResult<()> {
         match instruction {
-            //     IRInstruction::LoadImm { register, value } => {
-            //         self.emit("LDA R0 0x100500")?;
-            //     }
-            //     IRInstruction::Store { register, offset } => {
-            //         self.emit("ST [IH:IL] R0")?;
-            //     }
-            //     IRInstruction::Load { register, offset } => {
-            //         self.emit("LD R0 [IH:IL]")?;
-            //     }
-            //     IRInstruction::Add { dst, lhs, rhs } => {
-            //         self.emit("ADD R1 R0")?;
-            //     }
-            //     IRInstruction::Sub { dst, lhs, rhs } => {
-            //         self.emit("SUB R1 R0")?;
-            //     }
-            //     IRInstruction::Mul { dst, lhs, rhs } => {
-            //         self.emit("MUL R1 R0")?;
-            //     }
-            //     IRInstruction::Div { dst, lhs, rhs } => {
-            //         self.emit("DIV R1 R0")?;
-            //     }
-            //     IRInstruction::Cmp { dst, lhs, rhs } => {
-            //         self.emit("CMP R1 R0")?;
-            //     }
-            //     IRInstruction::Neg { dst, src } => {
-            //         self.emit("NEG R0")?;
-            //     }
+            IRInstruction::LoadImm {
+                register: _,
+                value: _,
+            } => {
+                self.emit("LDA R0 0x100500")?;
+            }
+            IRInstruction::Store {
+                register: _,
+                offset: _,
+            } => {
+                self.emit("ST [IH:IL] R0")?;
+            }
+            IRInstruction::Load {
+                register: _,
+                offset: _,
+            } => {
+                self.emit("LD R0 [IH:IL]")?;
+            }
+            IRInstruction::Add {
+                dst: _,
+                lhs: _,
+                rhs: _,
+            } => {
+                self.emit("ADD R1 R0")?;
+            }
+            IRInstruction::Sub {
+                dst: _,
+                lhs: _,
+                rhs: _,
+            } => {
+                self.emit("SUB R1 R0")?;
+            }
+            IRInstruction::Mul {
+                dst: _,
+                lhs: _,
+                rhs: _,
+            } => {
+                self.emit("MUL R1 R0")?;
+            }
+            IRInstruction::Div {
+                dst: _,
+                lhs: _,
+                rhs: _,
+            } => {
+                self.emit("DIV R1 R0")?;
+            }
+            IRInstruction::Cmp {
+                dst: _,
+                lhs: _,
+                rhs: _,
+            } => {
+                self.emit("CMP R1 R0")?;
+            }
+            IRInstruction::Neg { dst: _, src: _ } => {
+                self.emit("NEG R0")?;
+            }
             IRInstruction::Call {
                 result: _,
                 label,
@@ -93,7 +122,6 @@ impl Mb8Codegen {
             } => {
                 self.emit(&format!("CALL [{label}]"))?;
             }
-            _ => todo!(),
         }
 
         Ok(())
