@@ -1,6 +1,6 @@
 use crate::{
     error::CompileResult,
-    hir::{HIRBinaryOp, HIRExpr, HIRUnaryOp, Literal},
+    hir::HIRExpr,
     ir::{IRInstruction, VirtualRegister},
 };
 

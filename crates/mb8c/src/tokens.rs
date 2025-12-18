@@ -1,6 +1,10 @@
+use chumsky::span::SimpleSpan;
 use logos::Logos;
 
-use crate::error::CompileError;
+use crate::{
+    error::{CompileError, CompileResult},
+    pipe::CompilerPipe,
+};
 
 fn map_err(err: &mut logos::Lexer<TokenKind>) -> CompileError {
     let span = err.span();
@@ -98,6 +102,21 @@ pub enum TokenKind {
     /// Semicolon ;
     #[token(";")]
     Semicolon,
+}
+
+impl CompilerPipe for TokenKind {
+    type Prev = String;
+    type Next = Vec<(TokenKind, SimpleSpan)>;
+
+    fn execute(prev: &Self::Prev) -> CompileResult<Self::Next, Vec<CompileError>> {
+        let mut result = Vec::new();
+
+        for (token, span) in TokenKind::lexer(prev).spanned() {
+            result.push((token.map_err(|err| vec![err])?, SimpleSpan::from(span)));
+        }
+
+        Ok(result)
+    }
 }
 
 #[cfg(test)]

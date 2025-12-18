@@ -10,9 +10,7 @@ impl SemanticAnalysis {
     pub fn analyze_program(&mut self, program: &ASTProgram) -> CompileResult<HIRProgram> {
         self.ctx.scope.enter();
 
-        let mut hir = HIRProgram {
-            functions: Vec::with_capacity(program.functions.len()),
-        };
+        let mut functions = Vec::with_capacity(program.functions.len());
 
         // 1st iteration. collect function names
         for function in &program.functions {
@@ -22,9 +20,13 @@ impl SemanticAnalysis {
         // 2nd iteration
         for function in &program.functions {
             let hir_function = self.analyze_function(function)?;
-            hir.functions.push(hir_function);
+            functions.push(hir_function);
         }
 
-        Ok(hir)
+        Ok(HIRProgram {
+            symbols: self.ctx.symbols.clone(),
+            types: self.ctx.types.clone(),
+            functions,
+        })
     }
 }

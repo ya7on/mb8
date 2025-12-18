@@ -44,10 +44,10 @@ impl Mb8Codegen {
         Ok(())
     }
 
-    fn store_vreg(&mut self, src: impl ToString, vreg: &VirtualRegister) -> CompileResult<()> {
-        self.emit(format!("ST [0x{}] {}", vreg.0, src.to_string()))?;
-        Ok(())
-    }
+    // fn store_vreg(&mut self, src: impl ToString, vreg: &VirtualRegister) -> CompileResult<()> {
+    //     self.emit(format!("ST [0x{}] {}", vreg.0, src.to_string()))?;
+    //     Ok(())
+    // }
 
     /// # Errors
     /// Returns error if there are codegen issues
@@ -100,7 +100,7 @@ impl Mb8Codegen {
         Ok(())
     }
 
-    fn codegen_instruction(&mut self, instruction: &IRInstruction) -> CompileResult<()> {
+    fn codegen_instruction(&mut self, _instruction: &IRInstruction) -> CompileResult<()> {
         todo!()
     }
 }

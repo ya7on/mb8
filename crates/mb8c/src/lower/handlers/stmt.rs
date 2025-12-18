@@ -1,9 +1,8 @@
 use crate::{
     error::CompileResult,
     hir::HIRStmt,
-    ir::{BasicBlock, BasicBlockTerminator, IRInstruction, Mem},
+    ir::{BasicBlock, BasicBlockTerminator},
     lower::bb::BasicBlockBuilder,
-    semantic::symbols::{Symbol, SymbolKind},
 };
 
 use super::Lower;
@@ -127,7 +126,11 @@ impl Lower {
 
                 Ok((Some(exit_block), result))
             }
-            HIRStmt::Assign { symbol, ty, value } => {
+            HIRStmt::Assign {
+                symbol: _,
+                ty: _,
+                value: _,
+            } => {
                 // let (vreg, instructions) = self.lower_expr(ctx, value)?;
                 // for instruction in instructions {
                 //     builder.emit(instruction);

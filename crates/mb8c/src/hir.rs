@@ -1,6 +1,10 @@
+use crate::semantic::{symbols::SymbolTable, types::TypeTable};
+
 #[derive(Debug)]
 pub struct HIRProgram {
     pub functions: Vec<HIRFunction>,
+    pub symbols: SymbolTable,
+    pub types: TypeTable,
 }
 
 #[derive(Debug)]
