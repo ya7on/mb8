@@ -52,10 +52,10 @@ impl LowerContext {
         BasicBlockBuilder::new(BasicBlockId(id))
     }
 
-    pub fn vreg(&mut self, size: u8) -> VirtualRegister {
+    pub fn vreg(&mut self) -> VirtualRegister {
         let id = self.next_register;
         self.next_register += 1;
-        VirtualRegister { id, size }
+        VirtualRegister(id)
     }
 
     #[must_use]

@@ -9,11 +9,14 @@ pub struct IRFunction {
     pub basic_blocks: Vec<BasicBlock>,
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct VirtualRegister {
-    pub id: usize,
-    pub size: u8,
+#[derive(Debug)]
+pub enum IRType {
+    Unsigned8,
+    Bool,
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct VirtualRegister(pub usize);
 
 #[derive(Debug, Clone, Copy)]
 pub struct BasicBlockId(pub usize);
@@ -41,47 +44,62 @@ pub enum BasicBlockTerminator {
 }
 
 #[derive(Debug)]
+pub enum Mem {
+    Local { offset: usize },
+    Param { number: usize },
+}
+
+#[derive(Debug)]
 pub enum IRInstruction {
     LoadImm {
         register: VirtualRegister,
         value: u8,
+        ty: IRType,
     },
     Store {
-        register: VirtualRegister,
-        offset: usize,
+        src: VirtualRegister,
+        mem: Mem,
+        ty: IRType,
     },
     Load {
-        register: VirtualRegister,
-        offset: usize,
+        dst: VirtualRegister,
+        mem: Mem,
+        ty: IRType,
     },
     Add {
         dst: VirtualRegister,
         lhs: VirtualRegister,
         rhs: VirtualRegister,
+        ty: IRType,
     },
     Sub {
         dst: VirtualRegister,
         lhs: VirtualRegister,
         rhs: VirtualRegister,
+        ty: IRType,
     },
     Mul {
         dst: VirtualRegister,
         lhs: VirtualRegister,
         rhs: VirtualRegister,
+        ty: IRType,
     },
     Div {
         dst: VirtualRegister,
         lhs: VirtualRegister,
         rhs: VirtualRegister,
+        ty: IRType,
     },
     Cmp {
         dst: VirtualRegister,
         lhs: VirtualRegister,
         rhs: VirtualRegister,
+        ty: IRType,
     },
     Neg {
         dst: VirtualRegister,
         src: VirtualRegister,
+        ty: IRType,
     },
     Call {
         result: VirtualRegister,

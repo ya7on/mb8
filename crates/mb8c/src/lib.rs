@@ -13,6 +13,7 @@ use tokens::TokenKind;
 
 pub mod ast;
 pub mod codegen;
+pub mod config;
 pub mod error;
 pub mod hir;
 pub mod ir;
@@ -20,11 +21,6 @@ pub mod lower;
 pub mod parser;
 pub mod semantic;
 pub mod tokens;
-
-#[derive(Debug)]
-pub enum Targets {
-    Mb8,
-}
 
 /// Compile the input string into an executable program.
 ///
@@ -65,10 +61,10 @@ pub fn compile(input: &str) -> error::CompileResult<(), Vec<CompileError>> {
 
     let ir = lower(&semantic_analyzer.ctx, &hir).map_err(|err| vec![err])?;
 
-    let code = Mb8Codegen::default()
-        .codegen(&ir)
-        .map_err(|err| vec![err])?;
-    println!("{code}");
+    // let code = Mb8Codegen::default()
+    //     .codegen(&ir)
+    //     .map_err(|err| vec![err])?;
+    // println!("{code}");
 
     Ok(())
 }
