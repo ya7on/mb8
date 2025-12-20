@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    error::CompileResult,
+    error::{CompileError, CompileResult},
     hir::HIRFunction,
     ir::{BasicBlockTerminator, IRFunction, IRInstruction, Mem},
     lower::context::{LowerContext, StoredSymbol},
@@ -17,12 +17,24 @@ impl Lower {
         let mut offset = 1; // 0 is reserved for accumulator
         for param in &function.params {
             storage.insert(param.symbol, StoredSymbol { offset });
-            let type_kind = self.hir.types.lookup(param.type_id).unwrap(); // TODO
+            let type_kind =
+                self.hir
+                    .types
+                    .lookup(param.type_id)
+                    .ok_or(CompileError::InternalError {
+                        message: "Unknown type".to_string(),
+                    })?;
             offset += type_kind.size();
         }
         for local in &function.locals {
             storage.insert(local.symbol, StoredSymbol { offset });
-            let type_kind = self.hir.types.lookup(local.type_id).unwrap(); // TODO
+            let type_kind =
+                self.hir
+                    .types
+                    .lookup(local.type_id)
+                    .ok_or(CompileError::InternalError {
+                        message: "Unknown type".to_string(),
+                    })?;
             offset += type_kind.size();
         }
 

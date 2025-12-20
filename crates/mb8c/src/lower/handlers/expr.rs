@@ -11,6 +11,7 @@ use super::Lower;
 impl Lower {
     /// # Errors
     /// Returns a `CompileError` if there was an lowering error
+    #[allow(clippy::too_many_lines)]
     pub fn lower_expr(
         &mut self,
         ctx: &mut LowerContext,

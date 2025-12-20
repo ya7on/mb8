@@ -125,7 +125,7 @@ mod tests {
 
     #[test]
     fn test_tokens() {
-        let input = r#"
+        let input = r"
         // comments
         // if then begin end -- ignored
 
@@ -145,7 +145,7 @@ mod tests {
         return
         + - * / = ==
         ( ) , : ;
-        "#;
+        ";
 
         let result = TokenKind::lexer(input)
             .collect::<Result<Vec<_>, _>>()

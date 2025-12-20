@@ -1,3 +1,5 @@
+#![allow(clippy::missing_errors_doc, clippy::needless_pass_by_value)]
+
 use std::fmt::Debug;
 
 use crate::error::{CompileError, CompileResult};

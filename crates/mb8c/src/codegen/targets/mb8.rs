@@ -1,4 +1,7 @@
-use std::{collections::HashMap, fmt::Write};
+use std::{
+    collections::HashMap,
+    fmt::{self, Write},
+};
 
 use crate::{
     error::{CompileError, CompileResult},
@@ -14,18 +17,21 @@ pub struct ProgramWriter {
 }
 
 impl ProgramWriter {
+    #[allow(clippy::needless_pass_by_value)]
     fn emit(&mut self, value: impl ToString) -> CompileResult<()> {
         writeln!(self.result, "\t{}", value.to_string()).map_err(|_| CompileError::InternalError {
             message: "Codegen error".to_string(),
         })
     }
 
+    #[allow(clippy::needless_pass_by_value)]
     fn label(&mut self, label: impl ToString) -> CompileResult<()> {
         writeln!(self.result, "{}:", label.to_string()).map_err(|_| CompileError::InternalError {
             message: "Codegen error".to_string(),
         })
     }
 
+    #[allow(clippy::needless_pass_by_value)]
     fn sublabel(&mut self, sublabel: impl ToString) -> CompileResult<()> {
         writeln!(self.result, ".{}:", sublabel.to_string()).map_err(|_| {
             CompileError::InternalError {
@@ -34,6 +40,7 @@ impl ProgramWriter {
         })
     }
 
+    #[allow(clippy::needless_pass_by_value)]
     fn basic_block_label(function_name: impl ToString, basic_block_id: impl ToString) -> String {
         format!(
             "{}_{}",
@@ -52,13 +59,19 @@ enum PhysicalRegister {
 }
 
 impl PhysicalRegister {
-    fn to_string(&self) -> String {
+    fn to_value(self) -> &'static str {
         match self {
-            PhysicalRegister::R0 => "R0".to_string(),
-            PhysicalRegister::R1 => "R1".to_string(),
-            PhysicalRegister::R2 => "R2".to_string(),
-            PhysicalRegister::R3 => "R3".to_string(),
+            PhysicalRegister::R0 => "R0",
+            PhysicalRegister::R1 => "R1",
+            PhysicalRegister::R2 => "R2",
+            PhysicalRegister::R3 => "R3",
         }
+    }
+}
+
+impl fmt::Display for PhysicalRegister {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.to_value())
     }
 }
 
@@ -80,6 +93,7 @@ pub struct RegisterAllocator {
 }
 
 impl RegisterAllocator {
+    #[must_use]
     pub fn new(basic_block: &BasicBlock) -> Self {
         let mut uses = HashMap::<VirtualRegister, Vec<usize>>::new();
         let location = HashMap::<VirtualRegister, Location>::new();
@@ -95,10 +109,9 @@ impl RegisterAllocator {
                 IRInstruction::LoadlArg { .. }
                 | IRInstruction::StorelArg { .. }
                 | IRInstruction::LoadImm { .. }
-                | IRInstruction::Load { .. } => {
-                    continue;
-                }
-                IRInstruction::Store { src, mem: _, ty: _ } => {
+                | IRInstruction::Load { .. } => {}
+                IRInstruction::Store { src, mem: _, ty: _ }
+                | IRInstruction::Neg { dst: _, src, ty: _ } => {
                     uses.entry(*src).or_default().push(index);
                 }
                 IRInstruction::Add {
@@ -134,9 +147,6 @@ impl RegisterAllocator {
                     uses.entry(*lhs).or_default().push(index);
                     uses.entry(*rhs).or_default().push(index);
                 }
-                IRInstruction::Neg { dst: _, src, ty: _ } => {
-                    uses.entry(*src).or_default().push(index);
-                }
                 IRInstruction::Call {
                     result: _,
                     label: _,
@@ -165,7 +175,7 @@ impl RegisterAllocator {
         base: usize,
         writer: &mut ProgramWriter,
     ) -> CompileResult<PhysicalRegister> {
-        if let Some(Location::Register(register)) = self.location.get(&virtual_register).cloned() {
+        if let Some(Location::Register(register)) = self.location.get(&virtual_register).copied() {
             return Ok(register);
         }
 
@@ -199,22 +209,17 @@ impl RegisterAllocator {
                 message: "No registers available".to_string(),
             })?;
 
-        if next_use != usize::MAX {
+        if next_use == usize::MAX {
+            self.location.remove(&victim);
+        } else {
             let offset = *self.offsets.entry(victim).or_insert_with(|| {
                 let offset = self.offset;
                 self.offset += 1; // TODO: size
                 offset
             });
 
-            writer.emit(format!(
-                "ST [{} + {}] {}",
-                base,
-                offset,
-                register.to_string()
-            ))?;
+            writer.emit(format!("ST [{base} + {offset}] {register}"))?;
             self.location.insert(victim, Location::Spilled(offset));
-        } else {
-            self.location.remove(&victim);
         }
 
         self.location
@@ -235,7 +240,7 @@ impl RegisterAllocator {
             }
         }
 
-        match self.location.get(&virtual_register).cloned() {
+        match self.location.get(&virtual_register).copied() {
             Some(Location::Register(physical_register)) => {
                 return Ok(physical_register);
             }
@@ -267,21 +272,16 @@ impl RegisterAllocator {
                             message: "No registers available".to_string(),
                         })?;
 
-                    if next_use != usize::MAX {
+                    if next_use == usize::MAX {
+                        self.location.remove(&victim);
+                    } else {
                         let location = *self.offsets.entry(victim).or_insert_with(|| {
                             let offset = self.offset;
                             self.offset += 1; // TODO: size
                             offset
                         });
-                        writer.emit(format!(
-                            "ST [{} + {}] {}",
-                            base,
-                            location,
-                            register.to_string()
-                        ))?;
+                        writer.emit(format!("ST [{base} + {location}] {register}"))?;
                         self.location.insert(victim, Location::Spilled(location));
-                    } else {
-                        self.location.remove(&victim);
                     }
 
                     register
@@ -289,16 +289,11 @@ impl RegisterAllocator {
 
                 self.location
                     .insert(virtual_register, Location::Register(register));
-                writer.emit(format!(
-                    "LD {}, [{} + {}]",
-                    register.to_string(),
-                    base,
-                    offset
-                ))?;
+                writer.emit(format!("LD {register}, [{base} + {offset}]"))?;
                 return Ok(register);
             }
             None => {}
-        };
+        }
 
         Err(CompileError::InternalError {
             message: "Register not allocated".to_string(),
@@ -367,8 +362,7 @@ impl Mb8Codegen {
                         ProgramWriter::basic_block_label(&function.name, then_branch.0);
                     let else_block_label =
                         ProgramWriter::basic_block_label(&function.name, else_branch.0);
-                    self.writer
-                        .emit(format!("CMPI {} 0", register.to_string()))?;
+                    self.writer.emit(format!("CMPI {register} 0"))?;
                     self.writer.emit(format!("JNZR [.{then_block_label}]"))?;
                     self.writer.emit(format!("JZR [.{else_block_label}]"))?;
                     spilled = spilled.max(register_allocator.offset);
@@ -382,8 +376,7 @@ impl Mb8Codegen {
                             &mut self.writer,
                         )?;
                         if register != PhysicalRegister::R0 {
-                            self.writer
-                                .emit(format!("MOV R0 {}", register.to_string()))?;
+                            self.writer.emit(format!("MOV R0 {register}"))?;
                         }
                     }
                     self.writer.emit("RET")?;
@@ -394,6 +387,7 @@ impl Mb8Codegen {
         Ok(spilled)
     }
 
+    #[allow(clippy::too_many_lines)]
     fn codegen_instruction(
         &mut self,
         instruction: &IRInstruction,
@@ -424,7 +418,7 @@ impl Mb8Codegen {
                     spill_base,
                     &mut self.writer,
                 )?;
-                self.writer.emit(format!("PUSH {}", register.to_string()))?;
+                self.writer.emit(format!("PUSH {register}"))?;
                 Ok(())
             }
             IRInstruction::LoadImm {
@@ -436,8 +430,7 @@ impl Mb8Codegen {
                     spill_base,
                     &mut self.writer,
                 )?;
-                self.writer
-                    .emit(format!("LDI {} {:#X}", register.to_string(), value))?;
+                self.writer.emit(format!("LDI {register} {value:#X}"))?;
                 Ok(())
             }
             IRInstruction::Store { src, mem, ty: _ } => {
@@ -448,11 +441,8 @@ impl Mb8Codegen {
                     spill_base,
                     &mut self.writer,
                 )?;
-                self.writer.emit(format!(
-                    "ST [0x{:X}] {}",
-                    base + offset,
-                    register.to_string()
-                ))?;
+                self.writer
+                    .emit(format!("ST [0x{:X}] {}", base + offset, register))?;
                 Ok(())
             }
             IRInstruction::Load { dst, mem, ty: _ } => {
@@ -463,11 +453,8 @@ impl Mb8Codegen {
                     spill_base,
                     &mut self.writer,
                 )?;
-                self.writer.emit(format!(
-                    "LD {} [0x{:X}]",
-                    register.to_string(),
-                    base + offset
-                ))?;
+                self.writer
+                    .emit(format!("LD {} [0x{:X}]", register, base + offset))?;
                 Ok(())
             }
             IRInstruction::Add {
@@ -495,11 +482,9 @@ impl Mb8Codegen {
                     &mut self.writer,
                 )?;
                 if dst != lhs {
-                    self.writer
-                        .emit(format!("MOV {} {}", dst.to_string(), lhs.to_string()))?;
+                    self.writer.emit(format!("MOV {dst} {lhs}"))?;
                 }
-                self.writer
-                    .emit(format!("ADD {} {}", dst.to_string(), rhs.to_string()))?;
+                self.writer.emit(format!("ADD {dst} {rhs}"))?;
                 Ok(())
             }
             IRInstruction::Sub {
@@ -527,11 +512,9 @@ impl Mb8Codegen {
                     &mut self.writer,
                 )?;
                 if dst != lhs {
-                    self.writer
-                        .emit(format!("MOV {} {}", dst.to_string(), lhs.to_string()))?;
+                    self.writer.emit(format!("MOV {dst} {lhs}"))?;
                 }
-                self.writer
-                    .emit(format!("SUB {} {}", dst.to_string(), rhs.to_string()))?;
+                self.writer.emit(format!("SUB {dst} {rhs}"))?;
                 Ok(())
             }
             IRInstruction::Mul {
@@ -558,12 +541,7 @@ impl Mb8Codegen {
                     spill_base,
                     &mut self.writer,
                 )?;
-                self.writer.emit(format!(
-                    "MUL {} {} {}",
-                    dst.to_string(),
-                    lhs.to_string(),
-                    rhs.to_string()
-                ))?;
+                self.writer.emit(format!("MUL {dst} {lhs} {rhs}"))?;
                 Ok(())
             }
             IRInstruction::Div {
@@ -590,12 +568,7 @@ impl Mb8Codegen {
                     spill_base,
                     &mut self.writer,
                 )?;
-                self.writer.emit(format!(
-                    "DIV {} {} {}",
-                    dst.to_string(),
-                    lhs.to_string(),
-                    rhs.to_string()
-                ))?;
+                self.writer.emit(format!("DIV {dst} {lhs} {rhs}"))?;
                 Ok(())
             }
             IRInstruction::Cmp {
@@ -622,15 +595,14 @@ impl Mb8Codegen {
                     spill_base,
                     &mut self.writer,
                 )?;
-                let true_label = format!("cmp_true_{}", current_index);
-                let end_label = format!("cmp_end_{}", current_index);
-                self.writer
-                    .emit(format!("CMP {} {}", lhs.to_string(), rhs.to_string()))?;
-                self.writer.emit(format!("ZERO {}", dst.to_string()))?;
+                let true_label = format!("cmp_true_{current_index}");
+                let end_label = format!("cmp_end_{current_index}");
+                self.writer.emit(format!("CMP {lhs} {rhs}"))?;
+                self.writer.emit(format!("ZERO {dst}"))?;
                 self.writer.emit(format!("JNZR [.{true_label}]"))?;
                 self.writer.emit(format!("JR [.{end_label}]"))?;
                 self.writer.sublabel(true_label)?;
-                self.writer.emit(format!("LDI {} 1", dst.to_string()))?;
+                self.writer.emit(format!("LDI {dst} 1"))?;
                 self.writer.sublabel(end_label)?;
                 Ok(())
             }
@@ -647,9 +619,8 @@ impl Mb8Codegen {
                     spill_base,
                     &mut self.writer,
                 )?;
-                self.writer.emit(format!("ZERO {}", dst.to_string()))?;
-                self.writer
-                    .emit(format!("SUB {} {}", dst.to_string(), src.to_string()))?;
+                self.writer.emit(format!("ZERO {dst}"))?;
+                self.writer.emit(format!("SUB {dst} {src}"))?;
                 Ok(())
             }
             IRInstruction::Call {
@@ -666,7 +637,7 @@ impl Mb8Codegen {
                 )?;
                 self.writer.emit(format!("CALL [.{label}]"))?;
                 if dst != PhysicalRegister::R0 {
-                    self.writer.emit(format!("MOV {} R0", dst.to_string()))?;
+                    self.writer.emit(format!("MOV {dst} R0"))?;
                 }
                 Ok(())
             }
