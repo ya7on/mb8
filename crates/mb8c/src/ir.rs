@@ -1,3 +1,5 @@
+use crate::semantic::types::TypeKind;
+
 #[derive(Debug)]
 pub struct IRProgram {
     pub functions: Vec<IRFunction>,
@@ -7,15 +9,10 @@ pub struct IRProgram {
 pub struct IRFunction {
     pub name: String,
     pub basic_blocks: Vec<BasicBlock>,
+    pub size: usize,
 }
 
-#[derive(Debug)]
-pub enum IRType {
-    Unsigned8,
-    Bool,
-}
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct VirtualRegister(pub usize);
 
 #[derive(Debug, Clone, Copy)]
@@ -46,64 +43,74 @@ pub enum BasicBlockTerminator {
 #[derive(Debug)]
 pub enum Mem {
     Local { offset: usize },
-    Param { number: usize },
 }
 
 #[derive(Debug)]
 pub enum IRInstruction {
+    LoadlArg {
+        ty: TypeKind,
+        index: usize,
+        mem: Mem,
+    },
+    StorelArg {
+        register: VirtualRegister,
+        ty: TypeKind,
+        index: usize,
+    },
     LoadImm {
         register: VirtualRegister,
         value: u8,
-        ty: IRType,
+        ty: TypeKind,
     },
     Store {
         src: VirtualRegister,
         mem: Mem,
-        ty: IRType,
+        ty: TypeKind,
     },
     Load {
         dst: VirtualRegister,
         mem: Mem,
-        ty: IRType,
+        ty: TypeKind,
     },
     Add {
         dst: VirtualRegister,
         lhs: VirtualRegister,
         rhs: VirtualRegister,
-        ty: IRType,
+        ty: TypeKind,
     },
     Sub {
         dst: VirtualRegister,
         lhs: VirtualRegister,
         rhs: VirtualRegister,
-        ty: IRType,
+        ty: TypeKind,
     },
     Mul {
         dst: VirtualRegister,
         lhs: VirtualRegister,
         rhs: VirtualRegister,
-        ty: IRType,
+        ty: TypeKind,
     },
     Div {
         dst: VirtualRegister,
         lhs: VirtualRegister,
         rhs: VirtualRegister,
-        ty: IRType,
+        ty: TypeKind,
     },
     Cmp {
         dst: VirtualRegister,
         lhs: VirtualRegister,
         rhs: VirtualRegister,
-        ty: IRType,
+        ty: TypeKind,
     },
     Neg {
         dst: VirtualRegister,
         src: VirtualRegister,
-        ty: IRType,
+        ty: TypeKind,
     },
     Call {
         result: VirtualRegister,
         label: String,
         args: Vec<VirtualRegister>,
+        ty: TypeKind,
     },
 }

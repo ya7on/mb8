@@ -181,7 +181,8 @@ impl SemanticAnalysis {
         }
 
         Ok(HIRExpr::Call {
-            func: symbol_id,
+            symbol: symbol_id,
+            label: name.to_owned(),
             args: hir_args,
             ty: ret,
         })

@@ -1,7 +1,7 @@
 use crate::{
     ast::ASTFunction,
     error::CompileResult,
-    hir::{HIRFunction, HIRFunctionParam, SymbolId},
+    hir::{HIRFunction, HIRFunctionLocal, HIRFunctionParam, SymbolId},
     semantic::{
         helpers::lower_type,
         symbols::{Symbol, SymbolKind},
@@ -47,7 +47,8 @@ impl SemanticAnalysis {
 
         let mut params = Vec::with_capacity(function.params.len());
         // Collect params
-        for (name, ty) in &function.params {
+        for index in 0..function.params.len() {
+            let (name, ty) = &function.params[index];
             let hir_type = lower_type(*ty);
             let type_id = self.ctx.types.entry(hir_type.clone());
             let symbol = self.ctx.symbols.allocate(Symbol {
@@ -58,14 +59,16 @@ impl SemanticAnalysis {
             scope.allocate(name.to_owned(), symbol, &function.span)?;
             params.push(HIRFunctionParam {
                 symbol,
-                size: hir_type.size() as usize,
-                offset: size,
+                type_id,
+                index,
             });
             size += hir_type.size() as usize;
         }
 
+        let mut locals = Vec::with_capacity(function.vars.len());
         // Collects local vaers
-        for (name, ty) in &function.vars {
+        for index in 0..function.vars.len() {
+            let (name, ty) = &function.vars[index];
             let hir_type = lower_type(*ty);
             let type_id = self.ctx.types.entry(hir_type.clone());
             let symbol = self.ctx.symbols.allocate(Symbol {
@@ -74,11 +77,7 @@ impl SemanticAnalysis {
                 ty: type_id,
             });
             scope.allocate(name.to_owned(), symbol, &function.span)?;
-            params.push(HIRFunctionParam {
-                symbol,
-                size: hir_type.size() as usize,
-                offset: size,
-            });
+            locals.push(HIRFunctionLocal { symbol, type_id });
             size += hir_type.size() as usize;
         }
 
@@ -90,6 +89,7 @@ impl SemanticAnalysis {
             id: SymbolId(1),
             name: function.name.clone(),
             params,
+            locals,
             body: vec![body],
             params_size: size,
         };

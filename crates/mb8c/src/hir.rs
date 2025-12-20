@@ -1,24 +1,31 @@
 use crate::semantic::{symbols::SymbolTable, types::TypeTable};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HIRProgram {
     pub functions: Vec<HIRFunction>,
     pub symbols: SymbolTable,
     pub types: TypeTable,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HIRFunctionParam {
     pub symbol: SymbolId,
-    pub offset: usize,
-    pub size: usize,
+    pub type_id: TypeId,
+    pub index: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+pub struct HIRFunctionLocal {
+    pub symbol: SymbolId,
+    pub type_id: TypeId,
+}
+
+#[derive(Debug, Clone)]
 pub struct HIRFunction {
     pub id: SymbolId,
     pub name: String,
     pub params: Vec<HIRFunctionParam>,
+    pub locals: Vec<HIRFunctionLocal>,
     pub body: Vec<HIRStmt>,
     pub params_size: usize,
 }
@@ -29,12 +36,12 @@ pub struct SymbolId(pub usize);
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
 pub struct TypeId(pub usize);
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Literal {
     Int(u16),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum HIRStmt {
     Block(Vec<HIRStmt>),
     Return(Option<HIRExpr>),
@@ -55,7 +62,7 @@ pub enum HIRStmt {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum HIRBinaryOp {
     Add,
     Sub,
@@ -64,12 +71,12 @@ pub enum HIRBinaryOp {
     Eq,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum HIRUnaryOp {
     Neg,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum HIRExpr {
     Var {
         symbol: SymbolId,
@@ -91,7 +98,8 @@ pub enum HIRExpr {
         ty: TypeId,
     },
     Call {
-        func: SymbolId,
+        symbol: SymbolId,
+        label: String,
         args: Vec<HIRExpr>,
         ty: TypeId,
     },

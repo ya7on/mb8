@@ -5,15 +5,13 @@ use crate::{
     pipe::CompilerPipe,
 };
 
-use super::context::LowerContext;
-
 pub mod expr;
 pub mod function;
 pub mod stmt;
 
 #[derive(Debug)]
 pub struct Lower {
-    ctx: LowerContext,
+    hir: HIRProgram,
 }
 
 impl CompilerPipe for Lower {
@@ -21,10 +19,16 @@ impl CompilerPipe for Lower {
     type Next = IRProgram;
 
     fn execute(prev: &Self::Prev) -> CompileResult<Self::Next, Vec<CompileError>> {
-        // let lower = Self {
-        //     ctx: LowerContext::new(, hir_ctx)
-        // };
+        let mut lower = Self {
+            hir: prev.to_owned(),
+        };
 
-        todo!()
+        let mut functions = Vec::with_capacity(lower.hir.functions.len());
+
+        for function in &prev.functions {
+            functions.push(lower.lower_function(function).map_err(|err| vec![err])?);
+        }
+
+        Ok(IRProgram { functions })
     }
 }

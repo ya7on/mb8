@@ -40,7 +40,7 @@ pub enum TypeKind {
 
 impl TypeKind {
     #[must_use]
-    pub fn size(&self) -> u8 {
+    pub fn size(&self) -> usize {
         match self {
             Self::Void | Self::Function { .. } => 0,
             Self::Bool | Self::Unsigned8 => 1,

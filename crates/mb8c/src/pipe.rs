@@ -28,6 +28,10 @@ where
             result: N::execute(&self.result)?,
         })
     }
+
+    pub fn finish(self) -> CompileResult<T::Next, Vec<CompileError>> {
+        Ok(self.result)
+    }
 }
 
 pub trait CompilerPipe {
