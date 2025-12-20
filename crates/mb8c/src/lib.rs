@@ -33,7 +33,7 @@ pub fn compile(input: &str) -> error::CompileResult<(), Vec<CompileError>> {
         .and_next::<Codegen>()?
         .finish()?;
 
-    println!("{:?}", result);
+    println!("{}", result);
 
     Ok(())
 }
