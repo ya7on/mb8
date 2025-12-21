@@ -11,6 +11,9 @@ use crate::{
     },
 };
 
+const ARGUMENT_BASE: usize = 0x0;
+const ARGUMENT_SLOTS: usize = 10;
+
 #[derive(Debug, Default)]
 pub struct ProgramWriter {
     result: String,
@@ -310,7 +313,7 @@ impl Mb8Codegen {
     /// # Errors
     /// Returns error if there are codegen issues
     pub fn codegen(&mut self, ir: &IRProgram) -> CompileResult<String> {
-        let mut offset = 0;
+        let mut offset = ARGUMENT_SLOTS;
         for function in &ir.functions {
             let spilled = self.codegen_function(function, offset)?;
             offset += function.size + spilled;
@@ -397,28 +400,36 @@ impl Mb8Codegen {
         register_allocator: &mut RegisterAllocator,
     ) -> CompileResult<()> {
         match instruction {
-            IRInstruction::LoadlArg {
-                ty: _,
-                index: _, // TODO
-                mem,
-            } => {
+            IRInstruction::LoadlArg { ty: _, index, mem } => {
+                if *index >= ARGUMENT_SLOTS {
+                    return Err(CompileError::InternalError {
+                        message: "Too many arguments for function".to_string(),
+                    });
+                }
                 let Mem::Local { offset } = mem;
-                self.writer.emit("POP R0")?;
+                self.writer
+                    .emit(format!("LD R0 [0x{:X}]", ARGUMENT_BASE + *index))?;
                 self.writer.emit(format!("ST [0x{:X}] R0", base + offset))?;
                 Ok(())
             }
             IRInstruction::StorelArg {
                 register,
                 ty: _,
-                index: _,
+                index,
             } => {
+                if *index >= ARGUMENT_SLOTS {
+                    return Err(CompileError::InternalError {
+                        message: "Too many arguments for call".to_string(),
+                    });
+                }
                 let register = register_allocator.ensure_in_reg(
                     *register,
                     current_index,
                     spill_base,
                     &mut self.writer,
                 )?;
-                self.writer.emit(format!("PUSH {register}"))?;
+                self.writer
+                    .emit(format!("ST [0x{:X}] {register}", ARGUMENT_BASE + *index))?;
                 Ok(())
             }
             IRInstruction::LoadImm {

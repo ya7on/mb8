@@ -158,4 +158,24 @@
             JNZR [iter]
         POP {b}
     }
+
+    ST [{ addr: u16 }] { src: register } => {
+        hi = addr >> 8
+        lo = addr & 0xFF
+        asm {
+            LDI IH {hi}
+            LDI IL {lo}
+            ST [IH:IL] {src}
+        }
+    }
+
+    LD { dst: register } [{ addr: u16 }] => {
+        hi = addr >> 8
+        lo = addr & 0xFF
+        asm {
+            LDI IH {hi}
+            LDI IL {lo}
+            LD {dst} [IH:IL]
+        }
+    }
 }
