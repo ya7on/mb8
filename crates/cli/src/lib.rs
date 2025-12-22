@@ -19,8 +19,6 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 #[cfg(feature = "wasm")]
-use crate::keyboard::Keyboard;
-#[cfg(feature = "wasm")]
 use crate::tty::Tty;
 #[cfg(feature = "wasm")]
 use mb8::dev::gpu::registers::{TTY_COLS, TTY_ROWS};
@@ -44,7 +42,6 @@ pub fn run_wasm() -> Result<(), JsValue> {
     const WIDTH: usize = 320;
     const HEIGHT: usize = 200;
 
-    // --- VM and devices ---
     let vm = Rc::new(RefCell::new(VirtualMachine::default()));
     let tty = Rc::new(RefCell::new(Tty::new(
         TTY_COLS as usize,
@@ -53,7 +50,7 @@ pub fn run_wasm() -> Result<(), JsValue> {
     )));
     let framebuffer = Rc::new(RefCell::new(vec![0u32; WIDTH * HEIGHT]));
 
-    // --- Load kernel ---
+    // Load kernel 
     static KERNEL: &[u8] = include_bytes!("../../../kernel/main.bin");
     {
         let mut vm = vm.borrow_mut();
@@ -72,18 +69,16 @@ pub fn run_wasm() -> Result<(), JsValue> {
     canvas.set_width(WIDTH as u32);
     canvas.set_height(HEIGHT as u32);
     canvas.style().set_property("width", "960px")?;
-    canvas.style().set_property("height", "600px")?;
+        canvas.style().set_property("height", "600px")?;
 
-    canvas
-        .style()
-        .set_property("image-rendering", "pixelated")?;
-    canvas
-        .style()
-        .set_property("image-rendering", "crisp-edges")?;
+    canvas.style().set_property("image-rendering", "pixelated")?;
+        canvas.style().set_property("image-rendering", "crisp-edges")?;
+
+
 
     let ctx: CanvasRenderingContext2d = canvas.get_context("2d")?.unwrap().dyn_into()?;
 
-    // --- Keyboard  ---
+    // Keyboard
     {
         let vm = vm.clone();
         let keydown = Closure::<dyn FnMut(KeyboardEvent)>::new(move |e| {
@@ -95,7 +90,7 @@ pub fn run_wasm() -> Result<(), JsValue> {
         keydown.forget();
     }
 
-    // --- Main  ---
+    // --- Main 
     let f: Rc<RefCell<Option<Closure<dyn FnMut()>>>> = Rc::new(RefCell::new(None));
     let g = f.clone();
     let window_loop = window.clone();
@@ -154,7 +149,6 @@ pub fn run_wasm() -> Result<(), JsValue> {
             ctx.put_image_data(&img, 0.0, 0.0).unwrap();
         }
 
-        // Request next animation frame
         window_loop
             .request_animation_frame(f.borrow().as_ref().unwrap().as_ref().unchecked_ref())
             .unwrap();
