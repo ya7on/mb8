@@ -72,12 +72,14 @@ pub fn run_wasm() -> Result<(), JsValue> {
     canvas.set_width(WIDTH as u32);
     canvas.set_height(HEIGHT as u32);
     canvas.style().set_property("width", "960px")?;
-        canvas.style().set_property("height", "600px")?;
+    canvas.style().set_property("height", "600px")?;
 
-    canvas.style().set_property("image-rendering", "pixelated")?;
-        canvas.style().set_property("image-rendering", "crisp-edges")?;
-
-
+    canvas
+        .style()
+        .set_property("image-rendering", "pixelated")?;
+    canvas
+        .style()
+        .set_property("image-rendering", "crisp-edges")?;
 
     let ctx: CanvasRenderingContext2d = canvas.get_context("2d")?.unwrap().dyn_into()?;
 

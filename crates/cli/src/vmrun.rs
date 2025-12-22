@@ -22,6 +22,7 @@ pub struct VmRun {
 }
 
 impl VmRun {
+    #[must_use]
     pub fn new(vm: vm::VirtualMachine, tty: Tty) -> Self {
         Self {
             vm,
