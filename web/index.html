@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>MB8</title>
+  <style>
+    body { margin: 0; background: black; }
+    canvas { image-rendering: pixelated; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="320" height="200"></canvas>
+
+  <script type="module">
+    import init, { run_wasm } from "./cli-desktop.js";
+
+    async function main() {
+      await init();
+      run_wasm();
+    }
+
+    main();
+  </script>
+</body>
+</html>
+

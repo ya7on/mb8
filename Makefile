@@ -23,7 +23,7 @@ kernel/tests/%.bin: kernel/tests/%.asm $(KERNEL_MAIN)
 	customasm $< -o $@
 
 run: $(KERNEL_MAIN) $(USER_TARGETS)
-	cargo run --release --bin mb8-cli -- run $^
+	cargo run --features desktop --bin cli-desktop -- run $^
 
 clean:
 	rm -f kernel/*.bin user/*.bin kernel/tests/*.bin
