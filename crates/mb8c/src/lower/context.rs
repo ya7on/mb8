@@ -7,9 +7,10 @@ use crate::{
 
 use super::bb::BasicBlockBuilder;
 
-#[derive(Debug)]
-pub struct StoredSymbol {
-    pub offset: usize,
+#[derive(Debug, Clone, Copy)]
+pub enum StoredSymbol {
+    Offset(usize),
+    Global(usize),
 }
 
 #[derive(Debug)]

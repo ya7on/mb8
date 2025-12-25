@@ -406,7 +406,11 @@ impl Mb8Codegen {
                         message: "Too many arguments for function".to_string(),
                     });
                 }
-                let Mem::Local { offset } = mem;
+                let Mem::Local { offset } = mem else {
+                    return Err(CompileError::InternalError {
+                        message: "Invalid memory location".to_string(),
+                    });
+                };
                 self.writer
                     .emit(format!("LD R0 [0x{:X}]", ARGUMENT_BASE + *index))?;
                 self.writer.emit(format!("ST [0x{:X}] R0", base + offset))?;
@@ -445,27 +449,45 @@ impl Mb8Codegen {
                 Ok(())
             }
             IRInstruction::Store { src, mem, ty: _ } => {
-                let Mem::Local { offset } = mem;
                 let register = register_allocator.ensure_in_reg(
                     *src,
                     current_index,
                     spill_base,
                     &mut self.writer,
                 )?;
-                self.writer
-                    .emit(format!("ST [0x{:X}] {}", base + offset, register))?;
+
+                match mem {
+                    Mem::Local { offset } => {
+                        self.writer
+                            .emit(format!("ST [0x{:X}] {}", base + offset, register))?;
+                    }
+                    Mem::Global { address } => {
+                        self.writer
+                            .emit(format!("ST [0x{:X}] {}", address, register))?;
+                    }
+                }
+
                 Ok(())
             }
             IRInstruction::Load { dst, mem, ty: _ } => {
-                let Mem::Local { offset } = mem;
                 let register = register_allocator.alloc_dst(
                     *dst,
                     current_index,
                     spill_base,
                     &mut self.writer,
                 )?;
-                self.writer
-                    .emit(format!("LD {} [0x{:X}]", register, base + offset))?;
+
+                match mem {
+                    Mem::Local { offset } => {
+                        self.writer
+                            .emit(format!("LD {} [0x{:X}]", register, base + offset))?;
+                    }
+                    Mem::Global { address } => {
+                        self.writer
+                            .emit(format!("LD {} [0x{:X}]", register, address))?;
+                    }
+                }
+
                 Ok(())
             }
             IRInstruction::Add {

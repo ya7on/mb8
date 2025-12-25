@@ -2,21 +2,24 @@ use std::collections::HashMap;
 
 use crate::{
     error::{CompileError, CompileResult},
-    hir::HIRFunction,
-    ir::{BasicBlockTerminator, IRFunction, IRInstruction, Mem},
+    hir::{HIRFunction, SymbolId},
+    ir::{BasicBlockTerminator, IRFunction, IRInstruction},
     lower::context::{LowerContext, StoredSymbol},
 };
 
-use super::Lower;
+use super::{helpers::get_memory_from_stored_symbol, Lower};
 
 impl Lower {
     /// # Errors
     /// Returns a `CompileError` if there was an lowering error
-    pub fn lower_function(&mut self, function: &HIRFunction) -> CompileResult<IRFunction> {
-        let mut storage = HashMap::with_capacity(function.locals.len() + function.params.len());
+    pub fn lower_function(
+        &mut self,
+        function: &HIRFunction,
+        mut storage: HashMap<SymbolId, StoredSymbol>,
+    ) -> CompileResult<IRFunction> {
         let mut offset = 1; // 0 is reserved for accumulator
         for param in &function.params {
-            storage.insert(param.symbol, StoredSymbol { offset });
+            storage.insert(param.symbol, StoredSymbol::Offset(offset));
             let type_kind =
                 self.hir
                     .types
@@ -27,7 +30,7 @@ impl Lower {
             offset += type_kind.size();
         }
         for local in &function.locals {
-            storage.insert(local.symbol, StoredSymbol { offset });
+            storage.insert(local.symbol, StoredSymbol::Offset(offset));
             let type_kind =
                 self.hir
                     .types
@@ -49,9 +52,7 @@ impl Lower {
             current.emit(IRInstruction::LoadlArg {
                 ty: type_kind.to_owned(),
                 index,
-                mem: Mem::Local {
-                    offset: stored_symbol.offset,
-                },
+                mem: get_memory_from_stored_symbol(stored_symbol),
             });
         }
         let mut current = Some(current);

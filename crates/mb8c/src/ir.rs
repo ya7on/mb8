@@ -43,6 +43,7 @@ pub enum BasicBlockTerminator {
 #[derive(Debug)]
 pub enum Mem {
     Local { offset: usize },
+    Global { address: usize },
 }
 
 #[derive(Debug)]

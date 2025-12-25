@@ -26,6 +26,7 @@ pub enum TokenKind {
     Ident(String),
     /// Number (e.g. 123)
     #[regex("[0-9]+", |lex| lex.slice().parse::<u16>().ok())]
+    #[regex(r"0[xX][0-9a-fA-F]+", |lex| u16::from_str_radix(&lex.slice()[2..], 16).ok())]
     Number(u16),
 
     /* Keywords */
@@ -102,6 +103,9 @@ pub enum TokenKind {
     /// Semicolon ;
     #[token(";")]
     Semicolon,
+    /// At @
+    #[token("@")]
+    At,
 }
 
 impl CompilerPipe for TokenKind {
@@ -133,6 +137,8 @@ mod tests {
         name AbCdEf u_n_d_e_r_l_i_n_e
         // numer
         1 1337 228
+        // hex
+        0x1 0x1337 0x228 0xFFFF
         // negative
         -111
 
@@ -144,7 +150,7 @@ mod tests {
         while do
         return
         + - * / = ==
-        ( ) , : ;
+        ( ) , : ; @
         ";
 
         let result = TokenKind::lexer(input)
@@ -159,6 +165,10 @@ mod tests {
                 TokenKind::Number(1),
                 TokenKind::Number(1337),
                 TokenKind::Number(228),
+                TokenKind::Number(0x1),
+                TokenKind::Number(0x1337),
+                TokenKind::Number(0x228),
+                TokenKind::Number(0xFFFF),
                 TokenKind::OperatorMinus,
                 TokenKind::Number(111),
                 TokenKind::KeywordVoid,
@@ -182,7 +192,8 @@ mod tests {
                 TokenKind::RightParenthesis,
                 TokenKind::Comma,
                 TokenKind::Colon,
-                TokenKind::Semicolon
+                TokenKind::Semicolon,
+                TokenKind::At,
             ]
         );
     }

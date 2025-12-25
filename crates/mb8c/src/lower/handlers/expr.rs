@@ -1,12 +1,12 @@
 use crate::{
     error::CompileResult,
     hir::{HIRBinaryOp, HIRExpr, HIRUnaryOp, Literal},
-    ir::{IRInstruction, Mem, VirtualRegister},
+    ir::{IRInstruction, VirtualRegister},
     lower::context::LowerContext,
     semantic::helpers::fetch_expr_type,
 };
 
-use super::Lower;
+use super::{helpers::get_memory_from_stored_symbol, Lower};
 
 impl Lower {
     /// # Errors
@@ -26,9 +26,7 @@ impl Lower {
 
                 let instructions = vec![IRInstruction::Load {
                     dst: vreg,
-                    mem: Mem::Local {
-                        offset: stored.offset,
-                    },
+                    mem: get_memory_from_stored_symbol(stored),
                     ty: type_kind.clone(),
                 }];
                 Ok((vreg, instructions))

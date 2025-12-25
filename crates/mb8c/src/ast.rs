@@ -11,7 +11,16 @@ pub enum ASTType {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub struct ASTGlobal {
+    pub name: String,
+    pub ty: ASTType,
+    pub at: u16,
+    pub span: Span,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct ASTProgram {
+    pub globals: Vec<ASTGlobal>,
     pub functions: Vec<ASTFunction>,
 }
 
