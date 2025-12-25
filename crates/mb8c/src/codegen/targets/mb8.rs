@@ -459,11 +459,10 @@ impl Mb8Codegen {
                 match mem {
                     Mem::Local { offset } => {
                         self.writer
-                            .emit(format!("ST [0x{:X}] {}", base + offset, register))?;
+                            .emit(format!("ST [0x{:X}] {register}", base + offset))?;
                     }
                     Mem::Global { address } => {
-                        self.writer
-                            .emit(format!("ST [0x{:X}] {}", address, register))?;
+                        self.writer.emit(format!("ST [0x{address:X}] {register}"))?;
                     }
                 }
 
@@ -480,11 +479,10 @@ impl Mb8Codegen {
                 match mem {
                     Mem::Local { offset } => {
                         self.writer
-                            .emit(format!("LD {} [0x{:X}]", register, base + offset))?;
+                            .emit(format!("LD {register} [0x{:X}]", base + offset))?;
                     }
                     Mem::Global { address } => {
-                        self.writer
-                            .emit(format!("LD {} [0x{:X}]", register, address))?;
+                        self.writer.emit(format!("LD {register} [0x{address:X}]"))?;
                     }
                 }
 

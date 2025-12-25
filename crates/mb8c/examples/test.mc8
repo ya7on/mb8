@@ -1,15 +1,13 @@
-function add(a: u8, b: u8): u8;
-begin
-  return a + b;
-end
+// Hello
+
+var
+  TTY_WRITE: u8 @ 0xF001;
 
 function main(): void;
-var
-  a: u8;
-  b: u8;
-  sum: u8;
 begin
-  a = 1;
-  b = 2;
-  add(a, b);
+  TTY_WRITE = 72;
+  TTY_WRITE = 101;
+  TTY_WRITE = 108;
+  TTY_WRITE = 108;
+  TTY_WRITE = 111;
 end

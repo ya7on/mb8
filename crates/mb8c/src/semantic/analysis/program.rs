@@ -26,7 +26,7 @@ impl SemanticAnalysis {
                 kind: SymbolKind::Global { address: global.at },
                 ty: type_id,
             });
-            scope.allocate(global.name.to_owned(), symbol, &global.span)?;
+            scope.allocate(global.name.clone(), symbol, &global.span)?;
             globals.push(HIRGlobal {
                 symbol,
                 type_id,
