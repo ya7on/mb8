@@ -9,6 +9,10 @@ kernel/main.bin: kernel/main.asm kernel/init.asm kernel/syscalls.asm
 	customasm kernel/main.asm -o kernel/main.bin
 
 # User space
+USER_SOURCES := hello
+user/%.asm: user/%.mc8
+	cargo run -- compile $< > $@
+
 USER_BINS := exit help hello ls sh
 USER_TARGETS := $(USER_BINS:%=user/%.bin)
 user: $(USER_TARGETS)

@@ -14,9 +14,21 @@ use crate::{
 const ARGUMENT_BASE: usize = 0x0;
 const ARGUMENT_SLOTS: usize = 10;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct ProgramWriter {
     result: String,
+}
+
+impl Default for ProgramWriter {
+    fn default() -> Self {
+        Self {
+            result: r#"#include "../asm/cpu.asm"
+#include "../asm/ext.asm"
+
+"#
+            .to_string(),
+        }
+    }
 }
 
 impl ProgramWriter {
@@ -314,7 +326,20 @@ impl Mb8Codegen {
     /// Returns error if there are codegen issues
     pub fn codegen(&mut self, ir: &IRProgram) -> CompileResult<String> {
         let mut offset = ARGUMENT_SLOTS;
+
+        for main_function in &ir.functions {
+            if main_function.name == "main" {
+                let spilled = self.codegen_function(main_function, offset)?;
+                offset += main_function.size + spilled;
+                break;
+            }
+        }
+
         for function in &ir.functions {
+            if function.name == "main" {
+                continue;
+            }
+
             let spilled = self.codegen_function(function, offset)?;
             offset += function.size + spilled;
         }
@@ -382,7 +407,12 @@ impl Mb8Codegen {
                             self.writer.emit(format!("MOV R0 {register}"))?;
                         }
                     }
-                    self.writer.emit("RET")?;
+                    if function.name == "main" {
+                        self.writer.emit("LDI R0 0x0F")?;
+                        self.writer.emit("CALL [0xE500]")?;
+                    } else {
+                        self.writer.emit("RET")?;
+                    }
                 }
             }
         }
@@ -666,7 +696,7 @@ impl Mb8Codegen {
                     spill_base,
                     &mut self.writer,
                 )?;
-                self.writer.emit(format!("CALL [.{label}]"))?;
+                self.writer.emit(format!("CALL [{label}]"))?;
                 if dst != PhysicalRegister::R0 {
                     self.writer.emit(format!("MOV {dst} R0"))?;
                 }
