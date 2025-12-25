@@ -1,10 +1,18 @@
 use crate::semantic::{symbols::SymbolTable, types::TypeTable};
 
 #[derive(Debug, Clone)]
+pub struct HIRGlobal {
+    pub symbol: SymbolId,
+    pub type_id: TypeId,
+    pub at: usize,
+}
+
+#[derive(Debug, Clone)]
 pub struct HIRProgram {
     pub functions: Vec<HIRFunction>,
     pub symbols: SymbolTable,
     pub types: TypeTable,
+    pub globals: Vec<HIRGlobal>,
 }
 
 #[derive(Debug, Clone)]

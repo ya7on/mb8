@@ -5,16 +5,15 @@ use chumsky::{
 
 use crate::{ast::ASTProgram, tokens::TokenKind};
 
-use super::function::function_parser;
+use super::{function::function_parser, globals::globals_parser};
 
 #[must_use]
 pub fn program_parser<'src, I>() -> impl Parser<'src, I, ASTProgram, Err<Simple<'src, TokenKind>>>
 where
     I: ValueInput<'src, Token = TokenKind, Span = SimpleSpan>,
 {
-    function_parser()
-        .repeated()
-        .collect()
+    globals_parser()
+        .then(function_parser().repeated().collect())
         .then_ignore(end())
-        .map(|functions| ASTProgram { functions })
+        .map(|(globals, functions)| ASTProgram { globals, functions })
 }

@@ -23,6 +23,7 @@ pub enum SymbolKind {
     Variable,
     Function,
     Parameter,
+    Global { address: u16 },
 }
 
 #[derive(Debug, Clone)]

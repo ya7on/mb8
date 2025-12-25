@@ -1,4 +1,12 @@
-use crate::{ast::ASTProgram, error::CompileResult, hir::HIRProgram};
+use crate::{
+    ast::ASTProgram,
+    error::CompileResult,
+    hir::{HIRGlobal, HIRProgram},
+    semantic::{
+        helpers::lower_type,
+        symbols::{Symbol, SymbolKind},
+    },
+};
 
 use super::SemanticAnalysis;
 
@@ -8,7 +16,23 @@ impl SemanticAnalysis {
     /// # Errors
     /// Returns error if there are semantic issues
     pub fn analyze_program(&mut self, program: &ASTProgram) -> CompileResult<HIRProgram> {
-        self.ctx.scope.enter();
+        let scope = self.ctx.scope.enter();
+
+        let mut globals = Vec::with_capacity(program.globals.len());
+        for global in &program.globals {
+            let type_id = self.ctx.types.entry(lower_type(global.ty));
+            let symbol = self.ctx.symbols.allocate(Symbol {
+                name: global.name.clone(),
+                kind: SymbolKind::Global { address: global.at },
+                ty: type_id,
+            });
+            scope.allocate(global.name.clone(), symbol, &global.span)?;
+            globals.push(HIRGlobal {
+                symbol,
+                type_id,
+                at: global.at as usize,
+            });
+        }
 
         let mut functions = Vec::with_capacity(program.functions.len());
 
@@ -27,6 +51,7 @@ impl SemanticAnalysis {
             symbols: self.ctx.symbols.clone(),
             types: self.ctx.types.clone(),
             functions,
+            globals,
         })
     }
 }

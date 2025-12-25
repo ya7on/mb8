@@ -14,9 +14,21 @@ use crate::{
 const ARGUMENT_BASE: usize = 0x0;
 const ARGUMENT_SLOTS: usize = 10;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct ProgramWriter {
     result: String,
+}
+
+impl Default for ProgramWriter {
+    fn default() -> Self {
+        Self {
+            result: r#"#include "../asm/cpu.asm"
+#include "../asm/ext.asm"
+
+"#
+            .to_string(),
+        }
+    }
 }
 
 impl ProgramWriter {
@@ -314,7 +326,20 @@ impl Mb8Codegen {
     /// Returns error if there are codegen issues
     pub fn codegen(&mut self, ir: &IRProgram) -> CompileResult<String> {
         let mut offset = ARGUMENT_SLOTS;
+
+        for main_function in &ir.functions {
+            if main_function.name == "main" {
+                let spilled = self.codegen_function(main_function, offset)?;
+                offset += main_function.size + spilled;
+                break;
+            }
+        }
+
         for function in &ir.functions {
+            if function.name == "main" {
+                continue;
+            }
+
             let spilled = self.codegen_function(function, offset)?;
             offset += function.size + spilled;
         }
@@ -382,7 +407,12 @@ impl Mb8Codegen {
                             self.writer.emit(format!("MOV R0 {register}"))?;
                         }
                     }
-                    self.writer.emit("RET")?;
+                    if function.name == "main" {
+                        self.writer.emit("LDI R0 0x0F")?;
+                        self.writer.emit("CALL [0xE500]")?;
+                    } else {
+                        self.writer.emit("RET")?;
+                    }
                 }
             }
         }
@@ -406,7 +436,11 @@ impl Mb8Codegen {
                         message: "Too many arguments for function".to_string(),
                     });
                 }
-                let Mem::Local { offset } = mem;
+                let Mem::Local { offset } = mem else {
+                    return Err(CompileError::InternalError {
+                        message: "Invalid memory location".to_string(),
+                    });
+                };
                 self.writer
                     .emit(format!("LD R0 [0x{:X}]", ARGUMENT_BASE + *index))?;
                 self.writer.emit(format!("ST [0x{:X}] R0", base + offset))?;
@@ -445,27 +479,43 @@ impl Mb8Codegen {
                 Ok(())
             }
             IRInstruction::Store { src, mem, ty: _ } => {
-                let Mem::Local { offset } = mem;
                 let register = register_allocator.ensure_in_reg(
                     *src,
                     current_index,
                     spill_base,
                     &mut self.writer,
                 )?;
-                self.writer
-                    .emit(format!("ST [0x{:X}] {}", base + offset, register))?;
+
+                match mem {
+                    Mem::Local { offset } => {
+                        self.writer
+                            .emit(format!("ST [0x{:X}] {register}", base + offset))?;
+                    }
+                    Mem::Global { address } => {
+                        self.writer.emit(format!("ST [0x{address:X}] {register}"))?;
+                    }
+                }
+
                 Ok(())
             }
             IRInstruction::Load { dst, mem, ty: _ } => {
-                let Mem::Local { offset } = mem;
                 let register = register_allocator.alloc_dst(
                     *dst,
                     current_index,
                     spill_base,
                     &mut self.writer,
                 )?;
-                self.writer
-                    .emit(format!("LD {} [0x{:X}]", register, base + offset))?;
+
+                match mem {
+                    Mem::Local { offset } => {
+                        self.writer
+                            .emit(format!("LD {register} [0x{:X}]", base + offset))?;
+                    }
+                    Mem::Global { address } => {
+                        self.writer.emit(format!("LD {register} [0x{address:X}]"))?;
+                    }
+                }
+
                 Ok(())
             }
             IRInstruction::Add {
@@ -646,7 +696,7 @@ impl Mb8Codegen {
                     spill_base,
                     &mut self.writer,
                 )?;
-                self.writer.emit(format!("CALL [.{label}]"))?;
+                self.writer.emit(format!("CALL [{label}]"))?;
                 if dst != PhysicalRegister::R0 {
                     self.writer.emit(format!("MOV {dst} R0"))?;
                 }

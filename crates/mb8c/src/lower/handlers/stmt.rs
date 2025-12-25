@@ -1,11 +1,11 @@
 use crate::{
     error::CompileResult,
     hir::HIRStmt,
-    ir::{BasicBlock, BasicBlockTerminator, IRInstruction, Mem},
+    ir::{BasicBlock, BasicBlockTerminator, IRInstruction},
     lower::{bb::BasicBlockBuilder, context::LowerContext},
 };
 
-use super::Lower;
+use super::{helpers::get_memory_from_stored_symbol, Lower};
 
 impl Lower {
     /// # Errors
@@ -137,9 +137,7 @@ impl Lower {
                 let type_kind = self.hir.types.lookup(*ty).ok_or_else(|| todo!())?;
 
                 builder.emit(IRInstruction::Store {
-                    mem: Mem::Local {
-                        offset: symbol.offset,
-                    },
+                    mem: get_memory_from_stored_symbol(symbol),
                     src: vreg,
                     ty: type_kind.to_owned(),
                 });

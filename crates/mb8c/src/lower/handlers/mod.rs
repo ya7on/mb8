@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     error::{CompileError, CompileResult},
     hir::HIRProgram,
@@ -5,8 +7,11 @@ use crate::{
     pipe::CompilerPipe,
 };
 
+use super::context::StoredSymbol;
+
 pub mod expr;
 pub mod function;
+pub mod helpers;
 pub mod stmt;
 
 #[derive(Debug)]
@@ -25,8 +30,17 @@ impl CompilerPipe for Lower {
 
         let mut functions = Vec::with_capacity(lower.hir.functions.len());
 
+        let mut initial_storage = HashMap::new();
+        for global in &prev.globals {
+            initial_storage.insert(global.symbol, StoredSymbol::Global(global.at));
+        }
+
         for function in &prev.functions {
-            functions.push(lower.lower_function(function).map_err(|err| vec![err])?);
+            functions.push(
+                lower
+                    .lower_function(function, initial_storage.clone())
+                    .map_err(|err| vec![err])?,
+            );
         }
 
         Ok(IRProgram { functions })

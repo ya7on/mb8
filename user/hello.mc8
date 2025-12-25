@@ -1,0 +1,19 @@
+// Hello
+
+var
+  TTY_WRITE: u8 @ 0xF001;
+
+function sys_write(c: u8): void;
+begin
+  TTY_WRITE = c;
+end
+
+function main(): void;
+begin
+  sys_write(0x48);
+  sys_write(0x65);
+  sys_write(0x6C);
+  sys_write(0x6C);
+  sys_write(0x6F);
+  sys_write(0x0A);
+end
