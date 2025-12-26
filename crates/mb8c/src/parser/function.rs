@@ -5,7 +5,7 @@ use chumsky::{
 
 use crate::{
     ast::{ASTFunction, ASTStmt, Span},
-    tokens::TokenKind,
+    lex::tokens::TokenKind,
 };
 
 use super::{stmt::stmt_parser, ty::ty_parser};

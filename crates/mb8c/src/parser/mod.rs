@@ -8,8 +8,8 @@ use program::program_parser;
 use crate::{
     ast::ASTProgram,
     error::{CompileError, CompileResult},
+    lex::tokens::TokenKind,
     pipe::CompilerPipe,
-    tokens::TokenKind,
 };
 
 pub mod expr;

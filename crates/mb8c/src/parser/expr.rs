@@ -10,7 +10,7 @@ use chumsky::{
 
 use crate::{
     ast::{ASTBinaryOp, ASTExpr, Span},
-    tokens::TokenKind,
+    lex::tokens::TokenKind,
 };
 
 #[must_use]

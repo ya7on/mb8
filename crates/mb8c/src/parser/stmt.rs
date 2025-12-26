@@ -7,7 +7,7 @@ use chumsky::{prelude::recursive, Parser};
 use chumsky::{select, IterParser};
 
 use crate::ast::{ASTStmt, Span};
-use crate::tokens::TokenKind;
+use crate::lex::tokens::TokenKind;
 
 use super::expr::expr_parser;
 
