@@ -1,6 +1,6 @@
 use mb8::Mb8Codegen;
 
-use crate::{ir::IRProgram, pipe::CompilerPipe};
+use crate::{ir::instructions::IRProgram, pipe::CompilerPipe};
 
 pub mod mb8;
 

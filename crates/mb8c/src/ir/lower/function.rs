@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use crate::{
     error::{CompileError, CompileResult},
     hir::instructions::{HIRFunction, SymbolId},
-    ir::{BasicBlockTerminator, IRFunction, IRInstruction},
-    lower::context::{LowerContext, StoredSymbol},
+    ir::context::{LowerContext, StoredSymbol},
+    ir::instructions::{BasicBlockTerminator, IRFunction, IRInstruction},
 };
 
 use super::{helpers::get_memory_from_stored_symbol, Lower};

@@ -1,11 +1,8 @@
 use std::collections::HashMap;
 
-use crate::{
-    hir::instructions::SymbolId,
-    ir::{BasicBlockId, VirtualRegister},
-};
+use crate::{hir::instructions::SymbolId, ir::instructions::BasicBlockId};
 
-use super::bb::BasicBlockBuilder;
+use super::{bb::BasicBlockBuilder, instructions::VirtualRegister};
 
 #[derive(Debug, Clone, Copy)]
 pub enum StoredSymbol {

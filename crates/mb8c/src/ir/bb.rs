@@ -1,4 +1,4 @@
-use crate::ir::{BasicBlock, BasicBlockId, BasicBlockTerminator, IRInstruction};
+use crate::ir::instructions::{BasicBlock, BasicBlockId, BasicBlockTerminator, IRInstruction};
 
 #[derive(Debug)]
 pub struct BasicBlockBuilder {

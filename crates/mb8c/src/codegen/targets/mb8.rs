@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     error::{CompileError, CompileResult},
-    ir::{
+    ir::instructions::{
         BasicBlock, BasicBlockTerminator, IRFunction, IRInstruction, IRProgram, Mem,
         VirtualRegister,
     },

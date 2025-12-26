@@ -1,8 +1,8 @@
 use codegen::targets::Codegen;
 use error::CompileError;
 use hir::lower::SemanticAnalysis;
+use ir::lower::Lower;
 use lex::tokens::TokenKind;
-use lower::handlers::Lower;
 use parser::Parser;
 use pipe::CompilePipeline;
 
@@ -13,7 +13,6 @@ pub mod error;
 pub mod hir;
 pub mod ir;
 pub mod lex;
-pub mod lower;
 pub mod parser;
 pub mod pipe;
 

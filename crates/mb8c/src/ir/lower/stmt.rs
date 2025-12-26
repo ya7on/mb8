@@ -1,8 +1,8 @@
 use crate::{
     error::CompileResult,
     hir::instructions::HIRStmt,
-    ir::{BasicBlock, BasicBlockTerminator, IRInstruction},
-    lower::{bb::BasicBlockBuilder, context::LowerContext},
+    ir::instructions::{BasicBlock, BasicBlockTerminator, IRInstruction},
+    ir::{bb::BasicBlockBuilder, context::LowerContext},
 };
 
 use super::{helpers::get_memory_from_stored_symbol, Lower};

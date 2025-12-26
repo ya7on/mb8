@@ -1,4 +1,4 @@
-use crate::{ir::Mem, lower::context::StoredSymbol};
+use crate::{ir::context::StoredSymbol, ir::instructions::Mem};
 
 #[must_use]
 pub fn get_memory_from_stored_symbol(stored_symbol: &StoredSymbol) -> Mem {

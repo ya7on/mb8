@@ -2,8 +2,8 @@ use crate::{
     error::CompileResult,
     hir::helpers::fetch_expr_type,
     hir::instructions::{HIRBinaryOp, HIRExpr, HIRUnaryOp, Literal},
-    ir::{IRInstruction, VirtualRegister},
-    lower::context::LowerContext,
+    ir::context::LowerContext,
+    ir::instructions::{IRInstruction, VirtualRegister},
 };
 
 use super::{helpers::get_memory_from_stored_symbol, Lower};
