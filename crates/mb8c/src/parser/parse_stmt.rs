@@ -9,7 +9,7 @@ use chumsky::{select, IterParser};
 use crate::ast::{ASTStmt, Span};
 use crate::lex::tokens::TokenKind;
 
-use super::expr::expr_parser;
+use super::parse_expr::expr_parser;
 
 #[must_use]
 pub fn stmt_parser<'src, I>() -> impl Parser<'src, I, ASTStmt, Err<Simple<'src, TokenKind>>> + Clone

@@ -8,7 +8,7 @@ use crate::{
     lex::tokens::TokenKind,
 };
 
-use super::{stmt::stmt_parser, ty::ty_parser};
+use super::{parse_stmt::stmt_parser, parse_ty::ty_parser};
 
 #[must_use]
 pub fn function_parser<'src, I>() -> impl Parser<'src, I, ASTFunction, Err<Simple<'src, TokenKind>>>

@@ -8,7 +8,7 @@ use crate::{
     lex::tokens::TokenKind,
 };
 
-use super::ty::ty_parser;
+use super::parse_ty::ty_parser;
 
 #[must_use]
 pub fn globals_parser<'src, I>(

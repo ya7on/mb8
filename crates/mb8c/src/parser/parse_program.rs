@@ -5,7 +5,7 @@ use chumsky::{
 
 use crate::{ast::ASTProgram, lex::tokens::TokenKind};
 
-use super::{function::function_parser, globals::globals_parser};
+use super::{parse_function::function_parser, parse_globals::globals_parser};
 
 #[must_use]
 pub fn program_parser<'src, I>() -> impl Parser<'src, I, ASTProgram, Err<Simple<'src, TokenKind>>>
