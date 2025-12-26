@@ -1,9 +1,9 @@
 use crate::{
     error::CompileResult,
-    hir::{HIRBinaryOp, HIRExpr, HIRUnaryOp, Literal},
+    hir::helpers::fetch_expr_type,
+    hir::instructions::{HIRBinaryOp, HIRExpr, HIRUnaryOp, Literal},
     ir::{IRInstruction, VirtualRegister},
     lower::context::LowerContext,
-    semantic::helpers::fetch_expr_type,
 };
 
 use super::{helpers::get_memory_from_stored_symbol, Lower};

@@ -1,4 +1,4 @@
-use crate::{lex::tokens::TokenKind, semantic::types::TypeKind};
+use crate::{hir::types::TypeKind, lex::tokens::TokenKind};
 
 pub type CompileResult<T, E = CompileError> = Result<T, E>;
 

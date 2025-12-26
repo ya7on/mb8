@@ -1,8 +1,8 @@
 use crate::{
     ast::{ASTExpr, ASTStmt, Span},
     error::{CompileError, CompileResult},
-    hir::{HIRStmt, TypeId},
-    semantic::{helpers::fetch_expr_type, types::TypeKind},
+    hir::instructions::{HIRStmt, TypeId},
+    hir::{helpers::fetch_expr_type, types::TypeKind},
 };
 
 use super::SemanticAnalysis;

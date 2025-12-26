@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     error::{CompileError, CompileResult},
-    hir::{HIRFunction, SymbolId},
+    hir::instructions::{HIRFunction, SymbolId},
     ir::{BasicBlockTerminator, IRFunction, IRInstruction},
     lower::context::{LowerContext, StoredSymbol},
 };

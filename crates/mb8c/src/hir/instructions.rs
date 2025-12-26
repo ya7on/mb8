@@ -1,4 +1,4 @@
-use crate::semantic::{symbols::SymbolTable, types::TypeTable};
+use crate::hir::{symbols::SymbolTable, types::TypeTable};
 
 #[derive(Debug, Clone)]
 pub struct HIRGlobal {

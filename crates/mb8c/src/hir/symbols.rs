@@ -1,4 +1,4 @@
-use crate::hir::{SymbolId, TypeId};
+use crate::hir::instructions::{SymbolId, TypeId};
 
 #[derive(Debug, Default, Clone)]
 pub struct SymbolTable {

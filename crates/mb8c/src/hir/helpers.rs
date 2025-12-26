@@ -1,6 +1,6 @@
 use crate::{
     ast::ASTType,
-    hir::{HIRExpr, TypeId},
+    hir::instructions::{HIRExpr, TypeId},
 };
 
 use super::types::TypeKind;

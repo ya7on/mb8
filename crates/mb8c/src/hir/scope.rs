@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     ast::Span,
     error::{CompileError, CompileResult},
-    hir::SymbolId,
+    hir::instructions::SymbolId,
 };
 
 #[derive(Debug, Default)]

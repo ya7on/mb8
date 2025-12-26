@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::hir::TypeId;
+use crate::hir::instructions::TypeId;
 
 #[derive(Debug, Default, Clone)]
 pub struct TypeTable {

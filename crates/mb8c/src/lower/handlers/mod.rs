@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     error::{CompileError, CompileResult},
-    hir::HIRProgram,
+    hir::instructions::HIRProgram,
     ir::IRProgram,
     pipe::CompilerPipe,
 };

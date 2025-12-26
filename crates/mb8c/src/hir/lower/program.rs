@@ -1,8 +1,8 @@
 use crate::{
     ast::ASTProgram,
     error::CompileResult,
-    hir::{HIRGlobal, HIRProgram},
-    semantic::{
+    hir::instructions::{HIRGlobal, HIRProgram},
+    hir::{
         helpers::lower_type,
         symbols::{Symbol, SymbolKind},
     },

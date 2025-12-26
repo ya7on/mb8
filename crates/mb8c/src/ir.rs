@@ -1,4 +1,4 @@
-use crate::semantic::types::TypeKind;
+use crate::hir::types::TypeKind;
 
 #[derive(Debug)]
 pub struct IRProgram {

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    hir::SymbolId,
+    hir::instructions::SymbolId,
     ir::{BasicBlockId, VirtualRegister},
 };
 

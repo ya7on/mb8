@@ -1,6 +1,6 @@
 use crate::{
     error::CompileResult,
-    hir::HIRStmt,
+    hir::instructions::HIRStmt,
     ir::{BasicBlock, BasicBlockTerminator, IRInstruction},
     lower::{bb::BasicBlockBuilder, context::LowerContext},
 };
