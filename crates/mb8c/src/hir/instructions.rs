@@ -1,48 +1,17 @@
-use crate::hir::{symbols::SymbolTable, types::TypeTable};
-
-#[derive(Debug, Clone)]
-pub struct HIRGlobal {
-    pub symbol: SymbolId,
-    pub type_id: TypeId,
-    pub at: usize,
-}
+use crate::context::{SymbolId, TypeId};
 
 #[derive(Debug, Clone)]
 pub struct HIRProgram {
     pub functions: Vec<HIRFunction>,
-    pub symbols: SymbolTable,
-    pub types: TypeTable,
-    pub globals: Vec<HIRGlobal>,
-}
-
-#[derive(Debug, Clone)]
-pub struct HIRFunctionParam {
-    pub symbol: SymbolId,
-    pub type_id: TypeId,
-    pub index: usize,
-}
-
-#[derive(Debug, Clone)]
-pub struct HIRFunctionLocal {
-    pub symbol: SymbolId,
-    pub type_id: TypeId,
 }
 
 #[derive(Debug, Clone)]
 pub struct HIRFunction {
     pub id: SymbolId,
-    pub name: String,
-    pub params: Vec<HIRFunctionParam>,
-    pub locals: Vec<HIRFunctionLocal>,
+    pub params: Vec<SymbolId>,
+    pub locals: Vec<SymbolId>,
     pub body: Vec<HIRStmt>,
-    pub params_size: usize,
 }
-
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub struct SymbolId(pub usize);
-
-#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
-pub struct TypeId(pub usize);
 
 #[derive(Debug, Clone, Copy)]
 pub enum Literal {
@@ -64,7 +33,7 @@ pub enum HIRStmt {
         body: Box<HIRStmt>,
     },
     Assign {
-        symbol: SymbolId,
+        symbol_id: SymbolId,
         ty: TypeId,
         value: HIRExpr,
     },
@@ -107,7 +76,6 @@ pub enum HIRExpr {
     },
     Call {
         symbol: SymbolId,
-        label: String,
         args: Vec<HIRExpr>,
         ty: TypeId,
     },

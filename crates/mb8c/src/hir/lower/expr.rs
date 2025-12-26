@@ -1,18 +1,21 @@
 use crate::{
+    context::{symbols::SymbolKind, types::TypeKind},
     error::{CompileError, CompileResult},
-    hir::instructions::{HIRBinaryOp, HIRExpr, HIRUnaryOp, Literal},
-    hir::{helpers::fetch_expr_type, symbols::SymbolKind, types::TypeKind},
+    hir::{
+        helpers::fetch_expr_type,
+        instructions::{HIRBinaryOp, HIRExpr, HIRUnaryOp, Literal},
+    },
     parser::ast::{ASTBinaryOp, ASTExpr, ASTUnaryOp, Span},
 };
 
-use super::SemanticAnalysis;
+use super::HIRLowerer;
 
-impl SemanticAnalysis {
+impl HIRLowerer {
     #[allow(clippy::unnecessary_wraps)]
     fn analyze_int_literal_expr(&mut self, _span: &Span, value: u16) -> CompileResult<HIRExpr> {
         Ok(HIRExpr::Literal {
             literal: Literal::Int(value),
-            ty: self.ctx.types.entry(TypeKind::Unsigned8),
+            ty: self.ctx.type_table.entry(TypeKind::Unsigned8),
         })
     }
 
@@ -38,8 +41,18 @@ impl SemanticAnalysis {
 
         if lhs_ty != rhs_ty {
             return Err(CompileError::TypeMismatch {
-                expected: self.ctx.types.lookup(lhs_ty).cloned().unwrap_or_default(),
-                actual: self.ctx.types.lookup(rhs_ty).cloned().unwrap_or_default(),
+                expected: self
+                    .ctx
+                    .type_table
+                    .lookup(lhs_ty)
+                    .cloned()
+                    .unwrap_or_default(),
+                actual: self
+                    .ctx
+                    .type_table
+                    .lookup(rhs_ty)
+                    .cloned()
+                    .unwrap_or_default(),
                 start: 0,
                 end: 0,
             });
@@ -47,7 +60,7 @@ impl SemanticAnalysis {
 
         let return_type = match op {
             HIRBinaryOp::Add | HIRBinaryOp::Sub | HIRBinaryOp::Mul | HIRBinaryOp::Div => lhs_ty,
-            HIRBinaryOp::Eq => self.ctx.types.entry(TypeKind::Bool),
+            HIRBinaryOp::Eq => self.ctx.type_table.entry(TypeKind::Bool),
         };
 
         Ok(HIRExpr::Binary {
@@ -74,24 +87,20 @@ impl SemanticAnalysis {
     }
 
     fn analyze_var_expr(&mut self, name: &str, span: &Span) -> CompileResult<HIRExpr> {
-        let symbol_id = self
-            .ctx
-            .scope
-            .lookup(name)
-            .ok_or(CompileError::UnknownSymbol {
-                start: span.start,
-                end: span.end,
-                symbol: name.to_owned(),
-            })?;
-        let symbol = self
-            .ctx
-            .symbols
-            .lookup(symbol_id)
-            .ok_or(CompileError::UnknownSymbol {
-                start: span.start,
-                end: span.end,
-                symbol: name.to_owned(),
-            })?;
+        let symbol_id = self.scope.lookup(name).ok_or(CompileError::UnknownSymbol {
+            start: span.start,
+            end: span.end,
+            symbol: name.to_owned(),
+        })?;
+        let symbol =
+            self.ctx
+                .symbol_table
+                .lookup(symbol_id)
+                .ok_or(CompileError::UnknownSymbol {
+                    start: span.start,
+                    end: span.end,
+                    symbol: name.to_owned(),
+                })?;
 
         Ok(HIRExpr::Var {
             symbol: symbol_id,
@@ -105,24 +114,20 @@ impl SemanticAnalysis {
         args: &[ASTExpr],
         span: &Span,
     ) -> CompileResult<HIRExpr> {
-        let symbol_id = self
-            .ctx
-            .scope
-            .lookup(name)
-            .ok_or(CompileError::UnknownSymbol {
-                start: span.start,
-                end: span.end,
-                symbol: name.to_owned(),
-            })?;
-        let symbol = self
-            .ctx
-            .symbols
-            .lookup(symbol_id)
-            .ok_or(CompileError::UnknownSymbol {
-                start: span.start,
-                end: span.end,
-                symbol: name.to_owned(),
-            })?;
+        let symbol_id = self.scope.lookup(name).ok_or(CompileError::UnknownSymbol {
+            start: span.start,
+            end: span.end,
+            symbol: name.to_owned(),
+        })?;
+        let symbol =
+            self.ctx
+                .symbol_table
+                .lookup(symbol_id)
+                .ok_or(CompileError::UnknownSymbol {
+                    start: span.start,
+                    end: span.end,
+                    symbol: name.to_owned(),
+                })?;
 
         if symbol.kind != SymbolKind::Function {
             return Err(CompileError::SymbolIsNotCallable {
@@ -134,7 +139,7 @@ impl SemanticAnalysis {
 
         let ty = self
             .ctx
-            .types
+            .type_table
             .lookup(symbol.ty)
             .ok_or(CompileError::UnknownSymbol {
                 start: span.start,
@@ -170,8 +175,18 @@ impl SemanticAnalysis {
 
             if arg_ty != param {
                 return Err(CompileError::TypeMismatch {
-                    expected: self.ctx.types.lookup(param).cloned().unwrap_or_default(),
-                    actual: self.ctx.types.lookup(arg_ty).cloned().unwrap_or_default(),
+                    expected: self
+                        .ctx
+                        .type_table
+                        .lookup(param)
+                        .cloned()
+                        .unwrap_or_default(),
+                    actual: self
+                        .ctx
+                        .type_table
+                        .lookup(arg_ty)
+                        .cloned()
+                        .unwrap_or_default(),
                     start: span.start,
                     end: span.end,
                 });
@@ -182,7 +197,6 @@ impl SemanticAnalysis {
 
         Ok(HIRExpr::Call {
             symbol: symbol_id,
-            label: name.to_owned(),
             args: hir_args,
             ty: ret,
         })

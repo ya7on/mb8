@@ -1,6 +1,30 @@
 use std::collections::HashMap;
 
-use crate::hir::instructions::TypeId;
+use super::TypeId;
+
+#[derive(Debug, Eq, PartialEq, Hash, Clone, Default)]
+pub enum TypeKind {
+    #[default]
+    Void,
+    Bool,
+    Unsigned8,
+    Function {
+        params: Vec<TypeId>,
+        ret: TypeId,
+    },
+}
+
+impl TypeKind {
+    #[must_use]
+    pub fn width(&self) -> u8 {
+        match self {
+            TypeKind::Void => 0,
+            TypeKind::Bool => 1,
+            TypeKind::Unsigned8 => 1,
+            TypeKind::Function { .. } => 0,
+        }
+    }
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct TypeTable {
@@ -23,27 +47,5 @@ impl TypeTable {
     #[must_use]
     pub fn lookup(&self, type_id: TypeId) -> Option<&TypeKind> {
         self.types.get(type_id.0)
-    }
-}
-
-#[derive(Debug, Eq, PartialEq, Hash, Clone, Default)]
-pub enum TypeKind {
-    #[default]
-    Void,
-    Bool,
-    Unsigned8,
-    Function {
-        params: Vec<TypeId>,
-        ret: TypeId,
-    },
-}
-
-impl TypeKind {
-    #[must_use]
-    pub fn size(&self) -> usize {
-        match self {
-            Self::Void | Self::Function { .. } => 0,
-            Self::Bool | Self::Unsigned8 => 1,
-        }
     }
 }

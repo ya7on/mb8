@@ -1,149 +1,116 @@
 use crate::{
+    context::{SymbolId, TypeId},
     error::CompileResult,
-    hir::helpers::fetch_expr_type,
     hir::instructions::{HIRBinaryOp, HIRExpr, HIRUnaryOp, Literal},
-    ir::context::LowerContext,
-    ir::instructions::{IRInstruction, VirtualRegister},
+    ir::instructions::IRInstruction,
 };
 
-use super::{helpers::get_memory_from_stored_symbol, Lower};
+use super::IRLowerer;
 
-impl Lower {
-    /// # Errors
-    /// Returns a `CompileError` if there was an lowering error
-    #[allow(clippy::too_many_lines)]
-    pub fn lower_expr(
+impl IRLowerer {
+    pub fn lower_var_expr(
         &mut self,
-        ctx: &mut LowerContext,
+        symbol_id: &SymbolId,
+        ty: &TypeId,
+    ) -> CompileResult<Vec<IRInstruction>> {
+        let type_kind = self.ctx.type_table.lookup(*ty).ok_or_else(|| todo!())?;
+        Ok(vec![IRInstruction::PushVar {
+            symbol: *symbol_id,
+            width: type_kind.width(),
+        }])
+    }
+
+    pub fn lower_literal_expr(
+        &mut self,
+        literal: &Literal,
+        ty: &TypeId,
+    ) -> CompileResult<Vec<IRInstruction>> {
+        let type_kind = self.ctx.type_table.lookup(*ty).ok_or_else(|| todo!())?;
+        let Literal::Int(value) = literal;
+        Ok(vec![IRInstruction::LoadImm {
+            value: *value,
+            width: type_kind.width(),
+        }])
+    }
+
+    pub fn lower_binary_expr(
+        &mut self,
+        op: &HIRBinaryOp,
+        lhs: &HIRExpr,
+        rhs: &HIRExpr,
+        ty: &TypeId,
+    ) -> CompileResult<Vec<IRInstruction>> {
+        let mut instructions = Vec::new();
+        instructions.extend(self.lower_expr(lhs)?);
+        instructions.extend(self.lower_expr(rhs)?);
+
+        let type_kind = self.ctx.type_table.lookup(*ty).ok_or_else(|| todo!())?;
+        match op {
+            HIRBinaryOp::Add => instructions.push(IRInstruction::Add {
+                width: type_kind.width(),
+            }),
+            HIRBinaryOp::Sub => instructions.push(IRInstruction::Sub {
+                width: type_kind.width(),
+            }),
+            HIRBinaryOp::Mul => instructions.push(IRInstruction::Mul {
+                width: type_kind.width(),
+            }),
+            HIRBinaryOp::Div => instructions.push(IRInstruction::Div {
+                width: type_kind.width(),
+            }),
+            HIRBinaryOp::Eq => instructions.push(IRInstruction::Eq {
+                width: type_kind.width(),
+            }),
+        }
+        Ok(instructions)
+    }
+
+    pub fn lower_unary_expr(
+        &mut self,
+        op: &HIRUnaryOp,
         expr: &HIRExpr,
-    ) -> CompileResult<(VirtualRegister, Vec<IRInstruction>)> {
+        ty: &TypeId,
+    ) -> CompileResult<Vec<IRInstruction>> {
+        let mut instructions = Vec::new();
+        instructions.extend(self.lower_expr(expr)?);
+
+        let type_kind = self.ctx.type_table.lookup(*ty).ok_or_else(|| todo!())?;
+
+        match op {
+            HIRUnaryOp::Neg => instructions.push(IRInstruction::Neg {
+                width: type_kind.width(),
+            }),
+        }
+        Ok(instructions)
+    }
+
+    pub fn lower_call_expr(
+        &mut self,
+        symbol: &SymbolId,
+        args: &[HIRExpr],
+        _ty: &TypeId,
+    ) -> CompileResult<Vec<IRInstruction>> {
+        let mut instructions = Vec::new();
+
+        for arg in args.iter() {
+            instructions.extend(self.lower_expr(arg)?);
+        }
+
+        instructions.push(IRInstruction::Call {
+            symbol: *symbol,
+            argc: args.len(),
+        });
+
+        Ok(instructions)
+    }
+
+    pub fn lower_expr(&mut self, expr: &HIRExpr) -> CompileResult<Vec<IRInstruction>> {
         match expr {
-            HIRExpr::Var { symbol, ty } => {
-                let vreg = ctx.vreg();
-
-                let stored = ctx.lookup_name(symbol).ok_or_else(|| todo!())?;
-                let type_kind = self.hir.types.lookup(*ty).ok_or_else(|| todo!())?;
-
-                let instructions = vec![IRInstruction::Load {
-                    dst: vreg,
-                    mem: get_memory_from_stored_symbol(stored),
-                    ty: type_kind.clone(),
-                }];
-                Ok((vreg, instructions))
-            }
-            HIRExpr::Literal { literal, ty } => {
-                let type_kind = self.hir.types.lookup(*ty).ok_or_else(|| todo!())?;
-                match literal {
-                    Literal::Int(value) => {
-                        let vreg = ctx.vreg();
-                        let instructions = vec![IRInstruction::LoadImm {
-                            register: vreg,
-                            value: *value as u8,
-                            ty: type_kind.clone(),
-                        }];
-                        Ok((vreg, instructions))
-                    }
-                    // TODO: Add String literal
-                    #[allow(unreachable_patterns)]
-                    _ => {
-                        unreachable!()
-                    }
-                }
-            }
-            HIRExpr::Binary { op, lhs, rhs, ty } => {
-                let mut result = Vec::new();
-                let (lhs_reg, instructions) = self.lower_expr(ctx, lhs)?;
-                result.extend(instructions);
-                let (rhs_reg, instructions) = self.lower_expr(ctx, rhs)?;
-                result.extend(instructions);
-
-                let type_kind = self.hir.types.lookup(*ty).ok_or_else(|| todo!())?;
-                let dst_reg = ctx.vreg();
-
-                let instructions = match op {
-                    HIRBinaryOp::Add => vec![IRInstruction::Add {
-                        dst: dst_reg,
-                        lhs: lhs_reg,
-                        rhs: rhs_reg,
-                        ty: type_kind.to_owned(),
-                    }],
-                    HIRBinaryOp::Sub => vec![IRInstruction::Sub {
-                        dst: dst_reg,
-                        lhs: lhs_reg,
-                        rhs: rhs_reg,
-                        ty: type_kind.to_owned(),
-                    }],
-                    HIRBinaryOp::Mul => vec![IRInstruction::Mul {
-                        dst: dst_reg,
-                        lhs: lhs_reg,
-                        rhs: rhs_reg,
-                        ty: type_kind.to_owned(),
-                    }],
-                    HIRBinaryOp::Div => vec![IRInstruction::Div {
-                        dst: dst_reg,
-                        lhs: lhs_reg,
-                        rhs: rhs_reg,
-                        ty: type_kind.to_owned(),
-                    }],
-                    HIRBinaryOp::Eq => vec![IRInstruction::Cmp {
-                        dst: dst_reg,
-                        lhs: lhs_reg,
-                        rhs: rhs_reg,
-                        ty: type_kind.to_owned(),
-                    }],
-                };
-                result.extend(instructions);
-
-                Ok((dst_reg, result))
-            }
-            HIRExpr::Unary { op, expr, ty } => {
-                let (src, mut instructions) = self.lower_expr(ctx, expr)?;
-                let type_kind = self.hir.types.lookup(*ty).ok_or_else(|| todo!())?;
-                let dst = ctx.vreg();
-                match op {
-                    HIRUnaryOp::Neg => {
-                        instructions.push(IRInstruction::Neg {
-                            dst,
-                            src,
-                            ty: type_kind.to_owned(),
-                        });
-                    }
-                }
-                Ok((dst, instructions))
-            }
-            HIRExpr::Call {
-                symbol: _,
-                label,
-                args,
-                ty,
-            } => {
-                let dst = ctx.vreg();
-
-                let mut instructions = Vec::new();
-                let mut regs = Vec::with_capacity(args.len());
-                for (index, arg) in args.iter().enumerate() {
-                    let (reg, instr) = self.lower_expr(ctx, arg)?;
-                    instructions.extend(instr);
-                    let ty = fetch_expr_type(arg);
-                    let type_kind = self.hir.types.lookup(ty).ok_or_else(|| todo!())?;
-                    instructions.push(IRInstruction::StorelArg {
-                        register: reg,
-                        ty: type_kind.to_owned(),
-                        index,
-                    });
-                    regs.push(reg);
-                }
-
-                let type_kind = self.hir.types.lookup(*ty).ok_or_else(|| todo!())?;
-                instructions.push(IRInstruction::Call {
-                    result: dst,
-                    label: label.to_owned(),
-                    args: regs,
-                    ty: type_kind.to_owned(),
-                });
-
-                Ok((dst, instructions))
-            }
+            HIRExpr::Var { symbol, ty } => self.lower_var_expr(symbol, ty),
+            HIRExpr::Literal { literal, ty } => self.lower_literal_expr(literal, ty),
+            HIRExpr::Binary { op, lhs, rhs, ty } => self.lower_binary_expr(op, lhs, rhs, ty),
+            HIRExpr::Unary { op, expr, ty } => self.lower_unary_expr(op, expr, ty),
+            HIRExpr::Call { symbol, args, ty } => self.lower_call_expr(symbol, args, ty),
         }
     }
 }

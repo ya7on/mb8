@@ -1,24 +1,24 @@
 use crate::{
+    context::{types::TypeKind, TypeId},
     error::{CompileError, CompileResult},
-    hir::instructions::{HIRStmt, TypeId},
-    hir::{helpers::fetch_expr_type, types::TypeKind},
+    hir::{helpers::fetch_expr_type, instructions::HIRStmt},
     parser::ast::{ASTExpr, ASTStmt, Span},
 };
 
-use super::SemanticAnalysis;
+use super::HIRLowerer;
 
-impl SemanticAnalysis {
+impl HIRLowerer {
     fn analyze_block_stmt(
         &mut self,
         expected_ty: TypeId,
         stmts: &[ASTStmt],
     ) -> CompileResult<HIRStmt> {
         let mut result = Vec::new();
-        self.ctx.scope.enter();
+        self.scope.enter();
         for stmt in stmts {
             result.push(self.analyze_stmt(stmt, expected_ty)?);
         }
-        self.ctx.scope.exit();
+        self.scope.exit();
         Ok(HIRStmt::Block(result))
     }
 
@@ -36,11 +36,16 @@ impl SemanticAnalysis {
                 return Err(CompileError::TypeMismatch {
                     expected: self
                         .ctx
-                        .types
+                        .type_table
                         .lookup(expected_ty)
                         .cloned()
                         .unwrap_or_default(),
-                    actual: self.ctx.types.lookup(type_id).cloned().unwrap_or_default(),
+                    actual: self
+                        .ctx
+                        .type_table
+                        .lookup(type_id)
+                        .cloned()
+                        .unwrap_or_default(),
                     start: span.start,
                     end: span.end,
                 });
@@ -48,16 +53,21 @@ impl SemanticAnalysis {
 
             Some(value)
         } else {
-            let type_id = self.ctx.types.entry(TypeKind::Void);
+            let type_id = self.ctx.type_table.entry(TypeKind::Void);
             if type_id != expected_ty {
                 return Err(CompileError::TypeMismatch {
                     expected: self
                         .ctx
-                        .types
+                        .type_table
                         .lookup(expected_ty)
                         .cloned()
                         .unwrap_or_default(),
-                    actual: self.ctx.types.lookup(type_id).cloned().unwrap_or_default(),
+                    actual: self
+                        .ctx
+                        .type_table
+                        .lookup(type_id)
+                        .cloned()
+                        .unwrap_or_default(),
                     start: span.start,
                     end: span.end,
                 });
@@ -87,7 +97,7 @@ impl SemanticAnalysis {
         else_branch: Option<&ASTStmt>,
         span: &Span,
     ) -> CompileResult<HIRStmt> {
-        let bool = self.ctx.types.entry(TypeKind::Bool);
+        let bool = self.ctx.type_table.entry(TypeKind::Bool);
         let condition = self.analyze_expr(condition)?;
         let then_branch = self.analyze_stmt(then_branch, expected_ty)?;
         let else_branch = else_branch
@@ -100,7 +110,7 @@ impl SemanticAnalysis {
                 expected: TypeKind::Bool,
                 actual: self
                     .ctx
-                    .types
+                    .type_table
                     .lookup(condition_ty)
                     .cloned()
                     .unwrap_or_default(),
@@ -123,7 +133,7 @@ impl SemanticAnalysis {
         body: &ASTStmt,
         span: &Span,
     ) -> CompileResult<HIRStmt> {
-        let bool = self.ctx.types.entry(TypeKind::Bool);
+        let bool = self.ctx.type_table.entry(TypeKind::Bool);
         let condition = self.analyze_expr(condition)?;
         let body = self.analyze_stmt(body, expected_ty)?;
 
@@ -133,7 +143,7 @@ impl SemanticAnalysis {
                 expected: TypeKind::Bool,
                 actual: self
                     .ctx
-                    .types
+                    .type_table
                     .lookup(condition_ty)
                     .cloned()
                     .unwrap_or_default(),
@@ -155,34 +165,35 @@ impl SemanticAnalysis {
         value: &ASTExpr,
         span: &Span,
     ) -> CompileResult<HIRStmt> {
-        let symbol_id = self
-            .ctx
-            .scope
-            .lookup(name)
-            .ok_or(CompileError::UnknownSymbol {
-                start: span.start,
-                end: span.end,
-                symbol: name.to_owned(),
-            })?;
-        let symbol = self
-            .ctx
-            .symbols
-            .lookup(symbol_id)
-            .ok_or(CompileError::UnknownSymbol {
-                start: span.start,
-                end: span.end,
-                symbol: name.to_owned(),
-            })?;
+        let symbol_id = self.scope.lookup(name).ok_or(CompileError::UnknownSymbol {
+            start: span.start,
+            end: span.end,
+            symbol: name.to_owned(),
+        })?;
+        let symbol =
+            self.ctx
+                .symbol_table
+                .lookup(symbol_id)
+                .ok_or(CompileError::UnknownSymbol {
+                    start: span.start,
+                    end: span.end,
+                    symbol: name.to_owned(),
+                })?;
 
         let value = self.analyze_expr(value)?;
         let value_ty = fetch_expr_type(&value);
 
         if symbol.ty != value_ty {
             return Err(CompileError::TypeMismatch {
-                expected: self.ctx.types.lookup(value_ty).cloned().unwrap_or_default(),
+                expected: self
+                    .ctx
+                    .type_table
+                    .lookup(value_ty)
+                    .cloned()
+                    .unwrap_or_default(),
                 actual: self
                     .ctx
-                    .types
+                    .type_table
                     .lookup(symbol.ty)
                     .cloned()
                     .unwrap_or_default(),
@@ -192,7 +203,7 @@ impl SemanticAnalysis {
         }
 
         Ok(HIRStmt::Assign {
-            symbol: symbol_id,
+            symbol_id,
             value,
             ty: value_ty,
         })

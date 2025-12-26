@@ -1,17 +1,17 @@
 use crate::{
-    error::CompileResult,
-    hir::instructions::{HIRFunction, HIRFunctionLocal, HIRFunctionParam, SymbolId},
-    hir::{
-        helpers::lower_type,
+    context::{
         symbols::{Symbol, SymbolKind},
         types::TypeKind,
+        SymbolId,
     },
+    error::CompileResult,
+    hir::{helpers::lower_type, instructions::HIRFunction},
     parser::ast::ASTFunction,
 };
 
-use super::SemanticAnalysis;
+use super::HIRLowerer;
 
-impl SemanticAnalysis {
+impl HIRLowerer {
     /// First iteration through AST functions to collect their names
     ///
     /// # Errors
@@ -20,18 +20,21 @@ impl SemanticAnalysis {
         let params = function
             .params
             .iter()
-            .map(|(_name, ty)| self.ctx.types.entry(lower_type(*ty)))
+            .map(|(_name, ty)| self.ctx.type_table.entry(lower_type(*ty)))
             .collect();
-        let ret = self.ctx.types.entry(lower_type(function.return_type));
-        let type_id = self.ctx.types.entry(TypeKind::Function { params, ret });
+        let ret = self.ctx.type_table.entry(lower_type(function.return_type));
+        let type_id = self
+            .ctx
+            .type_table
+            .entry(TypeKind::Function { params, ret });
 
-        let symbol = self.ctx.symbols.allocate(Symbol {
+        let symbol = self.ctx.symbol_table.allocate(Symbol {
             name: function.name.clone(),
             kind: SymbolKind::Function,
             ty: type_id,
         });
 
-        let scope = self.ctx.scope.current();
+        let scope = self.scope.current();
         scope.allocate(function.name.clone(), symbol, &function.span)?;
 
         Ok(())
@@ -42,56 +45,33 @@ impl SemanticAnalysis {
     /// # Errors
     /// Returns error if there are semantic issues
     pub fn analyze_function(&mut self, function: &ASTFunction) -> CompileResult<HIRFunction> {
-        let scope = self.ctx.scope.enter();
-        let mut size = 0;
+        let scope = self.scope.enter();
 
         let mut params = Vec::with_capacity(function.params.len());
         // Collect params
-        for index in 0..function.params.len() {
-            let (name, ty) = &function.params[index];
-            let hir_type = lower_type(*ty);
-            let type_id = self.ctx.types.entry(hir_type.clone());
-            let symbol = self.ctx.symbols.allocate(Symbol {
-                name: name.to_owned(),
-                kind: SymbolKind::Parameter,
-                ty: type_id,
-            });
+        for (name, ty) in &function.params {
+            let symbol = self.ctx.allocate_parameter(name, lower_type(*ty));
             scope.allocate(name.to_owned(), symbol, &function.span)?;
-            params.push(HIRFunctionParam {
-                symbol,
-                type_id,
-                index,
-            });
-            size += hir_type.size() as usize;
+            params.push(symbol);
         }
 
         let mut locals = Vec::with_capacity(function.vars.len());
-        // Collects local vaers
-        for index in 0..function.vars.len() {
-            let (name, ty) = &function.vars[index];
-            let hir_type = lower_type(*ty);
-            let type_id = self.ctx.types.entry(hir_type.clone());
-            let symbol = self.ctx.symbols.allocate(Symbol {
-                name: name.to_owned(),
-                kind: SymbolKind::Variable,
-                ty: type_id,
-            });
+        // Collects local variables
+        for (name, ty) in &function.vars {
+            let symbol = self.ctx.allocate_local(name, lower_type(*ty));
             scope.allocate(name.to_owned(), symbol, &function.span)?;
-            locals.push(HIRFunctionLocal { symbol, type_id });
-            size += hir_type.size() as usize;
+            locals.push(symbol);
         }
 
-        let return_type_id = self.ctx.types.entry(lower_type(function.return_type));
+        let return_type_id = self.ctx.type_table.entry(lower_type(function.return_type));
 
         let body = self.analyze_stmt(&function.body, return_type_id)?;
 
         let hir = HIRFunction {
-            id: SymbolId(1),
-            name: function.name.clone(),
+            id: SymbolId(1), // TODO
             params,
             locals,
             body: vec![body],
-            params_size: size,
         };
 
         // TODO: Control flow checks

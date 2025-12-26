@@ -1,37 +1,28 @@
 use crate::{
+    context::symbols::{Symbol, SymbolKind},
     error::CompileResult,
-    hir::instructions::{HIRGlobal, HIRProgram},
-    hir::{
-        helpers::lower_type,
-        symbols::{Symbol, SymbolKind},
-    },
+    hir::{helpers::lower_type, instructions::HIRProgram},
     parser::ast::ASTProgram,
 };
 
-use super::SemanticAnalysis;
+use super::HIRLowerer;
 
-impl SemanticAnalysis {
+impl HIRLowerer {
     /// Analyze AST program and lower it to HIR
     ///
     /// # Errors
     /// Returns error if there are semantic issues
     pub fn analyze_program(&mut self, program: &ASTProgram) -> CompileResult<HIRProgram> {
-        let scope = self.ctx.scope.enter();
+        let scope = self.scope.enter();
 
-        let mut globals = Vec::with_capacity(program.globals.len());
         for global in &program.globals {
-            let type_id = self.ctx.types.entry(lower_type(global.ty));
-            let symbol = self.ctx.symbols.allocate(Symbol {
+            let type_id = self.ctx.type_table.entry(lower_type(global.ty));
+            let symbol = self.ctx.symbol_table.allocate(Symbol {
                 name: global.name.clone(),
                 kind: SymbolKind::Global { address: global.at },
                 ty: type_id,
             });
             scope.allocate(global.name.clone(), symbol, &global.span)?;
-            globals.push(HIRGlobal {
-                symbol,
-                type_id,
-                at: global.at as usize,
-            });
         }
 
         let mut functions = Vec::with_capacity(program.functions.len());
@@ -47,11 +38,6 @@ impl SemanticAnalysis {
             functions.push(hir_function);
         }
 
-        Ok(HIRProgram {
-            symbols: self.ctx.symbols.clone(),
-            types: self.ctx.types.clone(),
-            functions,
-            globals,
-        })
+        Ok(HIRProgram { functions })
     }
 }

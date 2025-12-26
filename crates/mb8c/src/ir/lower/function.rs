@@ -1,79 +1,28 @@
-use std::collections::HashMap;
-
 use crate::{
-    error::{CompileError, CompileResult},
-    hir::instructions::{HIRFunction, SymbolId},
-    ir::context::{LowerContext, StoredSymbol},
-    ir::instructions::{BasicBlockTerminator, IRFunction, IRInstruction},
+    error::CompileResult,
+    hir::instructions::HIRFunction,
+    ir::{bb::BasicBlockTable, instructions::IRFunction},
 };
 
-use super::{helpers::get_memory_from_stored_symbol, Lower};
+use super::IRLowerer;
 
-impl Lower {
-    /// # Errors
-    /// Returns a `CompileError` if there was an lowering error
-    pub fn lower_function(
-        &mut self,
-        function: &HIRFunction,
-        mut storage: HashMap<SymbolId, StoredSymbol>,
-    ) -> CompileResult<IRFunction> {
-        let mut offset = 1; // 0 is reserved for accumulator
-        for param in &function.params {
-            storage.insert(param.symbol, StoredSymbol::Offset(offset));
-            let type_kind =
-                self.hir
-                    .types
-                    .lookup(param.type_id)
-                    .ok_or(CompileError::InternalError {
-                        message: "Unknown type".to_string(),
-                    })?;
-            offset += type_kind.size();
-        }
-        for local in &function.locals {
-            storage.insert(local.symbol, StoredSymbol::Offset(offset));
-            let type_kind =
-                self.hir
-                    .types
-                    .lookup(local.type_id)
-                    .ok_or(CompileError::InternalError {
-                        message: "Unknown type".to_string(),
-                    })?;
-            offset += type_kind.size();
-        }
-
-        let mut ctx = LowerContext::new(storage);
-
+impl IRLowerer {
+    pub fn lower_function(&mut self, function: &HIRFunction) -> CompileResult<IRFunction> {
+        let mut bbtable = BasicBlockTable::default();
         let mut basic_blocks = Vec::new();
-        let mut current = ctx.bb();
-        // Initialize function arguments
-        for (index, arg) in function.params.iter().enumerate() {
-            let type_kind = self.hir.types.lookup(arg.type_id).ok_or_else(|| todo!())?;
-            let stored_symbol = ctx.lookup_name(&arg.symbol).ok_or_else(|| todo!())?;
-            current.emit(IRInstruction::LoadlArg {
-                ty: type_kind.to_owned(),
-                index,
-                mem: get_memory_from_stored_symbol(stored_symbol),
-            });
-        }
-        let mut current = Some(current);
-        for stmt in &function.body {
-            if let Some(builder) = current {
-                let (builder, bbs) = self.lower_stmt(builder, &mut ctx, stmt)?;
-                basic_blocks.extend(bbs);
-                current = builder;
-            }
-            if current.is_none() {
-                break;
-            }
-        }
-        if let Some(current) = current {
-            basic_blocks.push(current.build(BasicBlockTerminator::Ret { value: None }));
-        }
 
+        let mut builder = bbtable.bb();
+        for stmt in &function.body {
+            let (maybe_builder, blocks) = self.lower_stmt(stmt, builder, &mut bbtable)?;
+            basic_blocks.extend(blocks);
+            let Some(new_builder) = maybe_builder else {
+                break;
+            };
+            builder = new_builder;
+        }
         Ok(IRFunction {
-            name: function.name.clone(),
+            id: function.id,
             basic_blocks,
-            size: offset,
         })
     }
 }

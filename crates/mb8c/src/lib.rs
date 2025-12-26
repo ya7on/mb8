@@ -1,13 +1,15 @@
-use codegen::targets::Codegen;
+// use codegen::targets::Codegen;
 use error::CompileError;
-use hir::lower::SemanticAnalysis;
-use ir::lower::Lower;
+use hir::lower::HIRLowerer;
+use ir::lower::IRLowerer;
+// use ir::lower::Lower;
 use lex::tokens::TokenKind;
 use parser::Parser;
 use pipeline::CompilePipeline;
 
-pub mod codegen;
+// pub mod codegen;
 pub mod config;
+pub mod context;
 pub mod error;
 pub mod hir;
 pub mod ir;
@@ -25,12 +27,12 @@ pub mod pipeline;
 pub fn compile(input: &str) -> error::CompileResult<(), Vec<CompileError>> {
     let result = CompilePipeline::<TokenKind>::init(input.to_owned())?
         .and_next::<Parser>()?
-        .and_next::<SemanticAnalysis>()?
-        .and_next::<Lower>()?
-        .and_next::<Codegen>()?
+        .and_next::<HIRLowerer>()?
+        .and_next::<IRLowerer>()?
+        // .and_next::<Codegen>()?
         .finish()?;
 
-    println!("{result}");
+    println!("{result:?}");
 
     Ok(())
 }

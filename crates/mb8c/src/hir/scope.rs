@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use crate::{
+    context::SymbolId,
     error::{CompileError, CompileResult},
-    hir::instructions::SymbolId,
     parser::ast::Span,
 };
 

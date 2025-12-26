@@ -1,149 +1,193 @@
 use crate::{
+    context::{SymbolId, TypeId},
     error::CompileResult,
-    hir::instructions::HIRStmt,
-    ir::instructions::{BasicBlock, BasicBlockTerminator, IRInstruction},
-    ir::{bb::BasicBlockBuilder, context::LowerContext},
+    hir::instructions::{HIRExpr, HIRStmt},
+    ir::{
+        bb::{BasicBlockBuilder, BasicBlockTable},
+        instructions::{BasicBlock, BasicBlockTerminator, IRInstruction},
+    },
 };
 
-use super::{helpers::get_memory_from_stored_symbol, Lower};
+use super::IRLowerer;
 
-impl Lower {
-    /// # Errors
-    /// Returns a `CompileError` if there was an lowering error
-    #[allow(clippy::too_many_lines)]
-    pub fn lower_stmt(
+impl IRLowerer {
+    pub fn lower_block_stmt(
         &mut self,
+        stmts: &[HIRStmt],
         mut builder: BasicBlockBuilder,
-        ctx: &mut LowerContext,
-        stmt: &HIRStmt,
+        bbs: &mut BasicBlockTable,
+    ) -> CompileResult<(Option<BasicBlockBuilder>, Vec<BasicBlock>)> {
+        let mut result = Vec::new();
+        for stmt in stmts {
+            let (maybe_builder, bbs) = self.lower_stmt(stmt, builder, bbs)?;
+            result.extend(bbs);
+            let Some(new_builder) = maybe_builder else {
+                return Ok((None, result));
+            };
+            builder = new_builder;
+        }
+        Ok((Some(builder), result))
+    }
+
+    pub fn lower_return_stmt(
+        &mut self,
+        value: &Option<HIRExpr>,
+        mut builder: BasicBlockBuilder,
+    ) -> CompileResult<(Option<BasicBlockBuilder>, Vec<BasicBlock>)> {
+        let mut result = Vec::new();
+        if let Some(expr) = value {
+            let instructions = self.lower_expr(expr)?;
+            for instruction in instructions {
+                builder.emit(instruction);
+            }
+        };
+        result.push(builder.build(BasicBlockTerminator::Ret {
+            void: value.is_none(),
+        }));
+        Ok((None, result))
+    }
+
+    pub fn lower_expression_stmt(
+        &mut self,
+        expr: &HIRExpr,
+        mut builder: BasicBlockBuilder,
+    ) -> CompileResult<(Option<BasicBlockBuilder>, Vec<BasicBlock>)> {
+        let instructions = self.lower_expr(expr)?;
+        for instruction in instructions {
+            builder.emit(instruction);
+        }
+        Ok((Some(builder), vec![]))
+    }
+
+    pub fn lower_if_stmt(
+        &mut self,
+        condition: &HIRExpr,
+        then_branch: &HIRStmt,
+        else_branch: &Option<Box<HIRStmt>>,
+        mut builder: BasicBlockBuilder,
+        bbs: &mut BasicBlockTable,
     ) -> CompileResult<(Option<BasicBlockBuilder>, Vec<BasicBlock>)> {
         let mut result = Vec::new();
 
+        let then_block = bbs.bb();
+        let else_block = bbs.bb();
+        let merge_block = bbs.bb();
+
+        let instructions = self.lower_expr(condition)?;
+        for instruction in instructions {
+            builder.emit(instruction);
+        }
+
+        result.push(builder.build(BasicBlockTerminator::Branch {
+            then_branch: then_block.id(),
+            else_branch: else_block.id(),
+        }));
+
+        let (then_block, then_blocks) = self.lower_stmt(then_branch, then_block, bbs)?;
+        result.extend(then_blocks);
+        if let Some(then_block) = then_block {
+            result.push(then_block.build(BasicBlockTerminator::Jmp {
+                next: merge_block.id(),
+            }));
+        }
+
+        if let Some(else_branch) = else_branch {
+            let (else_block, else_blocks) = self.lower_stmt(else_branch, else_block, bbs)?;
+            result.extend(else_blocks);
+            if let Some(else_block) = else_block {
+                result.push(else_block.build(BasicBlockTerminator::Jmp {
+                    next: merge_block.id(),
+                }));
+            }
+        } else {
+            result.push(else_block.build(BasicBlockTerminator::Jmp {
+                next: merge_block.id(),
+            }));
+        }
+
+        Ok((Some(merge_block), result))
+    }
+
+    pub fn lower_while_stmt(
+        &mut self,
+        condition: &HIRExpr,
+        body: &HIRStmt,
+        mut builder: BasicBlockBuilder,
+        bbs: &mut BasicBlockTable,
+    ) -> CompileResult<(Option<BasicBlockBuilder>, Vec<BasicBlock>)> {
+        let mut result = Vec::new();
+
+        let body_block = bbs.bb();
+        let exit_block = bbs.bb();
+
+        let instructions = self.lower_expr(condition)?;
+        for instruction in instructions {
+            builder.emit(instruction);
+        }
+
+        let (body_block, body_blocks) = self.lower_stmt(body, body_block, bbs)?;
+        result.extend(body_blocks);
+        let Some(body_block) = body_block else {
+            return Ok((None, result));
+        };
+        let body_block_id = body_block.id();
+        result.push(body_block.build(BasicBlockTerminator::Branch {
+            then_branch: body_block_id,
+            else_branch: exit_block.id(),
+        }));
+        result.push(builder.build(BasicBlockTerminator::Branch {
+            then_branch: body_block_id,
+            else_branch: exit_block.id(),
+        }));
+
+        Ok((Some(exit_block), result))
+    }
+
+    pub fn lower_assign_stmt(
+        &mut self,
+        symbol_id: &SymbolId,
+        ty: &TypeId,
+        value: &HIRExpr,
+        mut builder: BasicBlockBuilder,
+    ) -> CompileResult<(Option<BasicBlockBuilder>, Vec<BasicBlock>)> {
+        let instructions = self.lower_expr(value)?;
+        for instruction in instructions {
+            builder.emit(instruction);
+        }
+
+        let type_kind = self.ctx.type_table.lookup(*ty).ok_or_else(|| todo!())?;
+
+        builder.emit(IRInstruction::StoreVar {
+            symbol: *symbol_id,
+            width: type_kind.width(),
+        });
+
+        Ok((Some(builder), vec![]))
+    }
+
+    pub fn lower_stmt(
+        &mut self,
+        stmt: &HIRStmt,
+        builder: BasicBlockBuilder,
+        bbs: &mut BasicBlockTable,
+    ) -> CompileResult<(Option<BasicBlockBuilder>, Vec<BasicBlock>)> {
         match stmt {
-            HIRStmt::Block(stmts) => {
-                for stmt in stmts {
-                    let (current, bbs) = self.lower_stmt(builder, ctx, stmt)?;
-                    result.extend(bbs);
-                    let Some(current) = current else {
-                        return Ok((None, result));
-                    };
-                    builder = current;
-                }
-                Ok((Some(builder), result))
-            }
-            HIRStmt::Return(expr) => {
-                let value = if let Some(expr) = expr {
-                    let (vreg, instructions) = self.lower_expr(ctx, expr)?;
-                    for instruction in instructions {
-                        builder.emit(instruction);
-                    }
-                    Some(vreg)
-                } else {
-                    None
-                };
-                result.push(builder.build(BasicBlockTerminator::Ret { value }));
-                Ok((None, result))
-            }
-            HIRStmt::Expression(expr) => {
-                let (_vreg, instructions) = self.lower_expr(ctx, expr)?;
-                for instruction in instructions {
-                    builder.emit(instruction);
-                }
-                Ok((Some(builder), result))
-            }
+            HIRStmt::Block(stmts) => self.lower_block_stmt(stmts, builder, bbs),
+            HIRStmt::Return(value) => self.lower_return_stmt(value, builder),
+            HIRStmt::Expression(expr) => self.lower_expression_stmt(expr, builder),
             HIRStmt::If {
                 condition,
                 then_branch,
                 else_branch,
-            } => {
-                let mut any_branch = false;
-                let then_block = ctx.bb();
-                let else_block = ctx.bb();
-                let merge_block = ctx.bb();
-
-                let (condition_vreg, instructions) = self.lower_expr(ctx, condition)?;
-                for instruction in instructions {
-                    builder.emit(instruction);
-                }
-
-                result.push(builder.build(BasicBlockTerminator::Branch {
-                    condition: condition_vreg,
-                    then_branch: then_block.id(),
-                    else_branch: else_block.id(),
-                }));
-
-                let (then_block, bbs) = self.lower_stmt(then_block, ctx, then_branch)?;
-                result.extend(bbs);
-                if let Some(then_block) = then_block {
-                    any_branch = true;
-                    result.push(then_block.build(BasicBlockTerminator::Jmp {
-                        next: merge_block.id(),
-                    }));
-                }
-
-                if let Some(else_branch) = else_branch {
-                    let (else_block, bbs) = self.lower_stmt(else_block, ctx, else_branch)?;
-                    result.extend(bbs);
-                    if let Some(else_block) = else_block {
-                        any_branch = true;
-                        result.push(else_block.build(BasicBlockTerminator::Jmp {
-                            next: merge_block.id(),
-                        }));
-                    }
-                } else {
-                    any_branch = true;
-                    result.push(else_block.build(BasicBlockTerminator::Jmp {
-                        next: merge_block.id(),
-                    }));
-                }
-
-                Ok((any_branch.then_some(merge_block), result))
-            }
+            } => self.lower_if_stmt(condition, then_branch, else_branch, builder, bbs),
             HIRStmt::While { condition, body } => {
-                let body_block = ctx.bb();
-                let exit_block = ctx.bb();
-
-                let (vreg, instructions) = self.lower_expr(ctx, condition)?;
-                for instruction in instructions {
-                    builder.emit(instruction);
-                }
-
-                let (body_block, blocks) = self.lower_stmt(body_block, ctx, body)?;
-                result.extend(blocks);
-                let Some(body_block) = body_block else {
-                    return Ok((None, result));
-                };
-                let body_block_id = body_block.id();
-                result.push(body_block.build(BasicBlockTerminator::Branch {
-                    condition: vreg,
-                    then_branch: body_block_id,
-                    else_branch: exit_block.id(),
-                }));
-                result.push(builder.build(BasicBlockTerminator::Branch {
-                    condition: vreg,
-                    then_branch: body_block_id,
-                    else_branch: exit_block.id(),
-                }));
-
-                Ok((Some(exit_block), result))
+                self.lower_while_stmt(condition, body, builder, bbs)
             }
-            HIRStmt::Assign { symbol, ty, value } => {
-                let (vreg, instructions) = self.lower_expr(ctx, value)?;
-                for instruction in instructions {
-                    builder.emit(instruction);
-                }
-
-                let symbol = ctx.lookup_name(symbol).ok_or_else(|| todo!())?;
-                let type_kind = self.hir.types.lookup(*ty).ok_or_else(|| todo!())?;
-
-                builder.emit(IRInstruction::Store {
-                    mem: get_memory_from_stored_symbol(symbol),
-                    src: vreg,
-                    ty: type_kind.to_owned(),
-                });
-
-                Ok((Some(builder), result))
-            }
+            HIRStmt::Assign {
+                symbol_id: symbol,
+                ty,
+                value,
+            } => self.lower_assign_stmt(symbol, ty, value, builder),
         }
     }
 }

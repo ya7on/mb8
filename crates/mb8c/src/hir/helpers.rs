@@ -1,9 +1,8 @@
 use crate::{
-    hir::instructions::{HIRExpr, TypeId},
+    context::{types::TypeKind, TypeId},
+    hir::instructions::HIRExpr,
     parser::ast::ASTType,
 };
-
-use super::types::TypeKind;
 
 #[must_use]
 pub fn lower_type(ty: ASTType) -> TypeKind {
