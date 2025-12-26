@@ -6,6 +6,7 @@ var
 function sys_write(c: u8): void;
 begin
   TTY_WRITE = c;
+  return;
 end
 
 function main(): void;
@@ -16,4 +17,5 @@ begin
   sys_write(0x6C);
   sys_write(0x6F);
   sys_write(0x0A);
+  return;
 end

@@ -10,7 +10,7 @@ pub struct SymbolId(pub usize);
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
 pub struct TypeId(pub usize);
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct CompileContext {
     pub symbol_table: SymbolTable,
     pub type_table: TypeTable,

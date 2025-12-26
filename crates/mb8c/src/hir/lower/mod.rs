@@ -18,13 +18,13 @@ pub struct HIRLowerer {
 
 impl CompilerPipe for HIRLowerer {
     type Prev = ASTProgram;
-    type Next = HIRProgram;
+    type Next = (HIRProgram, CompileContext);
 
     fn execute(
         prev: &Self::Prev,
     ) -> crate::error::CompileResult<Self::Next, Vec<crate::error::CompileError>> {
         let mut semantic = HIRLowerer::default();
         let hir = semantic.analyze_program(prev).map_err(|err| vec![err])?;
-        Ok(hir)
+        Ok((hir, semantic.ctx))
     }
 }
