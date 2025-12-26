@@ -9,7 +9,7 @@ use crate::{
     ast::ASTProgram,
     error::{CompileError, CompileResult},
     lex::tokens::TokenKind,
-    pipe::CompilerPipe,
+    pipeline::CompilerPipe,
 };
 
 pub mod parse_expr;

@@ -3,7 +3,7 @@ use logos::Logos;
 
 use crate::{
     error::{CompileError, CompileResult},
-    pipe::CompilerPipe,
+    pipeline::CompilerPipe,
 };
 
 fn map_err(err: &mut logos::Lexer<TokenKind>) -> CompileError {

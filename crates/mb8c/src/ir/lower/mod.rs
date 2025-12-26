@@ -4,7 +4,7 @@ use crate::{
     error::{CompileError, CompileResult},
     hir::instructions::HIRProgram,
     ir::instructions::IRProgram,
-    pipe::CompilerPipe,
+    pipeline::CompilerPipe,
 };
 
 use super::context::StoredSymbol;

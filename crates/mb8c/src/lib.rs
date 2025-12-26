@@ -4,7 +4,7 @@ use hir::lower::SemanticAnalysis;
 use ir::lower::Lower;
 use lex::tokens::TokenKind;
 use parser::Parser;
-use pipe::CompilePipeline;
+use pipeline::CompilePipeline;
 
 pub mod ast;
 pub mod codegen;
@@ -14,7 +14,7 @@ pub mod hir;
 pub mod ir;
 pub mod lex;
 pub mod parser;
-pub mod pipe;
+pub mod pipeline;
 
 /// Compile the input string into an executable program.
 ///
