@@ -6,12 +6,13 @@ use chumsky::{
 use parse_program::program_parser;
 
 use crate::{
-    ast::ASTProgram,
     error::{CompileError, CompileResult},
     lex::tokens::TokenKind,
+    parser::ast::ASTProgram,
     pipeline::CompilerPipe,
 };
 
+pub mod ast;
 pub mod parse_expr;
 pub mod parse_function;
 pub mod parse_globals;

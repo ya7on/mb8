@@ -6,7 +6,6 @@ use lex::tokens::TokenKind;
 use parser::Parser;
 use pipeline::CompilePipeline;
 
-pub mod ast;
 pub mod codegen;
 pub mod config;
 pub mod error;

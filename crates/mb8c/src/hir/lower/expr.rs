@@ -1,8 +1,8 @@
 use crate::{
-    ast::{ASTBinaryOp, ASTExpr, ASTUnaryOp, Span},
     error::{CompileError, CompileResult},
     hir::instructions::{HIRBinaryOp, HIRExpr, HIRUnaryOp, Literal},
     hir::{helpers::fetch_expr_type, symbols::SymbolKind, types::TypeKind},
+    parser::ast::{ASTBinaryOp, ASTExpr, ASTUnaryOp, Span},
 };
 
 use super::SemanticAnalysis;

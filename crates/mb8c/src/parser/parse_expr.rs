@@ -9,8 +9,8 @@ use chumsky::{
 };
 
 use crate::{
-    ast::{ASTBinaryOp, ASTExpr, Span},
     lex::tokens::TokenKind,
+    parser::ast::{ASTBinaryOp, ASTExpr, Span},
 };
 
 #[must_use]

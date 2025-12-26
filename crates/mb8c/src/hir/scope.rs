@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 use crate::{
-    ast::Span,
     error::{CompileError, CompileResult},
     hir::instructions::SymbolId,
+    parser::ast::Span,
 };
 
 #[derive(Debug, Default)]

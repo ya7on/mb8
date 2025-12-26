@@ -1,4 +1,4 @@
-use crate::{ast::ASTProgram, hir::instructions::HIRProgram, pipeline::CompilerPipe};
+use crate::{hir::instructions::HIRProgram, parser::ast::ASTProgram, pipeline::CompilerPipe};
 
 use super::context::SemanticContext;
 

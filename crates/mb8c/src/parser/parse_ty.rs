@@ -1,6 +1,6 @@
 use chumsky::{error::Simple, extra::Err, input::ValueInput, select, span::SimpleSpan, Parser};
 
-use crate::{ast::ASTType, lex::tokens::TokenKind};
+use crate::{lex::tokens::TokenKind, parser::ast::ASTType};
 
 #[must_use]
 pub fn ty_parser<'src, I>() -> impl Parser<'src, I, ASTType, Err<Simple<'src, TokenKind>>> + Clone

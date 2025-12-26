@@ -3,7 +3,7 @@ use chumsky::{
     Parser,
 };
 
-use crate::{ast::ASTProgram, lex::tokens::TokenKind};
+use crate::{lex::tokens::TokenKind, parser::ast::ASTProgram};
 
 use super::{parse_function::function_parser, parse_globals::globals_parser};
 

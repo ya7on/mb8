@@ -1,5 +1,4 @@
 use crate::{
-    ast::ASTFunction,
     error::CompileResult,
     hir::instructions::{HIRFunction, HIRFunctionLocal, HIRFunctionParam, SymbolId},
     hir::{
@@ -7,6 +6,7 @@ use crate::{
         symbols::{Symbol, SymbolKind},
         types::TypeKind,
     },
+    parser::ast::ASTFunction,
 };
 
 use super::SemanticAnalysis;

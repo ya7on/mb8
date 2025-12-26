@@ -4,8 +4,8 @@ use chumsky::{
 };
 
 use crate::{
-    ast::{ASTFunction, ASTStmt, Span},
     lex::tokens::TokenKind,
+    parser::ast::{ASTFunction, ASTStmt, Span},
 };
 
 use super::{parse_stmt::stmt_parser, parse_ty::ty_parser};

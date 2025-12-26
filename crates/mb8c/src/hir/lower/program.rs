@@ -1,11 +1,11 @@
 use crate::{
-    ast::ASTProgram,
     error::CompileResult,
     hir::instructions::{HIRGlobal, HIRProgram},
     hir::{
         helpers::lower_type,
         symbols::{Symbol, SymbolKind},
     },
+    parser::ast::ASTProgram,
 };
 
 use super::SemanticAnalysis;

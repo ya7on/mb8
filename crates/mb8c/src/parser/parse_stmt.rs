@@ -6,8 +6,8 @@ use chumsky::span::SimpleSpan;
 use chumsky::{prelude::recursive, Parser};
 use chumsky::{select, IterParser};
 
-use crate::ast::{ASTStmt, Span};
 use crate::lex::tokens::TokenKind;
+use crate::parser::ast::{ASTStmt, Span};
 
 use super::parse_expr::expr_parser;
 
