@@ -66,6 +66,14 @@
         0x33 @ offset`8
     }
 
+    ; Jump if zero flag is not set to an absolute label
+    JNCR [{ addr: u16 }] => {
+        offset = addr - $ - 2
+        assert(offset <= 127)
+        assert(offset >= -128)
+        0x35 @ offset`8
+    }
+
     ; Clear register value
     ZERO { reg: register } => asm {
         LDI {reg} 0
@@ -177,5 +185,14 @@
             LDI IL {lo}
             LD {dst} [IH:IL]
         }
+    }
+
+    LD { dst: register } [{ hi: register }:{ lo: register } - { offset: u8 }] => asm {
+        LDI R0 {offset}
+        SUB {lo} R0
+        JNCR [no_borrow]
+        DEC {hi}
+        no_borrow:
+        LD {dst} [{hi}:{lo}]
     }
 }

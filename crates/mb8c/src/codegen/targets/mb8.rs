@@ -50,7 +50,7 @@ impl Mb8Codegen {
                         Place::Global { address } => {
                             self.writter.emit(format!("LD R0 [0x{address:X}]"))?;
                         }
-                        Place::StackFrame { offset } | Place::StaticFrame { offset } => {
+                        Place::StaticFrame { offset } => {
                             self.writter.emit(format!("LD R0 [0x{offset:X}]"))?;
                         }
                     }
@@ -65,7 +65,7 @@ impl Mb8Codegen {
                         Place::Global { address } => {
                             self.writter.emit(format!("ST [0x{address:X}] R0"))?;
                         }
-                        Place::StackFrame { offset } | Place::StaticFrame { offset } => {
+                        Place::StaticFrame { offset } => {
                             self.writter.emit(format!("ST [0x{offset:X}] R0"))?;
                         }
                     }
@@ -99,8 +99,7 @@ impl Mb8Codegen {
                     let symbol = self.ctx.lookup(*symbol).ok_or_else(|| todo!())?;
                     let label = symbol.name;
                     for argn in 0..*argc {
-                        self.writter.emit("POP R0")?;
-                        self.writter.emit(format!("ST [0x{argn:X}] R0"))?;
+                        self.writter.emit(format!("POP R{argn}"))?;
                     }
                     self.writter.emit(format!("CALL [{label}]"))?;
                 }
@@ -142,6 +141,14 @@ impl Mb8Codegen {
     pub fn codegen_function(&mut self, function: &IRFunction, is_main: bool) -> CompileResult<()> {
         let symbol = self.ctx.lookup(function.id).ok_or_else(|| todo!())?;
         self.writter.label(symbol.name.clone())?;
+
+        for (index, symbol_id) in function.params.iter().enumerate() {
+            let symbol = self.layout.lookup(*symbol_id).ok_or_else(|| todo!())?;
+            let Place::StaticFrame { offset } = symbol else {
+                unimplemented!()
+            };
+            self.writter.emit(format!("ST [0x{offset:X}] R{index}"))?;
+        }
 
         for bb in &function.basic_blocks {
             self.codegen_basic_block(bb, is_main)?;

@@ -24,7 +24,7 @@ impl CompilerPipe for LayoutPass {
         let mut pass = LayoutPass {
             ctx: ctx.clone(),
             layout: Layout::default(),
-            offset: 10,
+            offset: 0,
         };
 
         pass.pass_program(program).map_err(|err| vec![err])?;
@@ -75,7 +75,6 @@ impl LayoutPass {
     /// # Errors
     /// Returns an error when parameter symbols or their types cannot be resolved.
     pub fn pass_params(&mut self, params: &[SymbolId]) -> CompileResult<()> {
-        let mut offset = 0;
         for symbol_id in params {
             let symbol = self.ctx.lookup(*symbol_id).ok_or_else(|| todo!())?;
             let ty = self
@@ -86,9 +85,13 @@ impl LayoutPass {
             let SymbolKind::Parameter = symbol.kind else {
                 unimplemented!()
             };
-            self.layout
-                .allocate(*symbol_id, Place::StackFrame { offset });
-            offset += ty.width() as usize;
+            self.layout.allocate(
+                *symbol_id,
+                Place::StaticFrame {
+                    offset: self.offset,
+                },
+            );
+            self.offset += ty.width() as usize;
         }
 
         Ok(())
@@ -111,7 +114,7 @@ impl LayoutPass {
             };
             self.layout.allocate(
                 *symbol_id,
-                Place::StackFrame {
+                Place::StaticFrame {
                     offset: self.offset,
                 },
             );
