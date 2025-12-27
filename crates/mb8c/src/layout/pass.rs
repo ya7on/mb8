@@ -90,7 +90,7 @@ impl LayoutPass {
                 .type_table
                 .lookup(symbol.ty)
                 .ok_or_else(|| todo!())?;
-            let SymbolKind::Parameter = symbol.kind else {
+            let SymbolKind::Local = symbol.kind else {
                 unimplemented!()
             };
             self.layout.allocate(

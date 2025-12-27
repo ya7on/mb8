@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::context::{symbols::Symbol, SymbolId};
+use crate::context::SymbolId;
 
 pub mod globals;
 pub mod pass;
