@@ -2,7 +2,7 @@ use crate::{
     codegen::writter::ProgramWriter,
     context::CompileContext,
     error::{CompileError, CompileResult},
-    ir::instructions::{IRFunction, IRInstruction, IRProgram},
+    ir::instructions::{BasicBlockTerminator, IRFunction, IRInstruction, IRProgram},
     layout::{Layout, Place},
     pipeline::CompilerPipe,
 };
@@ -34,12 +34,13 @@ impl Mb8Codegen {
     ///
     /// # Errors
     /// Returns an error if symbol lookups fail or the writer cannot emit output.
-    pub fn codegen_function(&mut self, function: &IRFunction) -> CompileResult<()> {
+    pub fn codegen_function(&mut self, function: &IRFunction, is_main: bool) -> CompileResult<()> {
         let symbol = self.ctx.lookup(function.id).ok_or_else(|| todo!())?;
         self.writter.label(symbol.name.to_string())?;
 
         for bb in &function.basic_blocks {
-            self.writter.sublabel(format!("BB{}", bb.id.0))?;
+            self.writter
+                .sublabel(ProgramWriter::basic_block_label(bb.id.0))?;
 
             for inst in &bb.instructions {
                 match inst {
@@ -54,7 +55,7 @@ impl Mb8Codegen {
                                 self.writter.emit(format!("LD R0 [0x{address:X}]"))?;
                             }
                             Place::StackFrame { offset } => {
-                                self.writter.emit(format!("LD R0 [FPH:FPL + {offset}]"))?;
+                                self.writter.emit(format!("LD R0 [0x{offset:X}]"))?;
                             }
                             Place::StaticFrame { offset } => {
                                 self.writter.emit(format!("LD R0 [0x{offset:X}]"))?;
@@ -69,13 +70,13 @@ impl Mb8Codegen {
                         let place = self.layout.lookup(*symbol).ok_or_else(|| todo!())?;
                         match place {
                             Place::Global { address } => {
-                                self.writter.emit(format!("LD R0 [0x{address:X}]"))?;
+                                self.writter.emit(format!("ST [0x{address:X}] R0"))?;
                             }
                             Place::StackFrame { offset } => {
-                                self.writter.emit(format!("LD R0 [FPH:FPL + {offset}]"))?;
+                                self.writter.emit(format!("ST [0x{offset:X}] R0"))?;
                             }
                             Place::StaticFrame { offset } => {
-                                self.writter.emit(format!("LD R0 [0x{offset:X}]"))?;
+                                self.writter.emit(format!("ST [0x{offset:X}] R0"))?;
                             }
                         }
                     }
@@ -111,6 +112,31 @@ impl Mb8Codegen {
                     }
                 }
             }
+
+            match bb.terminator {
+                BasicBlockTerminator::Branch {
+                    then_branch,
+                    else_branch,
+                } => {
+                    let then_label = ProgramWriter::basic_block_label(then_branch.0);
+                    let else_label = ProgramWriter::basic_block_label(else_branch.0);
+                    self.writter.emit("POP R0")?;
+                    self.writter.emit(format!("JZ R0 [{else_label}]"))?;
+                    self.writter.emit(format!("JMP [{then_label}]"))?;
+                }
+                BasicBlockTerminator::Jmp { next } => {
+                    let label = ProgramWriter::basic_block_label(next.0);
+                    self.writter.emit(format!("JMP [{label}]"))?;
+                }
+                BasicBlockTerminator::Ret { void: _ } => {
+                    if is_main {
+                        self.writter.emit("LDI R0 0x0F")?;
+                        self.writter.emit("CALL [0xE500]")?;
+                    } else {
+                        self.writter.emit("RET")?;
+                    }
+                }
+            }
         }
 
         Ok(())
@@ -124,7 +150,7 @@ impl Mb8Codegen {
         for function in &ir.functions {
             let symbol = self.ctx.lookup(function.id).ok_or_else(|| todo!())?;
             if symbol.name == "main" {
-                self.codegen_function(function)?;
+                self.codegen_function(function, true)?;
                 break;
             }
         }
@@ -133,7 +159,7 @@ impl Mb8Codegen {
             if symbol.name == "main" {
                 continue;
             }
-            self.codegen_function(function)?;
+            self.codegen_function(function, false)?;
         }
         Ok(self.writter.finish())
     }

@@ -56,15 +56,9 @@ impl ProgramWriter {
     }
 
     #[allow(clippy::needless_pass_by_value)]
-    pub fn basic_block_label(
-        function_name: impl ToString,
-        basic_block_id: impl ToString,
-    ) -> String {
-        format!(
-            "{}_{}",
-            function_name.to_string(),
-            basic_block_id.to_string()
-        )
+    #[must_use]
+    pub fn basic_block_label(basic_block_id: usize) -> String {
+        format!("BB{basic_block_id}")
     }
 
     #[must_use]
