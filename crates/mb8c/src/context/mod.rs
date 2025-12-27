@@ -35,7 +35,7 @@ impl CompileContext {
         })
     }
 
-    pub fn lookup(&self, symbol: SymbolId) -> Option<Symbol> {
+    #[must_use] pub fn lookup(&self, symbol: SymbolId) -> Option<Symbol> {
         self.symbol_table.lookup(symbol)
     }
 }

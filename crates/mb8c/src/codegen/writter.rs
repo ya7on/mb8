@@ -55,7 +55,7 @@ impl ProgramWriter {
         )
     }
 
-    pub fn finish(&self) -> String {
+    #[must_use] pub fn finish(&self) -> String {
         self.result.clone()
     }
 }

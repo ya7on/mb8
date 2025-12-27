@@ -33,7 +33,7 @@ impl Mb8Codegen {
     pub fn codegen(&mut self, ir: &IRProgram) -> CompileResult<String> {
         for function in &ir.functions {
             let symbol = self.ctx.lookup(function.id).ok_or_else(|| todo!())?;
-            self.writter.label(format!("{}", symbol.name))?;
+            self.writter.label(symbol.name.to_string())?;
 
             for bb in &function.basic_blocks {
                 self.writter.sublabel(format!("BB{}", bb.id.0))?;
@@ -41,7 +41,7 @@ impl Mb8Codegen {
                 for inst in &bb.instructions {
                     match inst {
                         IRInstruction::LoadImm { value, width: _ } => {
-                            self.writter.emit(format!("LDI R0 {}", value))?;
+                            self.writter.emit(format!("LDI R0 {value}"))?;
                             self.writter.emit("PUSH R0")?;
                         }
                         IRInstruction::PushVar { symbol, width: _ } => {

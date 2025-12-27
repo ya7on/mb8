@@ -27,7 +27,7 @@ impl CompilerPipe for LayoutPass {
             offset: 0,
         };
 
-        pass.pass_program(&program).map_err(|err| vec![err])?;
+        pass.pass_program(program).map_err(|err| vec![err])?;
 
         Ok((program.clone(), ctx.clone(), pass.layout))
     }

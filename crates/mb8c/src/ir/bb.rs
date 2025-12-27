@@ -26,7 +26,7 @@ impl BasicBlockTable {
         self.break_stack.pop()
     }
 
-    pub fn top_break(&self) -> Option<BasicBlockId> {
+    #[must_use] pub fn top_break(&self) -> Option<BasicBlockId> {
         self.break_stack.last().copied()
     }
 
@@ -38,7 +38,7 @@ impl BasicBlockTable {
         self.continue_stack.pop()
     }
 
-    pub fn top_continue(&self) -> Option<BasicBlockId> {
+    #[must_use] pub fn top_continue(&self) -> Option<BasicBlockId> {
         self.continue_stack.last().copied()
     }
 }

@@ -40,7 +40,7 @@ impl IRLowerer {
             for instruction in instructions {
                 builder.emit(instruction);
             }
-        };
+        }
         result.push(builder.build(BasicBlockTerminator::Ret {
             void: value.is_none(),
         }));

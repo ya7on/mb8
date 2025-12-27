@@ -92,7 +92,7 @@ impl IRLowerer {
     ) -> CompileResult<Vec<IRInstruction>> {
         let mut instructions = Vec::new();
 
-        for arg in args.iter() {
+        for arg in args {
             instructions.extend(self.lower_expr(arg)?);
         }
 
