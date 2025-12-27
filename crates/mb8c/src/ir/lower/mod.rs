@@ -19,12 +19,12 @@ pub struct IRLowerer {
 
 impl CompilerPipe for IRLowerer {
     type Prev = (HIRProgram, CompileContext);
-    type Next = IRProgram;
+    type Next = (IRProgram, CompileContext);
 
     fn execute(prev: &Self::Prev) -> CompileResult<Self::Next, Vec<CompileError>> {
         let (hir, ctx) = prev;
-        let mut semantic = IRLowerer { ctx: ctx.clone() };
-        let ir = semantic.lower_program(hir).map_err(|err| vec![err])?;
-        Ok(ir)
+        let mut lower = IRLowerer { ctx: ctx.clone() };
+        let ir = lower.lower_program(hir).map_err(|err| vec![err])?;
+        Ok((ir, lower.ctx))
     }
 }

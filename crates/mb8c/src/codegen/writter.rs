@@ -1,0 +1,61 @@
+use std::fmt::Write;
+
+use crate::error::{CompileError, CompileResult};
+
+#[derive(Debug)]
+pub struct ProgramWriter {
+    result: String,
+}
+
+impl Default for ProgramWriter {
+    fn default() -> Self {
+        Self {
+            result: r#"#include "../asm/cpu.asm"
+#include "../asm/ext.asm"
+
+"#
+            .to_string(),
+        }
+    }
+}
+
+impl ProgramWriter {
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn emit(&mut self, value: impl ToString) -> CompileResult<()> {
+        writeln!(self.result, "\t{}", value.to_string()).map_err(|_| CompileError::InternalError {
+            message: "Codegen error".to_string(),
+        })
+    }
+
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn label(&mut self, label: impl ToString) -> CompileResult<()> {
+        writeln!(self.result, "{}:", label.to_string()).map_err(|_| CompileError::InternalError {
+            message: "Codegen error".to_string(),
+        })
+    }
+
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn sublabel(&mut self, sublabel: impl ToString) -> CompileResult<()> {
+        writeln!(self.result, ".{}:", sublabel.to_string()).map_err(|_| {
+            CompileError::InternalError {
+                message: "Codegen error".to_string(),
+            }
+        })
+    }
+
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn basic_block_label(
+        function_name: impl ToString,
+        basic_block_id: impl ToString,
+    ) -> String {
+        format!(
+            "{}_{}",
+            function_name.to_string(),
+            basic_block_id.to_string()
+        )
+    }
+
+    pub fn finish(&self) -> String {
+        self.result.clone()
+    }
+}

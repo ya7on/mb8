@@ -1,13 +1,13 @@
-// use codegen::targets::Codegen;
+use codegen::targets::mb8::Mb8Codegen;
 use error::CompileError;
 use hir::lower::HIRLowerer;
 use ir::lower::IRLowerer;
-// use ir::lower::Lower;
 use lex::tokens::TokenKind;
 use parser::Parser;
 use pipeline::CompilePipeline;
 
 // pub mod codegen;
+pub mod codegen;
 pub mod config;
 pub mod context;
 pub mod error;
@@ -29,10 +29,10 @@ pub fn compile(input: &str) -> error::CompileResult<(), Vec<CompileError>> {
         .and_next::<Parser>()?
         .and_next::<HIRLowerer>()?
         .and_next::<IRLowerer>()?
-        // .and_next::<Codegen>()?
+        .and_next::<Mb8Codegen>()?
         .finish()?;
 
-    println!("{result:?}");
+    println!("{result}");
 
     Ok(())
 }

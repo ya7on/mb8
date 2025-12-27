@@ -2,9 +2,8 @@ use crate::{
     context::{
         symbols::{Symbol, SymbolKind},
         types::TypeKind,
-        SymbolId,
     },
-    error::CompileResult,
+    error::{CompileError, CompileResult},
     hir::{helpers::lower_type, instructions::HIRFunction},
     parser::ast::ASTFunction,
 };
@@ -45,6 +44,13 @@ impl HIRLowerer {
     /// # Errors
     /// Returns error if there are semantic issues
     pub fn analyze_function(&mut self, function: &ASTFunction) -> CompileResult<HIRFunction> {
+        let id = self
+            .scope
+            .lookup(&function.name)
+            .ok_or_else(|| CompileError::InternalError {
+                message: "Cannot find function".to_string(),
+            })?;
+
         let scope = self.scope.enter();
 
         let mut params = Vec::with_capacity(function.params.len());
@@ -68,7 +74,7 @@ impl HIRLowerer {
         let body = self.analyze_stmt(&function.body, return_type_id)?;
 
         let hir = HIRFunction {
-            id: SymbolId(1), // TODO
+            id,
             params,
             locals,
             body: vec![body],
