@@ -40,13 +40,46 @@ impl Mb8Peephole {
         }
     }
 
+    /// Remove a matching trailing `PUSH`/`POP` pair.
+    ///
+    /// # Errors
+    /// Currently infallible but keeps the result type for future validation steps.
+    pub fn use_mov_instead_of_push_pop(&mut self) -> CompileResult<bool> {
+        if self.result.len() < 2 {
+            return Ok(false);
+        }
+
+        let last = self.result.last().cloned();
+        let prev = self.result.get(self.result.len() - 2).cloned();
+
+        match (prev, last) {
+            (
+                Some(Mb8Asm::Push {
+                    register: push_register,
+                }),
+                Some(Mb8Asm::Pop {
+                    register: pop_register,
+                }),
+            ) if push_register != pop_register => {
+                self.result.pop();
+                self.result.pop();
+                self.result.push(Mb8Asm::Mov {
+                    dst: pop_register,
+                    src: push_register,
+                });
+                Ok(true)
+            }
+            _ => Ok(false),
+        }
+    }
+
     /// Apply peephole optimizations repeatedly until no further change occurs.
     ///
     /// # Errors
     /// Currently infallible but keeps the result type for future validation steps.
     pub fn check_output(&mut self) -> CompileResult<()> {
         loop {
-            let updated = self.remove_push_pop()?;
+            let updated = self.remove_push_pop()? || self.use_mov_instead_of_push_pop()?;
             if !updated {
                 break;
             }

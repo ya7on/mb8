@@ -137,17 +137,22 @@ impl IRLowerer {
         &mut self,
         condition: &HIRExpr,
         body: &HIRStmt,
-        mut builder: BasicBlockBuilder,
+        builder: BasicBlockBuilder,
         bbs: &mut BasicBlockTable,
     ) -> CompileResult<(Option<BasicBlockBuilder>, Vec<BasicBlock>)> {
         let mut result = Vec::new();
 
+        let mut cond_block = bbs.bb();
         let body_block = bbs.bb();
         let exit_block = bbs.bb();
 
+        result.push(builder.build(BasicBlockTerminator::Jmp {
+            next: cond_block.id,
+        }));
+
         let instructions = self.lower_expr(condition)?;
         for instruction in instructions {
-            builder.emit(instruction);
+            cond_block.emit(instruction);
         }
 
         let (body_block, body_blocks) = self.lower_stmt(body, body_block, bbs)?;
@@ -156,11 +161,10 @@ impl IRLowerer {
             return Ok((None, result));
         };
         let body_block_id = body_block.id();
-        result.push(body_block.build(BasicBlockTerminator::Branch {
-            then_branch: body_block_id,
-            else_branch: exit_block.id(),
+        result.push(body_block.build(BasicBlockTerminator::Jmp {
+            next: cond_block.id(),
         }));
-        result.push(builder.build(BasicBlockTerminator::Branch {
+        result.push(cond_block.build(BasicBlockTerminator::Branch {
             then_branch: body_block_id,
             else_branch: exit_block.id(),
         }));
