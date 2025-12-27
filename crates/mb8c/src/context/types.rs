@@ -8,6 +8,7 @@ pub enum TypeKind {
     Void,
     Bool,
     Unsigned8,
+    Unsigned16,
     Function {
         params: Vec<TypeId>,
         ret: TypeId,
@@ -20,6 +21,7 @@ impl TypeKind {
         match self {
             TypeKind::Void | TypeKind::Function { .. } => 0,
             TypeKind::Bool | TypeKind::Unsigned8 => 1,
+            TypeKind::Unsigned16 => 2,
         }
     }
 }

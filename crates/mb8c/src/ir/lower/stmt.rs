@@ -1,7 +1,10 @@
 use crate::{
     context::{SymbolId, TypeId},
     error::CompileResult,
-    hir::instructions::{HIRExpr, HIRStmt},
+    hir::{
+        helpers::fetch_expr_type,
+        instructions::{HIRExpr, HIRStmt},
+    },
     ir::{
         bb::{BasicBlockBuilder, BasicBlockTable},
         instructions::{BasicBlock, BasicBlockTerminator, IRInstruction},
@@ -43,15 +46,17 @@ impl IRLowerer {
         mut builder: BasicBlockBuilder,
     ) -> CompileResult<(Option<BasicBlockBuilder>, Vec<BasicBlock>)> {
         let mut result = Vec::new();
+        let mut width = 0;
         if let Some(expr) = value {
             let instructions = self.lower_expr(expr)?;
+            let type_id = fetch_expr_type(expr);
+            let type_kind = self.ctx.type_table.lookup(type_id).ok_or_else(|| todo!())?;
+            width = type_kind.width() as usize;
             for instruction in instructions {
                 builder.emit(instruction);
             }
         }
-        result.push(builder.build(BasicBlockTerminator::Ret {
-            void: value.is_none(),
-        }));
+        result.push(builder.build(BasicBlockTerminator::Ret { width }));
         Ok((None, result))
     }
 

@@ -25,9 +25,12 @@ pub enum TokenKind {
     #[regex(r"[a-zA-Z_]+", |lex| lex.slice().to_string())]
     Ident(String),
     /// Number (e.g. 123)
-    #[regex("[0-9]+", |lex| lex.slice().parse::<u16>().ok())]
-    #[regex(r"0[xX][0-9a-fA-F]+", |lex| u16::from_str_radix(&lex.slice()[2..], 16).ok())]
-    Number(u16),
+    #[regex("[0-9]+u8", |lex| lex.slice()[..lex.slice().len()-2].parse::<u8>().ok())]
+    #[regex(r"0[xX][0-9a-fA-F]+u8", |lex| u8::from_str_radix(&lex.slice()[2..lex.slice().len()-2], 16).ok())]
+    LiteralU8(u8),
+    #[regex("[0-9]+u16", |lex| lex.slice()[..lex.slice().len()-3].parse::<u16>().ok())]
+    #[regex(r"0[xX][0-9a-fA-F]+u16", |lex| u16::from_str_radix(&lex.slice()[2..lex.slice().len()-3], 16).ok())]
+    LiteralU16(u16),
 
     /* Keywords */
     /// Void
@@ -36,6 +39,9 @@ pub enum TokenKind {
     /// 8-bit unsigned integer
     #[token("u8")]
     KeywordU8,
+    /// 16-bit unsigned integer
+    #[token("u16")]
+    KeywordU16,
     /// function
     #[token("function")]
     KeywordFunction,
@@ -136,14 +142,14 @@ mod tests {
         // ident
         name AbCdEf u_n_d_e_r_l_i_n_e
         // numer
-        1 1337 228
+        1u8 1337u16
         // hex
-        0x1 0x1337 0x228 0xFFFF
+        0x1u8 0x1337u16 0x228u16 0xFFFFu16
         // negative
-        -111
+        -111u8
 
         // types
-        void u8
+        void u8 u16
         // keywords
         function var begin end
         if then
@@ -162,17 +168,17 @@ mod tests {
                 TokenKind::Ident("name".to_string()),
                 TokenKind::Ident("AbCdEf".to_string()),
                 TokenKind::Ident("u_n_d_e_r_l_i_n_e".to_string()),
-                TokenKind::Number(1),
-                TokenKind::Number(1337),
-                TokenKind::Number(228),
-                TokenKind::Number(0x1),
-                TokenKind::Number(0x1337),
-                TokenKind::Number(0x228),
-                TokenKind::Number(0xFFFF),
+                TokenKind::LiteralU8(1),
+                TokenKind::LiteralU16(1337),
+                TokenKind::LiteralU8(0x1),
+                TokenKind::LiteralU16(0x1337),
+                TokenKind::LiteralU16(0x228),
+                TokenKind::LiteralU16(0xFFFF),
                 TokenKind::OperatorMinus,
-                TokenKind::Number(111),
+                TokenKind::LiteralU8(111),
                 TokenKind::KeywordVoid,
                 TokenKind::KeywordU8,
+                TokenKind::KeywordU16,
                 TokenKind::KeywordFunction,
                 TokenKind::KeywordVar,
                 TokenKind::KeywordBegin,

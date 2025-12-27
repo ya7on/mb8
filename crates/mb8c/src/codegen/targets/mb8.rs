@@ -44,118 +44,345 @@ impl Mb8Codegen {
 
         for inst in &bb.instructions {
             match inst {
-                IRInstruction::LoadImm { value, width: _ } => {
-                    self.result.push(Mb8Asm::Ldi {
-                        register: "R0".to_string(),
-                        value: *value,
-                    });
-                    self.result.push(Mb8Asm::Push {
-                        register: "R0".to_string(),
-                    });
-                }
-                IRInstruction::PushVar { symbol, width: _ } => {
-                    let place = self.layout.lookup(*symbol).ok_or_else(|| todo!())?;
-                    match place {
-                        Place::Global { address } => {
-                            self.result.push(Mb8Asm::Ld {
-                                register: "R0".to_string(),
-                                address: *address,
-                            });
-                        }
-                        Place::StaticFrame { offset } => {
-                            self.result.push(Mb8Asm::Ld {
-                                register: "R0".to_string(),
-                                address: *offset,
-                            });
-                        }
+                IRInstruction::LoadImm { value, width } => match width {
+                    1 => {
+                        self.result.push(Mb8Asm::Ldi {
+                            register: "R0".to_string(),
+                            value: *value as u8,
+                        });
+                        self.result.push(Mb8Asm::Push {
+                            register: "R0".to_string(),
+                        });
                     }
-
-                    self.result.push(Mb8Asm::Push {
-                        register: "R0".to_string(),
-                    });
-                }
-                IRInstruction::StoreVar { symbol, width: _ } => {
-                    self.result.push(Mb8Asm::Pop {
-                        register: "R0".to_string(),
-                    });
-
+                    2 => {
+                        self.result.push(Mb8Asm::Ldi {
+                            register: "R0".to_string(),
+                            value: (*value >> 8) as u8,
+                        });
+                        self.result.push(Mb8Asm::Ldi {
+                            register: "R1".to_string(),
+                            value: (*value & 0xFF) as u8,
+                        });
+                        self.result.push(Mb8Asm::Push {
+                            register: "R0".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Push {
+                            register: "R1".to_string(),
+                        });
+                    }
+                    _ => {
+                        unimplemented!()
+                    }
+                },
+                IRInstruction::PushVar { symbol, width } => {
                     let place = self.layout.lookup(*symbol).ok_or_else(|| todo!())?;
-                    match place {
-                        Place::Global { address } => {
-                            self.result.push(Mb8Asm::St {
-                                address: *address,
+                    match width {
+                        1 => {
+                            match place {
+                                Place::Global { address } => {
+                                    self.result.push(Mb8Asm::Ld {
+                                        register: "R0".to_string(),
+                                        address: *address,
+                                    });
+                                }
+                                Place::StaticFrame { offset } => {
+                                    self.result.push(Mb8Asm::Ld {
+                                        register: "R0".to_string(),
+                                        address: *offset,
+                                    });
+                                }
+                            }
+
+                            self.result.push(Mb8Asm::Push {
                                 register: "R0".to_string(),
                             });
                         }
-                        Place::StaticFrame { offset } => {
-                            self.result.push(Mb8Asm::St {
-                                address: *offset,
+                        2 => {
+                            match place {
+                                Place::Global { address } => {
+                                    self.result.push(Mb8Asm::Ld {
+                                        register: "R0".to_string(),
+                                        address: *address,
+                                    });
+                                    self.result.push(Mb8Asm::Ld {
+                                        register: "R1".to_string(),
+                                        address: *address + 1,
+                                    });
+                                }
+                                Place::StaticFrame { offset } => {
+                                    self.result.push(Mb8Asm::Ld {
+                                        register: "R0".to_string(),
+                                        address: *offset,
+                                    });
+                                    self.result.push(Mb8Asm::Ld {
+                                        register: "R1".to_string(),
+                                        address: *offset + 1,
+                                    });
+                                }
+                            }
+
+                            self.result.push(Mb8Asm::Push {
                                 register: "R0".to_string(),
                             });
+                            self.result.push(Mb8Asm::Push {
+                                register: "R1".to_string(),
+                            });
                         }
+                        _ => unimplemented!(),
                     }
                 }
-                IRInstruction::Add { width: _ } => {
-                    self.result.push(Mb8Asm::Pop {
-                        register: "R0".to_string(),
-                    });
-                    self.result.push(Mb8Asm::Pop {
-                        register: "R1".to_string(),
-                    });
-                    self.result.push(Mb8Asm::Add {
-                        dst: "R0".to_string(),
-                        src: "R1".to_string(),
-                    });
-                    self.result.push(Mb8Asm::Push {
-                        register: "R0".to_string(),
-                    });
+                IRInstruction::StoreVar { symbol, width } => {
+                    let place = self.layout.lookup(*symbol).ok_or_else(|| todo!())?;
+                    match width {
+                        1 => {
+                            self.result.push(Mb8Asm::Pop {
+                                register: "R0".to_string(),
+                            });
+
+                            match place {
+                                Place::Global { address } => {
+                                    self.result.push(Mb8Asm::St {
+                                        address: *address,
+                                        register: "R0".to_string(),
+                                    });
+                                }
+                                Place::StaticFrame { offset } => {
+                                    self.result.push(Mb8Asm::St {
+                                        address: *offset,
+                                        register: "R0".to_string(),
+                                    });
+                                }
+                            }
+                        }
+                        2 => {
+                            self.result.push(Mb8Asm::Pop {
+                                register: "R1".to_string(),
+                            });
+                            self.result.push(Mb8Asm::Pop {
+                                register: "R0".to_string(),
+                            });
+
+                            match place {
+                                Place::Global { address } => {
+                                    self.result.push(Mb8Asm::St {
+                                        address: *address,
+                                        register: "R0".to_string(),
+                                    });
+                                    self.result.push(Mb8Asm::St {
+                                        address: *address + 1,
+                                        register: "R1".to_string(),
+                                    });
+                                }
+                                Place::StaticFrame { offset } => {
+                                    self.result.push(Mb8Asm::St {
+                                        address: *offset,
+                                        register: "R0".to_string(),
+                                    });
+                                    self.result.push(Mb8Asm::St {
+                                        address: *offset + 1,
+                                        register: "R1".to_string(),
+                                    });
+                                }
+                            }
+                        }
+                        _ => unimplemented!(),
+                    }
                 }
-                IRInstruction::Sub { width: _ } => {
-                    self.result.push(Mb8Asm::Pop {
-                        register: "R0".to_string(),
-                    });
-                    self.result.push(Mb8Asm::Pop {
-                        register: "R1".to_string(),
-                    });
-                    self.result.push(Mb8Asm::Sub {
-                        dst: "R0".to_string(),
-                        src: "R1".to_string(),
-                    });
-                    self.result.push(Mb8Asm::Push {
-                        register: "R0".to_string(),
-                    });
-                }
+                IRInstruction::Add { width } => match width {
+                    1 => {
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R0".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R1".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Add {
+                            dst: "R0".to_string(),
+                            src: "R1".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Push {
+                            register: "R0".to_string(),
+                        });
+                    }
+                    2 => {
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R1".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R0".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R4".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R3".to_string(),
+                        });
+
+                        self.result.push(Mb8Asm::Add {
+                            dst: "R1".to_string(),
+                            src: "R4".to_string(),
+                        });
+                        let sublabel_id = self.result.len();
+                        self.result
+                            .push(Mb8Asm::Jncr(format!(".no_carry_{sublabel_id}")));
+                        self.result.push(Mb8Asm::Inc {
+                            register: "R0".to_string(),
+                        });
+                        self.result
+                            .push(Mb8Asm::Sublabel(format!("no_carry_{sublabel_id}")));
+                        self.result.push(Mb8Asm::Add {
+                            dst: "R0".to_string(),
+                            src: "R3".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Push {
+                            register: "R0".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Push {
+                            register: "R1".to_string(),
+                        });
+                    }
+                    _ => unimplemented!(),
+                },
+                IRInstruction::Sub { width } => match width {
+                    1 => {
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R0".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R1".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Sub {
+                            dst: "R0".to_string(),
+                            src: "R1".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Push {
+                            register: "R0".to_string(),
+                        });
+                    }
+                    2 => {
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R1".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R0".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R4".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R3".to_string(),
+                        });
+
+                        self.result.push(Mb8Asm::Sub {
+                            dst: "R1".to_string(),
+                            src: "R4".to_string(),
+                        });
+                        let sublabel_id = self.result.len();
+                        self.result
+                            .push(Mb8Asm::Jncr(format!(".no_carry_{sublabel_id}")));
+                        self.result.push(Mb8Asm::Dec {
+                            register: "R0".to_string(),
+                        });
+                        self.result
+                            .push(Mb8Asm::Sublabel(format!("no_carry_{sublabel_id}")));
+                        self.result.push(Mb8Asm::Sub {
+                            dst: "R0".to_string(),
+                            src: "R3".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Push {
+                            register: "R0".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Push {
+                            register: "R1".to_string(),
+                        });
+                    }
+                    _ => unimplemented!(),
+                },
                 IRInstruction::Mul { width: _ } => {
-                    self.result.push(Mb8Asm::Pop {
-                        register: "R0".to_string(),
-                    });
-                    self.result.push(Mb8Asm::Pop {
-                        register: "R1".to_string(),
-                    });
-                    self.result.push(Mb8Asm::Mul {
-                        dst: "R0".to_string(),
-                        src: "R1".to_string(),
-                    });
-                    self.result.push(Mb8Asm::Push {
-                        register: "R0".to_string(),
-                    });
+                    todo!()
                 }
                 IRInstruction::Div { width: _ } => {
-                    self.result.push(Mb8Asm::Pop {
-                        register: "R0".to_string(),
-                    });
-                    self.result.push(Mb8Asm::Pop {
-                        register: "R1".to_string(),
-                    });
-                    self.result.push(Mb8Asm::Div {
-                        dst: "R0".to_string(),
-                        src: "R1".to_string(),
-                    });
-                    self.result.push(Mb8Asm::Push {
-                        register: "R0".to_string(),
-                    });
+                    todo!()
                 }
-                IRInstruction::Eq { width: _ } | IRInstruction::Neg { width: _ } => {}
+                IRInstruction::Eq { width } => match width {
+                    1 => {
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R1".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R0".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Cmp {
+                            dst: "R0".to_string(),
+                            src: "R1".to_string(),
+                        });
+                        let sublabel_id = self.result.len();
+                        self.result.push(Mb8Asm::Ldi {
+                            register: "R0".to_string(),
+                            value: 1,
+                        });
+                        self.result
+                            .push(Mb8Asm::Jnzr(format!(".not_equal_{sublabel_id}")));
+                        self.result.push(Mb8Asm::Ldi {
+                            register: "R0".to_string(),
+                            value: 0,
+                        });
+                        self.result
+                            .push(Mb8Asm::Sublabel(format!("not_equal_{sublabel_id}")));
+
+                        self.result.push(Mb8Asm::Push {
+                            register: "R0".to_string(),
+                        });
+                    }
+                    2 => {
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R1".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R0".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R4".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R3".to_string(),
+                        });
+                        let sublabel_id = self.result.len();
+                        self.result.push(Mb8Asm::Cmp {
+                            dst: "R0".to_string(),
+                            src: "R3".to_string(),
+                        });
+                        self.result
+                            .push(Mb8Asm::Jnzr(format!(".not_equal_{sublabel_id}")));
+                        self.result.push(Mb8Asm::Cmp {
+                            dst: "R1".to_string(),
+                            src: "R4".to_string(),
+                        });
+                        self.result
+                            .push(Mb8Asm::Jnzr(format!(".not_equal_{sublabel_id}")));
+                        self.result.push(Mb8Asm::Ldi {
+                            register: "R0".to_string(),
+                            value: 0,
+                        });
+                        self.result
+                            .push(Mb8Asm::Jmp(format!(".eq_end_{sublabel_id}")));
+                        self.result
+                            .push(Mb8Asm::Sublabel(format!("not_equal_{sublabel_id}")));
+                        self.result.push(Mb8Asm::Ldi {
+                            register: "R0".to_string(),
+                            value: 1,
+                        });
+                        self.result
+                            .push(Mb8Asm::Sublabel(format!("eq_end_{sublabel_id}")));
+                        self.result.push(Mb8Asm::Push {
+                            register: "R0".to_string(),
+                        });
+                    }
+                    _ => unimplemented!(),
+                },
+                IRInstruction::Neg { width: _ } => {
+                    todo!()
+                }
                 IRInstruction::Call { symbol, argc } => {
                     let symbol = self.ctx.lookup(*symbol).ok_or_else(|| todo!())?;
                     let type_kind = self
@@ -175,10 +402,21 @@ impl Mb8Codegen {
                     let ret_type_kind = self.ctx.type_table.lookup(*ret).ok_or_else(|| todo!())?;
                     match ret_type_kind {
                         TypeKind::Void => {}
-                        _ => {
+                        TypeKind::Unsigned8 | TypeKind::Bool => {
                             self.result.push(Mb8Asm::Push {
                                 register: "R0".to_string(),
                             });
+                        }
+                        TypeKind::Unsigned16 => {
+                            self.result.push(Mb8Asm::Push {
+                                register: "R0".to_string(),
+                            });
+                            self.result.push(Mb8Asm::Push {
+                                register: "R1".to_string(),
+                            });
+                        }
+                        TypeKind::Function { .. } => {
+                            unimplemented!()
                         }
                     }
                 }
@@ -193,15 +431,23 @@ impl Mb8Codegen {
                 self.result.push(Mb8Asm::Pop {
                     register: "R0".to_string(),
                 });
+                self.result.push(Mb8Asm::Ldi {
+                    register: "R1".to_string(),
+                    value: 0,
+                });
+                self.result.push(Mb8Asm::Cmp {
+                    dst: "R0".to_string(),
+                    src: "R1".to_string(),
+                });
                 self.result
-                    .push(Mb8Asm::Jzr(format!("BB{}", else_branch.0)));
+                    .push(Mb8Asm::Jnzr(format!(".BB{}", else_branch.0)));
                 self.result
-                    .push(Mb8Asm::Jmp(format!("BB{}", then_branch.0)));
+                    .push(Mb8Asm::Jmp(format!(".BB{}", then_branch.0)));
             }
             BasicBlockTerminator::Jmp { next } => {
-                self.result.push(Mb8Asm::Jmp(format!("BB{}", next.0)));
+                self.result.push(Mb8Asm::Jmp(format!(".BB{}", next.0)));
             }
-            BasicBlockTerminator::Ret { void } => {
+            BasicBlockTerminator::Ret { width } => {
                 if is_main {
                     // SYS_EXIT
                     self.result.push(Mb8Asm::Ldi {
@@ -210,10 +456,22 @@ impl Mb8Codegen {
                     });
                     self.result.push(Mb8Asm::Call("0xE500".to_string()));
                 } else {
-                    if !void {
-                        self.result.push(Mb8Asm::Pop {
-                            register: "R0".to_string(),
-                        });
+                    match width {
+                        0 => {}
+                        1 => {
+                            self.result.push(Mb8Asm::Pop {
+                                register: "R0".to_string(),
+                            });
+                        }
+                        2 => {
+                            self.result.push(Mb8Asm::Pop {
+                                register: "R1".to_string(),
+                            });
+                            self.result.push(Mb8Asm::Pop {
+                                register: "R0".to_string(),
+                            });
+                        }
+                        _ => unimplemented!(),
                     }
 
                     self.result.push(Mb8Asm::Ret);
