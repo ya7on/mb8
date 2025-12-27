@@ -11,7 +11,7 @@ use super::{Layout, Place};
 pub struct LayoutPass {
     ctx: CompileContext,
     layout: Layout,
-    offset: usize,
+    offset: u16,
 }
 
 impl CompilerPipe for LayoutPass {
@@ -59,12 +59,7 @@ impl LayoutPass {
             let SymbolKind::Global { address } = symbol.kind else {
                 unimplemented!()
             };
-            self.layout.allocate(
-                *symbol_id,
-                Place::Global {
-                    address: address as u32,
-                },
-            );
+            self.layout.allocate(*symbol_id, Place::Global { address });
         }
 
         Ok(())
@@ -91,7 +86,7 @@ impl LayoutPass {
                     offset: self.offset,
                 },
             );
-            self.offset += ty.width() as usize;
+            self.offset += ty.width() as u16;
         }
 
         Ok(())
@@ -118,7 +113,7 @@ impl LayoutPass {
                     offset: self.offset,
                 },
             );
-            self.offset += ty.width() as usize;
+            self.offset += ty.width() as u16;
         }
 
         Ok(())

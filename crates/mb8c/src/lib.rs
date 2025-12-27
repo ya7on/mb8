@@ -1,4 +1,4 @@
-use codegen::targets::mb8::Mb8Codegen;
+use codegen::targets::{mb8::Mb8Codegen, peephole::Mb8Peephole};
 use error::CompileError;
 use hir::lower::HIRLowerer;
 use ir::lower::IRLowerer;
@@ -32,9 +32,12 @@ pub fn compile(input: &str) -> error::CompileResult<(), Vec<CompileError>> {
         .and_next::<IRLowerer>()?
         .and_next::<LayoutPass>()?
         .and_next::<Mb8Codegen>()?
+        .and_next::<Mb8Peephole>()?
         .finish()?;
 
-    println!("{result}");
+    for line in result {
+        println!("{}", line.to_string());
+    }
 
     Ok(())
 }

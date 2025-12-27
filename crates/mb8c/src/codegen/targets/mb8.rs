@@ -1,5 +1,4 @@
 use crate::{
-    codegen::writter::ProgramWriter,
     context::CompileContext,
     error::{CompileError, CompileResult},
     ir::instructions::{BasicBlock, BasicBlockTerminator, IRFunction, IRInstruction, IRProgram},
@@ -7,23 +6,28 @@ use crate::{
     pipeline::CompilerPipe,
 };
 
+use super::asm::Mb8Asm;
+
 #[derive(Debug)]
 pub struct Mb8Codegen {
     ctx: CompileContext,
     layout: Layout,
-    writter: ProgramWriter,
+    result: Vec<Mb8Asm>,
 }
 
 impl CompilerPipe for Mb8Codegen {
     type Prev = (IRProgram, CompileContext, Layout);
-    type Next = String;
+    type Next = Vec<Mb8Asm>;
 
     fn execute(prev: &Self::Prev) -> CompileResult<Self::Next, Vec<CompileError>> {
         let (ir, ctx, layout) = prev;
         let mut codegen = Mb8Codegen {
             ctx: ctx.clone(),
             layout: layout.clone(),
-            writter: ProgramWriter::default(),
+            result: vec![
+                Mb8Asm::Import("../asm/cpu.asm".to_string()),
+                Mb8Asm::Import("../asm/ext.asm".to_string()),
+            ],
         };
         codegen.codegen(ir).map_err(|err| vec![err])
     }
@@ -34,74 +38,132 @@ impl Mb8Codegen {
     ///
     /// # Errors
     /// This function will return an error if the basic block cannot be generated.
+    #[allow(clippy::too_many_lines)]
     pub fn codegen_basic_block(&mut self, bb: &BasicBlock, is_main: bool) -> CompileResult<()> {
-        self.writter
-            .sublabel(ProgramWriter::basic_block_label(bb.id.0))?;
+        self.result.push(Mb8Asm::Sublabel(format!("BB{}", bb.id.0)));
 
         for inst in &bb.instructions {
             match inst {
                 IRInstruction::LoadImm { value, width: _ } => {
-                    self.writter.emit(format!("LDI R0 {value}"))?;
-                    self.writter.emit("PUSH R0")?;
+                    self.result.push(Mb8Asm::Ldi {
+                        register: "R0".to_string(),
+                        value: *value,
+                    });
+                    self.result.push(Mb8Asm::Push {
+                        register: "R0".to_string(),
+                    });
                 }
                 IRInstruction::PushVar { symbol, width: _ } => {
                     let place = self.layout.lookup(*symbol).ok_or_else(|| todo!())?;
                     match place {
                         Place::Global { address } => {
-                            self.writter.emit(format!("LD R0 [0x{address:X}]"))?;
+                            self.result.push(Mb8Asm::Ld {
+                                register: "R0".to_string(),
+                                address: *address,
+                            });
                         }
                         Place::StaticFrame { offset } => {
-                            self.writter.emit(format!("LD R0 [0x{offset:X}]"))?;
+                            self.result.push(Mb8Asm::Ld {
+                                register: "R0".to_string(),
+                                address: *offset,
+                            });
                         }
                     }
 
-                    self.writter.emit("PUSH R0")?;
+                    self.result.push(Mb8Asm::Push {
+                        register: "R0".to_string(),
+                    });
                 }
                 IRInstruction::StoreVar { symbol, width: _ } => {
-                    self.writter.emit("POP R0")?;
+                    self.result.push(Mb8Asm::Pop {
+                        register: "R0".to_string(),
+                    });
 
                     let place = self.layout.lookup(*symbol).ok_or_else(|| todo!())?;
                     match place {
                         Place::Global { address } => {
-                            self.writter.emit(format!("ST [0x{address:X}] R0"))?;
+                            self.result.push(Mb8Asm::St {
+                                address: *address,
+                                register: "R0".to_string(),
+                            });
                         }
                         Place::StaticFrame { offset } => {
-                            self.writter.emit(format!("ST [0x{offset:X}] R0"))?;
+                            self.result.push(Mb8Asm::St {
+                                address: *offset,
+                                register: "R0".to_string(),
+                            });
                         }
                     }
                 }
                 IRInstruction::Add { width: _ } => {
-                    self.writter.emit("POP R0")?;
-                    self.writter.emit("POP R1")?;
-                    self.writter.emit("ADD R0 R1")?;
-                    self.writter.emit("PUSH R0")?;
+                    self.result.push(Mb8Asm::Pop {
+                        register: "R0".to_string(),
+                    });
+                    self.result.push(Mb8Asm::Pop {
+                        register: "R1".to_string(),
+                    });
+                    self.result.push(Mb8Asm::Add {
+                        dst: "R0".to_string(),
+                        src: "R1".to_string(),
+                    });
+                    self.result.push(Mb8Asm::Push {
+                        register: "R0".to_string(),
+                    });
                 }
                 IRInstruction::Sub { width: _ } => {
-                    self.writter.emit("POP R0")?;
-                    self.writter.emit("POP R1")?;
-                    self.writter.emit("SUB R0 R1")?;
-                    self.writter.emit("PUSH R0")?;
+                    self.result.push(Mb8Asm::Pop {
+                        register: "R0".to_string(),
+                    });
+                    self.result.push(Mb8Asm::Pop {
+                        register: "R1".to_string(),
+                    });
+                    self.result.push(Mb8Asm::Sub {
+                        dst: "R0".to_string(),
+                        src: "R1".to_string(),
+                    });
+                    self.result.push(Mb8Asm::Push {
+                        register: "R0".to_string(),
+                    });
                 }
                 IRInstruction::Mul { width: _ } => {
-                    self.writter.emit("POP R0")?;
-                    self.writter.emit("POP R1")?;
-                    self.writter.emit("MUL R0 R1")?;
-                    self.writter.emit("PUSH R0")?;
+                    self.result.push(Mb8Asm::Pop {
+                        register: "R0".to_string(),
+                    });
+                    self.result.push(Mb8Asm::Pop {
+                        register: "R1".to_string(),
+                    });
+                    self.result.push(Mb8Asm::Mul {
+                        dst: "R0".to_string(),
+                        src: "R1".to_string(),
+                    });
+                    self.result.push(Mb8Asm::Push {
+                        register: "R0".to_string(),
+                    });
                 }
                 IRInstruction::Div { width: _ } => {
-                    self.writter.emit("POP R0")?;
-                    self.writter.emit("POP R1")?;
-                    self.writter.emit("DIV R0 R1")?;
-                    self.writter.emit("PUSH R0")?;
+                    self.result.push(Mb8Asm::Pop {
+                        register: "R0".to_string(),
+                    });
+                    self.result.push(Mb8Asm::Pop {
+                        register: "R1".to_string(),
+                    });
+                    self.result.push(Mb8Asm::Div {
+                        dst: "R0".to_string(),
+                        src: "R1".to_string(),
+                    });
+                    self.result.push(Mb8Asm::Push {
+                        register: "R0".to_string(),
+                    });
                 }
                 IRInstruction::Eq { width: _ } | IRInstruction::Neg { width: _ } => {}
                 IRInstruction::Call { symbol, argc } => {
                     let symbol = self.ctx.lookup(*symbol).ok_or_else(|| todo!())?;
-                    let label = symbol.name;
                     for argn in 0..*argc {
-                        self.writter.emit(format!("POP R{argn}"))?;
+                        self.result.push(Mb8Asm::Pop {
+                            register: format!("R{argn}"),
+                        });
                     }
-                    self.writter.emit(format!("CALL [{label}]"))?;
+                    self.result.push(Mb8Asm::Call(symbol.name));
                 }
             }
         }
@@ -111,22 +173,26 @@ impl Mb8Codegen {
                 then_branch,
                 else_branch,
             } => {
-                let then_label = ProgramWriter::basic_block_label(then_branch.0);
-                let else_label = ProgramWriter::basic_block_label(else_branch.0);
-                self.writter.emit("POP R0")?;
-                self.writter.emit(format!("JZ R0 [{else_label}]"))?;
-                self.writter.emit(format!("JMP [{then_label}]"))?;
+                self.result.push(Mb8Asm::Pop {
+                    register: "R0".to_string(),
+                });
+                self.result
+                    .push(Mb8Asm::Jzr(format!("BB{}", else_branch.0)));
+                self.result
+                    .push(Mb8Asm::Jmp(format!("BB{}", then_branch.0)));
             }
             BasicBlockTerminator::Jmp { next } => {
-                let label = ProgramWriter::basic_block_label(next.0);
-                self.writter.emit(format!("JMP [{label}]"))?;
+                self.result.push(Mb8Asm::Jmp(format!("BB{}", next.0)));
             }
             BasicBlockTerminator::Ret { void: _ } => {
                 if is_main {
-                    self.writter.emit("LDI R0 0x0F")?;
-                    self.writter.emit("CALL [0xE500]")?;
+                    self.result.push(Mb8Asm::Ldi {
+                        register: "R0".to_string(),
+                        value: 0x0F,
+                    });
+                    self.result.push(Mb8Asm::Call("0xE500".to_string()));
                 } else {
-                    self.writter.emit("RET")?;
+                    self.result.push(Mb8Asm::Ret);
                 }
             }
         }
@@ -140,14 +206,17 @@ impl Mb8Codegen {
     /// Returns an error if symbol lookups fail or the writer cannot emit output.
     pub fn codegen_function(&mut self, function: &IRFunction, is_main: bool) -> CompileResult<()> {
         let symbol = self.ctx.lookup(function.id).ok_or_else(|| todo!())?;
-        self.writter.label(symbol.name.clone())?;
+        self.result.push(Mb8Asm::Label(symbol.name.clone()));
 
         for (index, symbol_id) in function.params.iter().enumerate() {
             let symbol = self.layout.lookup(*symbol_id).ok_or_else(|| todo!())?;
             let Place::StaticFrame { offset } = symbol else {
                 unimplemented!()
             };
-            self.writter.emit(format!("ST [0x{offset:X}] R{index}"))?;
+            self.result.push(Mb8Asm::St {
+                register: format!("R{index}"),
+                address: *offset,
+            });
         }
 
         for bb in &function.basic_blocks {
@@ -161,7 +230,7 @@ impl Mb8Codegen {
     ///
     /// # Errors
     /// Returns an error if symbol lookups fail or the writer cannot emit output.
-    pub fn codegen(&mut self, ir: &IRProgram) -> CompileResult<String> {
+    pub fn codegen(&mut self, ir: &IRProgram) -> CompileResult<Vec<Mb8Asm>> {
         for function in &ir.functions {
             let symbol = self.ctx.lookup(function.id).ok_or_else(|| todo!())?;
             if symbol.name == "main" {
@@ -176,6 +245,6 @@ impl Mb8Codegen {
             }
             self.codegen_function(function, false)?;
         }
-        Ok(self.writter.finish())
+        Ok(self.result.clone())
     }
 }

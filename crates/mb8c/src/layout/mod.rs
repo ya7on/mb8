@@ -7,8 +7,8 @@ pub mod pass;
 
 #[derive(Debug, Clone)]
 pub enum Place {
-    StaticFrame { offset: usize },
-    Global { address: u32 },
+    StaticFrame { offset: u16 },
+    Global { address: u16 },
 }
 
 #[derive(Debug, Clone, Default)]
