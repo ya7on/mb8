@@ -11,6 +11,10 @@ pub struct Mb8Peephole {
 }
 
 impl Mb8Peephole {
+    /// Remove a matching trailing `PUSH`/`POP` pair.
+    ///
+    /// # Errors
+    /// Currently infallible but keeps the result type for future validation steps.
     pub fn remove_push_pop(&mut self) -> CompileResult<bool> {
         if self.result.len() < 2 {
             return Ok(false);
@@ -36,6 +40,10 @@ impl Mb8Peephole {
         }
     }
 
+    /// Apply peephole optimizations repeatedly until no further change occurs.
+    ///
+    /// # Errors
+    /// Currently infallible but keeps the result type for future validation steps.
     pub fn check_output(&mut self) -> CompileResult<()> {
         loop {
             let updated = self.remove_push_pop()?;
@@ -47,6 +55,10 @@ impl Mb8Peephole {
         Ok(())
     }
 
+    /// Run peephole passes over the provided instructions as they are appended.
+    ///
+    /// # Errors
+    /// Currently infallible but keeps the result type for future validation steps.
     pub fn pass(&mut self, input: &[Mb8Asm]) -> CompileResult<()> {
         for instruction in input {
             self.result.push(instruction.clone());

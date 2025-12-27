@@ -1,5 +1,5 @@
 use crate::{
-    context::CompileContext,
+    context::{types::TypeKind, CompileContext},
     error::{CompileError, CompileResult},
     ir::instructions::{BasicBlock, BasicBlockTerminator, IRFunction, IRInstruction, IRProgram},
     layout::{Layout, Place},
@@ -158,12 +158,29 @@ impl Mb8Codegen {
                 IRInstruction::Eq { width: _ } | IRInstruction::Neg { width: _ } => {}
                 IRInstruction::Call { symbol, argc } => {
                     let symbol = self.ctx.lookup(*symbol).ok_or_else(|| todo!())?;
+                    let type_kind = self
+                        .ctx
+                        .type_table
+                        .lookup(symbol.ty)
+                        .ok_or_else(|| todo!())?;
                     for argn in 0..*argc {
                         self.result.push(Mb8Asm::Pop {
                             register: format!("R{argn}"),
                         });
                     }
                     self.result.push(Mb8Asm::Call(symbol.name));
+                    let TypeKind::Function { params: _, ret } = type_kind else {
+                        unimplemented!()
+                    };
+                    let ret_type_kind = self.ctx.type_table.lookup(*ret).ok_or_else(|| todo!())?;
+                    match ret_type_kind {
+                        TypeKind::Void => {}
+                        _ => {
+                            self.result.push(Mb8Asm::Push {
+                                register: "R0".to_string(),
+                            });
+                        }
+                    }
                 }
             }
         }
@@ -184,14 +201,21 @@ impl Mb8Codegen {
             BasicBlockTerminator::Jmp { next } => {
                 self.result.push(Mb8Asm::Jmp(format!("BB{}", next.0)));
             }
-            BasicBlockTerminator::Ret { void: _ } => {
+            BasicBlockTerminator::Ret { void } => {
                 if is_main {
+                    // SYS_EXIT
                     self.result.push(Mb8Asm::Ldi {
                         register: "R0".to_string(),
                         value: 0x0F,
                     });
                     self.result.push(Mb8Asm::Call("0xE500".to_string()));
                 } else {
+                    if !void {
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R0".to_string(),
+                        });
+                    }
+
                     self.result.push(Mb8Asm::Ret);
                 }
             }

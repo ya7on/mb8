@@ -36,7 +36,7 @@ pub fn compile(input: &str) -> error::CompileResult<(), Vec<CompileError>> {
         .finish()?;
 
     for line in result {
-        println!("{}", line.to_string());
+        println!("{line}");
     }
 
     Ok(())
