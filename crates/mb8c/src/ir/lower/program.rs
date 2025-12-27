@@ -10,6 +10,9 @@ impl IRLowerer {
             functions.push(self.lower_function(function)?);
         }
 
-        Ok(IRProgram { functions })
+        Ok(IRProgram {
+            functions,
+            globals: program.globals.clone(),
+        })
     }
 }

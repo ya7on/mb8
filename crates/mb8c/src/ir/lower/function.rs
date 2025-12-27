@@ -23,6 +23,8 @@ impl IRLowerer {
         Ok(IRFunction {
             id: function.id,
             basic_blocks,
+            params: function.params.clone(),
+            locals: function.locals.clone(),
         })
     }
 }

@@ -3,6 +3,7 @@ use crate::context::{SymbolId, TypeId};
 #[derive(Debug, Clone)]
 pub struct HIRProgram {
     pub functions: Vec<HIRFunction>,
+    pub globals: Vec<SymbolId>,
 }
 
 #[derive(Debug, Clone)]

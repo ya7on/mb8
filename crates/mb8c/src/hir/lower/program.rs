@@ -15,6 +15,7 @@ impl HIRLowerer {
     pub fn analyze_program(&mut self, program: &ASTProgram) -> CompileResult<HIRProgram> {
         let scope = self.scope.enter();
 
+        let mut globals = Vec::with_capacity(program.globals.len());
         for global in &program.globals {
             let type_id = self.ctx.type_table.entry(lower_type(global.ty));
             let symbol = self.ctx.symbol_table.allocate(Symbol {
@@ -23,6 +24,7 @@ impl HIRLowerer {
                 ty: type_id,
             });
             scope.allocate(global.name.clone(), symbol, &global.span)?;
+            globals.push(symbol);
         }
 
         let mut functions = Vec::with_capacity(program.functions.len());
@@ -38,6 +40,6 @@ impl HIRLowerer {
             functions.push(hir_function);
         }
 
-        Ok(HIRProgram { functions })
+        Ok(HIRProgram { functions, globals })
     }
 }

@@ -1,20 +1,23 @@
 use crate::context::SymbolId;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IRProgram {
     pub functions: Vec<IRFunction>,
+    pub globals: Vec<SymbolId>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IRFunction {
     pub id: SymbolId,
     pub basic_blocks: Vec<BasicBlock>,
+    pub params: Vec<SymbolId>,
+    pub locals: Vec<SymbolId>,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct BasicBlockId(pub usize);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BasicBlock {
     pub id: BasicBlockId,
     pub terminator: BasicBlockTerminator,
@@ -25,7 +28,7 @@ pub struct BasicBlock {
     pub stack_out: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BasicBlockTerminator {
     Branch {
         then_branch: BasicBlockId,
@@ -39,7 +42,7 @@ pub enum BasicBlockTerminator {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum IRInstruction {
     LoadImm { value: u16, width: u8 },
     PushVar { symbol: SymbolId, width: u8 },

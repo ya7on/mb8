@@ -3,23 +3,26 @@ use crate::{
     context::CompileContext,
     error::{CompileError, CompileResult},
     ir::instructions::{IRInstruction, IRProgram},
+    layout::{Layout, Place},
     pipeline::CompilerPipe,
 };
 
 #[derive(Debug)]
 pub struct Mb8Codegen {
     ctx: CompileContext,
+    layout: Layout,
     writter: ProgramWriter,
 }
 
 impl CompilerPipe for Mb8Codegen {
-    type Prev = (IRProgram, CompileContext);
+    type Prev = (IRProgram, CompileContext, Layout);
     type Next = String;
 
     fn execute(prev: &Self::Prev) -> CompileResult<Self::Next, Vec<CompileError>> {
-        let (ir, ctx) = prev;
+        let (ir, ctx, layout) = prev;
         let mut codegen = Mb8Codegen {
             ctx: ctx.clone(),
+            layout: layout.clone(),
             writter: ProgramWriter::default(),
         };
         codegen.codegen(ir).map_err(|err| vec![err])
@@ -42,14 +45,36 @@ impl Mb8Codegen {
                             self.writter.emit("PUSH R0")?;
                         }
                         IRInstruction::PushVar { symbol, width: _ } => {
-                            // let symbol = self.ctx.lookup(*symbol).ok_or_else(|| todo!())?;
-                            self.writter.emit(format!("LD R0 [ADDR]"))?;
+                            let place = self.layout.lookup(*symbol).ok_or_else(|| todo!())?;
+                            match place {
+                                Place::Global { address } => {
+                                    self.writter.emit(format!("LD R0 [0x{address:X}]"))?;
+                                }
+                                Place::StackFrame { offset } => {
+                                    self.writter.emit(format!("LD R0 [FPH:FPL + {offset}]"))?;
+                                }
+                                Place::StaticFrame { offset } => {
+                                    self.writter.emit(format!("LD R0 [0x{offset:X}]"))?;
+                                }
+                            }
+
                             self.writter.emit("PUSH R0")?;
                         }
                         IRInstruction::StoreVar { symbol, width: _ } => {
-                            // let symbol = self.ctx.lookup(*symbol).ok_or_else(|| todo!())?;
                             self.writter.emit("POP R0")?;
-                            self.writter.emit(format!("ST [ADDR] R0"))?;
+
+                            let place = self.layout.lookup(*symbol).ok_or_else(|| todo!())?;
+                            match place {
+                                Place::Global { address } => {
+                                    self.writter.emit(format!("LD R0 [0x{address:X}]"))?;
+                                }
+                                Place::StackFrame { offset } => {
+                                    self.writter.emit(format!("LD R0 [FPH:FPL + {offset}]"))?;
+                                }
+                                Place::StaticFrame { offset } => {
+                                    self.writter.emit(format!("LD R0 [0x{offset:X}]"))?;
+                                }
+                            }
                         }
                         IRInstruction::Add { width: _ } => {
                             self.writter.emit("POP R0")?;
@@ -77,7 +102,11 @@ impl Mb8Codegen {
                         }
                         IRInstruction::Eq { width: _ } => {}
                         IRInstruction::Neg { width: _ } => {}
-                        IRInstruction::Call { symbol: _, argc: _ } => {}
+                        IRInstruction::Call { symbol, argc: _ } => {
+                            let symbol = self.ctx.lookup(*symbol).ok_or_else(|| todo!())?;
+                            let label = symbol.name;
+                            self.writter.emit(format!("CALL [{label}]"))?;
+                        }
                     }
                 }
             }
