@@ -142,11 +142,11 @@ mod tests {
         // ident
         name AbCdEf u_n_d_e_r_l_i_n_e
         // numer
-        1 1337 228
+        1u8 1337u16
         // hex
-        0x1 0x1337 0x228 0xFFFF
+        0x1u8 0x1337u16 0x228u16 0xFFFFu16
         // negative
-        -111
+        -111u8
 
         // types
         void u8 u16
@@ -169,12 +169,11 @@ mod tests {
                 TokenKind::Ident("AbCdEf".to_string()),
                 TokenKind::Ident("u_n_d_e_r_l_i_n_e".to_string()),
                 TokenKind::LiteralU8(1),
-                TokenKind::LiteralU8(1337),
-                TokenKind::LiteralU8(228),
+                TokenKind::LiteralU16(1337),
                 TokenKind::LiteralU8(0x1),
-                TokenKind::LiteralU8(0x1337),
-                TokenKind::LiteralU8(0x228),
-                TokenKind::LiteralU8(0xFFFF),
+                TokenKind::LiteralU16(0x1337),
+                TokenKind::LiteralU16(0x228),
+                TokenKind::LiteralU16(0xFFFF),
                 TokenKind::OperatorMinus,
                 TokenKind::LiteralU8(111),
                 TokenKind::KeywordVoid,

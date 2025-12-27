@@ -7,7 +7,7 @@ fn test_var_assign() {
     var
         c: u8;
     begin
-        c = (a - 2) + (b + 2);
+        c = (a - 2u8) + (b + 2u8);
     end
     ";
     compile(input).unwrap();
