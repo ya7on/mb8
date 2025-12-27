@@ -9,6 +9,7 @@ pub fn lower_type(ty: ASTType) -> TypeKind {
     match ty {
         ASTType::Void => TypeKind::Void,
         ASTType::Unsigned8 => TypeKind::Unsigned8,
+        ASTType::Unsigned16 => TypeKind::Unsigned16,
     }
 }
 
@@ -17,7 +18,9 @@ pub fn fetch_expr_type(expr: &HIRExpr) -> TypeId {
     match expr {
         HIRExpr::Var { ty, .. }
         | HIRExpr::Literal { ty, .. }
-        | HIRExpr::Binary { ty, .. }
+        | HIRExpr::Binary {
+            result_type: ty, ..
+        }
         | HIRExpr::Unary { ty, .. }
         | HIRExpr::Call { ty, .. } => *ty,
     }

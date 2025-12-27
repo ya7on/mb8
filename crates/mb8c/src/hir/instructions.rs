@@ -16,7 +16,8 @@ pub struct HIRFunction {
 
 #[derive(Debug, Clone, Copy)]
 pub enum Literal {
-    Int(u16),
+    Unsigned8(u8),
+    Unsigned16(u16),
 }
 
 #[derive(Debug, Clone)]
@@ -68,7 +69,8 @@ pub enum HIRExpr {
         op: HIRBinaryOp,
         lhs: Box<HIRExpr>,
         rhs: Box<HIRExpr>,
-        ty: TypeId,
+        inner_type: TypeId,
+        result_type: TypeId,
     },
     Unary {
         op: HIRUnaryOp,

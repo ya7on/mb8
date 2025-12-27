@@ -47,9 +47,21 @@ where
 
         let primary = call_expr
             .or(
-                select! { TokenKind::Number(number) => number }.map_with(|number, extra| {
+                select! { TokenKind::LiteralU8(number) => number }.map_with(|number, extra| {
                     let span: SimpleSpan = extra.span();
-                    ASTExpr::IntLiteral {
+                    ASTExpr::LiteralU8 {
+                        value: number,
+                        span: Span {
+                            start: span.start,
+                            end: span.end,
+                        },
+                    }
+                }),
+            )
+            .or(
+                select! { TokenKind::LiteralU16(number) => number }.map_with(|number, extra| {
+                    let span: SimpleSpan = extra.span();
+                    ASTExpr::LiteralU16 {
                         value: number,
                         span: Span {
                             start: span.start,

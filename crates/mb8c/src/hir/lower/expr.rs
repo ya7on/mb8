@@ -12,10 +12,18 @@ use super::HIRLowerer;
 
 impl HIRLowerer {
     #[allow(clippy::unnecessary_wraps)]
-    fn analyze_int_literal_expr(&mut self, _span: &Span, value: u16) -> CompileResult<HIRExpr> {
+    fn analyze_u8_literal_expr(&mut self, _span: &Span, value: u8) -> CompileResult<HIRExpr> {
         Ok(HIRExpr::Literal {
-            literal: Literal::Int(value),
+            literal: Literal::Unsigned8(value),
             ty: self.ctx.type_table.entry(TypeKind::Unsigned8),
+        })
+    }
+
+    #[allow(clippy::unnecessary_wraps)]
+    fn analyze_u16_literal_expr(&mut self, _span: &Span, value: u16) -> CompileResult<HIRExpr> {
+        Ok(HIRExpr::Literal {
+            literal: Literal::Unsigned16(value),
+            ty: self.ctx.type_table.entry(TypeKind::Unsigned16),
         })
     }
 
@@ -67,7 +75,8 @@ impl HIRLowerer {
             op,
             lhs: Box::new(lhs_expr),
             rhs: Box::new(rhs_expr),
-            ty: return_type,
+            inner_type: lhs_ty,
+            result_type: return_type,
         })
     }
 
@@ -208,7 +217,8 @@ impl HIRLowerer {
     /// Returns error if there are semantic issues
     pub fn analyze_expr(&mut self, expr: &ASTExpr) -> CompileResult<HIRExpr> {
         match expr {
-            ASTExpr::IntLiteral { span, value } => self.analyze_int_literal_expr(span, *value),
+            ASTExpr::LiteralU8 { span, value } => self.analyze_u8_literal_expr(span, *value),
+            ASTExpr::LiteralU16 { span, value } => self.analyze_u16_literal_expr(span, *value),
             ASTExpr::BinaryOp { op, lhs, rhs, span } => {
                 self.analyze_binary_op_expr(op, lhs, rhs, span)
             }

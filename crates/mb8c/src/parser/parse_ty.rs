@@ -10,5 +10,6 @@ where
     select! {
         TokenKind::KeywordVoid => ASTType::Void,
         TokenKind::KeywordU8 => ASTType::Unsigned8,
+        TokenKind::KeywordU16 => ASTType::Unsigned16,
     }
 }

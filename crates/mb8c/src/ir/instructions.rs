@@ -38,7 +38,7 @@ pub enum BasicBlockTerminator {
         next: BasicBlockId,
     },
     Ret {
-        void: bool,
+        width: usize,
     },
 }
 

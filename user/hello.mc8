@@ -1,7 +1,7 @@
 // Hello
 
 var
-  TTY_WRITE: u8 @ 0xF001;
+  TTY_WRITE: u8 @ 0xF001u16;
 
 function sys_write(c: u8): void;
 begin
@@ -11,11 +11,11 @@ end
 
 function main(): void;
 begin
-  sys_write(0x48);
-  sys_write(0x65);
-  sys_write(0x6C);
-  sys_write(0x6C);
-  sys_write(0x6F);
-  sys_write(0x0A);
+  sys_write(0x48u8);
+  sys_write(0x65u8);
+  sys_write(0x6Cu8);
+  sys_write(0x6Cu8);
+  sys_write(0x6Fu8);
+  sys_write(0x0Au8);
   return;
 end

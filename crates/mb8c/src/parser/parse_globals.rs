@@ -20,7 +20,7 @@ where
         .then_ignore(just(TokenKind::Colon))
         .then(ty_parser())
         .then_ignore(just(TokenKind::At))
-        .then(select! { TokenKind::Number(address) => address })
+        .then(select! { TokenKind::LiteralU16(address) => address })
         .then_ignore(just(TokenKind::Semicolon))
         .map_with(|((name, ty), at), extra| {
             let span: SimpleSpan = extra.span();

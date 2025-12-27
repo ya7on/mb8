@@ -205,7 +205,7 @@ impl HIRLowerer {
         Ok(HIRStmt::Assign {
             symbol_id,
             value,
-            ty: value_ty,
+            ty: symbol.ty,
         })
     }
 

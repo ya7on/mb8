@@ -8,6 +8,7 @@ pub struct Span {
 pub enum ASTType {
     Void,
     Unsigned8,
+    Unsigned16,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -79,7 +80,11 @@ pub enum ASTUnaryOp {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ASTExpr {
-    IntLiteral {
+    LiteralU8 {
+        value: u8,
+        span: Span,
+    },
+    LiteralU16 {
         value: u16,
         span: Span,
     },

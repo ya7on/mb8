@@ -34,11 +34,16 @@ impl IRLowerer {
         ty: &TypeId,
     ) -> CompileResult<Vec<IRInstruction>> {
         let type_kind = self.ctx.type_table.lookup(*ty).ok_or_else(|| todo!())?;
-        let Literal::Int(value) = literal;
-        Ok(vec![IRInstruction::LoadImm {
-            value: *value,
-            width: type_kind.width(),
-        }])
+        match literal {
+            Literal::Unsigned8(value) => Ok(vec![IRInstruction::LoadImm {
+                value: *value as u16,
+                width: type_kind.width(),
+            }]),
+            Literal::Unsigned16(value) => Ok(vec![IRInstruction::LoadImm {
+                value: *value,
+                width: type_kind.width(),
+            }]),
+        }
     }
 
     /// Lower a binary expression into IR instructions.
@@ -50,13 +55,18 @@ impl IRLowerer {
         op: &HIRBinaryOp,
         lhs: &HIRExpr,
         rhs: &HIRExpr,
-        ty: &TypeId,
+        inner_ty: &TypeId,
+        result_ty: &TypeId,
     ) -> CompileResult<Vec<IRInstruction>> {
         let mut instructions = Vec::new();
         instructions.extend(self.lower_expr(lhs)?);
         instructions.extend(self.lower_expr(rhs)?);
 
-        let type_kind = self.ctx.type_table.lookup(*ty).ok_or_else(|| todo!())?;
+        let type_kind = self
+            .ctx
+            .type_table
+            .lookup(*result_ty)
+            .ok_or_else(|| todo!())?;
         match op {
             HIRBinaryOp::Add => instructions.push(IRInstruction::Add {
                 width: type_kind.width(),
@@ -70,9 +80,16 @@ impl IRLowerer {
             HIRBinaryOp::Div => instructions.push(IRInstruction::Div {
                 width: type_kind.width(),
             }),
-            HIRBinaryOp::Eq => instructions.push(IRInstruction::Eq {
-                width: type_kind.width(),
-            }),
+            HIRBinaryOp::Eq => {
+                let type_kind = self
+                    .ctx
+                    .type_table
+                    .lookup(*inner_ty)
+                    .ok_or_else(|| todo!())?;
+                instructions.push(IRInstruction::Eq {
+                    width: type_kind.width(),
+                });
+            }
         }
         Ok(instructions)
     }
@@ -132,7 +149,13 @@ impl IRLowerer {
         match expr {
             HIRExpr::Var { symbol, ty } => self.lower_var_expr(symbol, ty),
             HIRExpr::Literal { literal, ty } => self.lower_literal_expr(literal, ty),
-            HIRExpr::Binary { op, lhs, rhs, ty } => self.lower_binary_expr(op, lhs, rhs, ty),
+            HIRExpr::Binary {
+                op,
+                lhs,
+                rhs,
+                inner_type,
+                result_type,
+            } => self.lower_binary_expr(op, lhs, rhs, inner_type, result_type),
             HIRExpr::Unary { op, expr, ty } => self.lower_unary_expr(op, expr, ty),
             HIRExpr::Call { symbol, args, ty } => self.lower_call_expr(symbol, args, ty),
         }
