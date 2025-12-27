@@ -50,10 +50,7 @@ impl Mb8Codegen {
                         Place::Global { address } => {
                             self.writter.emit(format!("LD R0 [0x{address:X}]"))?;
                         }
-                        Place::StackFrame { offset } => {
-                            self.writter.emit(format!("LD R0 [0x{offset:X}]"))?;
-                        }
-                        Place::StaticFrame { offset } => {
+                        Place::StackFrame { offset } | Place::StaticFrame { offset } => {
                             self.writter.emit(format!("LD R0 [0x{offset:X}]"))?;
                         }
                     }
@@ -68,10 +65,7 @@ impl Mb8Codegen {
                         Place::Global { address } => {
                             self.writter.emit(format!("ST [0x{address:X}] R0"))?;
                         }
-                        Place::StackFrame { offset } => {
-                            self.writter.emit(format!("ST [0x{offset:X}] R0"))?;
-                        }
-                        Place::StaticFrame { offset } => {
+                        Place::StackFrame { offset } | Place::StaticFrame { offset } => {
                             self.writter.emit(format!("ST [0x{offset:X}] R0"))?;
                         }
                     }
@@ -147,7 +141,7 @@ impl Mb8Codegen {
     /// Returns an error if symbol lookups fail or the writer cannot emit output.
     pub fn codegen_function(&mut self, function: &IRFunction, is_main: bool) -> CompileResult<()> {
         let symbol = self.ctx.lookup(function.id).ok_or_else(|| todo!())?;
-        self.writter.label(symbol.name.to_string())?;
+        self.writter.label(symbol.name.clone())?;
 
         for bb in &function.basic_blocks {
             self.codegen_basic_block(bb, is_main)?;
