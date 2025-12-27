@@ -11,6 +11,10 @@ use crate::{
 use super::IRLowerer;
 
 impl IRLowerer {
+    /// Lower a block of statements, returning the resulting basic blocks.
+    ///
+    /// # Errors
+    /// Returns an error when lowering any contained statement fails.
     pub fn lower_block_stmt(
         &mut self,
         stmts: &[HIRStmt],
@@ -29,6 +33,10 @@ impl IRLowerer {
         Ok((Some(builder), result))
     }
 
+    /// Lower a return statement.
+    ///
+    /// # Errors
+    /// Returns an error when the returned expression fails to lower.
     pub fn lower_return_stmt(
         &mut self,
         value: &Option<HIRExpr>,
@@ -47,6 +55,10 @@ impl IRLowerer {
         Ok((None, result))
     }
 
+    /// Lower a standalone expression statement.
+    ///
+    /// # Errors
+    /// Returns an error when the expression fails to lower.
     pub fn lower_expression_stmt(
         &mut self,
         expr: &HIRExpr,
@@ -59,6 +71,10 @@ impl IRLowerer {
         Ok((Some(builder), vec![]))
     }
 
+    /// Lower an if statement into branching basic blocks.
+    ///
+    /// # Errors
+    /// Returns an error when condition or branch lowering fails.
     pub fn lower_if_stmt(
         &mut self,
         condition: &HIRExpr,
@@ -108,6 +124,10 @@ impl IRLowerer {
         Ok((Some(merge_block), result))
     }
 
+    /// Lower a while loop into IR basic blocks.
+    ///
+    /// # Errors
+    /// Returns an error when lowering the condition or body fails.
     pub fn lower_while_stmt(
         &mut self,
         condition: &HIRExpr,
@@ -143,6 +163,10 @@ impl IRLowerer {
         Ok((Some(exit_block), result))
     }
 
+    /// Lower an assignment statement.
+    ///
+    /// # Errors
+    /// Returns an error when the value expression cannot be lowered or the type lookup fails.
     pub fn lower_assign_stmt(
         &mut self,
         symbol_id: &SymbolId,
@@ -165,6 +189,10 @@ impl IRLowerer {
         Ok((Some(builder), vec![]))
     }
 
+    /// Dispatch lowering for any statement node.
+    ///
+    /// # Errors
+    /// Propagates errors from specific lowering routines.
     pub fn lower_stmt(
         &mut self,
         stmt: &HIRStmt,

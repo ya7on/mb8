@@ -8,6 +8,10 @@ use crate::{
 use super::IRLowerer;
 
 impl IRLowerer {
+    /// Lower a variable expression into IR instructions.
+    ///
+    /// # Errors
+    /// Returns an error when the variable type cannot be resolved.
     pub fn lower_var_expr(
         &mut self,
         symbol_id: &SymbolId,
@@ -20,6 +24,10 @@ impl IRLowerer {
         }])
     }
 
+    /// Lower a literal expression into IR instructions.
+    ///
+    /// # Errors
+    /// Returns an error when the literal type cannot be resolved.
     pub fn lower_literal_expr(
         &mut self,
         literal: &Literal,
@@ -33,6 +41,10 @@ impl IRLowerer {
         }])
     }
 
+    /// Lower a binary expression into IR instructions.
+    ///
+    /// # Errors
+    /// Returns an error when operand lowering or type resolution fails.
     pub fn lower_binary_expr(
         &mut self,
         op: &HIRBinaryOp,
@@ -65,6 +77,10 @@ impl IRLowerer {
         Ok(instructions)
     }
 
+    /// Lower a unary expression into IR instructions.
+    ///
+    /// # Errors
+    /// Returns an error when operand lowering or type resolution fails.
     pub fn lower_unary_expr(
         &mut self,
         op: &HIRUnaryOp,
@@ -84,6 +100,10 @@ impl IRLowerer {
         Ok(instructions)
     }
 
+    /// Lower a call expression into IR instructions.
+    ///
+    /// # Errors
+    /// Returns an error when argument lowering fails.
     pub fn lower_call_expr(
         &mut self,
         symbol: &SymbolId,
@@ -104,6 +124,10 @@ impl IRLowerer {
         Ok(instructions)
     }
 
+    /// Lower any expression node into IR instructions.
+    ///
+    /// # Errors
+    /// Propagates errors from specific lowering routines.
     pub fn lower_expr(&mut self, expr: &HIRExpr) -> CompileResult<Vec<IRInstruction>> {
         match expr {
             HIRExpr::Var { symbol, ty } => self.lower_var_expr(symbol, ty),

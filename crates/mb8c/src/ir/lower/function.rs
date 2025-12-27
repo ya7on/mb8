@@ -7,6 +7,10 @@ use crate::{
 use super::IRLowerer;
 
 impl IRLowerer {
+    /// Lower a high-level function into IR basic blocks.
+    ///
+    /// # Errors
+    /// Returns an error when lowering of contained statements fails.
     pub fn lower_function(&mut self, function: &HIRFunction) -> CompileResult<IRFunction> {
         let mut bbtable = BasicBlockTable::default();
         let mut basic_blocks = Vec::new();

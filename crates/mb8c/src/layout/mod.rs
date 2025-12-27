@@ -22,7 +22,8 @@ impl Layout {
         self.table.insert(symbol_id, place);
     }
 
-    #[must_use] pub fn lookup(&self, symbol_id: SymbolId) -> Option<&Place> {
+    #[must_use]
+    pub fn lookup(&self, symbol_id: SymbolId) -> Option<&Place> {
         self.table.get(&symbol_id)
     }
 }

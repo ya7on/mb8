@@ -34,6 +34,10 @@ impl CompilerPipe for LayoutPass {
 }
 
 impl LayoutPass {
+    /// Walk the IR program and allocate memory/layout slots.
+    ///
+    /// # Errors
+    /// Returns an error when any subordinate pass encounters missing context data.
     pub fn pass_program(&mut self, ir: &IRProgram) -> CompileResult<()> {
         self.pass_globals(&ir.globals)?;
 
@@ -45,6 +49,10 @@ impl LayoutPass {
         Ok(())
     }
 
+    /// Allocate storage for global symbols.
+    ///
+    /// # Errors
+    /// Returns an error when a global symbol cannot be resolved.
     pub fn pass_globals(&mut self, globals: &[SymbolId]) -> CompileResult<()> {
         for symbol_id in globals {
             let symbol = self.ctx.lookup(*symbol_id).ok_or_else(|| todo!())?;
@@ -62,6 +70,10 @@ impl LayoutPass {
         Ok(())
     }
 
+    /// Allocate storage for function parameters on the stack.
+    ///
+    /// # Errors
+    /// Returns an error when parameter symbols or their types cannot be resolved.
     pub fn pass_params(&mut self, params: &[SymbolId]) -> CompileResult<()> {
         let mut offset = 2;
         for symbol_id in params {
@@ -82,6 +94,10 @@ impl LayoutPass {
         Ok(())
     }
 
+    /// Allocate storage for local variables on the stack.
+    ///
+    /// # Errors
+    /// Returns an error when local symbols or their types cannot be resolved.
     pub fn pass_locals(&mut self, locals: &[SymbolId]) -> CompileResult<()> {
         for symbol_id in locals {
             let symbol = self.ctx.lookup(*symbol_id).ok_or_else(|| todo!())?;

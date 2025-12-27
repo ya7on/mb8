@@ -18,10 +18,8 @@ impl TypeKind {
     #[must_use]
     pub fn width(&self) -> u8 {
         match self {
-            TypeKind::Void => 0,
-            TypeKind::Bool => 1,
-            TypeKind::Unsigned8 => 1,
-            TypeKind::Function { .. } => 0,
+            TypeKind::Void | TypeKind::Function { .. } => 0,
+            TypeKind::Bool | TypeKind::Unsigned8 => 1,
         }
     }
 }
