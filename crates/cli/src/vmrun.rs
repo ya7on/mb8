@@ -92,9 +92,8 @@ impl VmRun {
 
             self.vm.step();
 
-            if self.debug_enabled && self.vm.debug_break
-            {
-                //run the debug shell.... 
+            if self.debug_enabled && self.vm.debug_break {
+                //run the debug shell....
                 debug_shell();
             }
         }
