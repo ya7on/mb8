@@ -20,7 +20,7 @@ pub struct VmRun {
     ticks: u32,
     width: usize,
     height: usize,
-    debug_enabled: bool,
+    pub debug_enabled: bool,
 }
 
 impl VmRun {
