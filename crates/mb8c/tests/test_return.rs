@@ -32,3 +32,13 @@ fn test_return_type_mismatc_void() {
     ";
     compile(input).unwrap_err();
 }
+
+#[test]
+fn test_no_return() {
+    let input = r"
+    function foo(a: u8, b: u8): void;
+    begin
+    end
+    ";
+    compile(input).unwrap_err();
+}
