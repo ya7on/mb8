@@ -13,9 +13,6 @@ pub enum Opcode {
     Halt,
     /// System call.
     Sys,
-    /// Debug Mode
-    Debug,
-
     /* reg-reg opcodes */
     /// Move value from one register to another.
     Mov {

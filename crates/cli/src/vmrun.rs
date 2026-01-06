@@ -6,6 +6,7 @@ use std::{
 use crate::{filesystem::makefs, keyboard::Keyboard};
 use mb8::vm;
 use minifb::{Window, WindowOptions};
+use mb8::dev::gpu::registers;
 
 use crate::debug::{Debug, DebugCmd};
 use crate::tty::Tty;
@@ -22,6 +23,9 @@ pub struct VmRun {
     height: usize,
     debug: Debug,
     pub debug_enabled: bool,
+    pub hit_entry_break: bool,
+    pub paused: bool,
+    pub debug_prompt: bool,
 }
 
 impl VmRun {
@@ -35,6 +39,9 @@ impl VmRun {
             height: 200,
             debug: debug,
             debug_enabled: false,
+            hit_entry_break: false,
+            paused: false,
+            debug_prompt: false,
         }
     }
 
@@ -64,15 +71,22 @@ impl VmRun {
         while !self.vm.halted && window.is_open() {
             self.ticks = self.ticks.wrapping_add(1);
 
-            if self.run_debug(&window) {
-                continue;
-            }
+            //if self.run_debug(&window) {
+            //    continue;
+           // }
 
-            Keyboard::key_pressed(key, &window, &mut self.vm);
+
+           let paused = self.run_debug(&window);
+
+           if !paused{
+
+             Keyboard::key_pressed(key, &window, &mut self.vm);
 
             Keyboard::key_released(key, &window);
 
             self.vm_step();
+
+           }
 
             if last_render.elapsed() >= Duration::from_millis(16) {
                 let gpu = self.vm.devices.gpu();
@@ -82,22 +96,26 @@ impl VmRun {
 
                 self.tty.render(buf.as_mut_slice(), 320);
 
-                if window.update_with_buffer(&buf, 320, 200).is_err() {
-                    return;
-                }
+               // if window.update_with_buffer(&buf, 320, 200).is_err() {
+                   // self.has_rendered = true;
+               //     return;
+               // }
+
+                window.update_with_buffer(&buf, 320, 200).unwrap();
                 last_render = Instant::now();
+
+                
             }
         }
     }
 
     fn vm_step(&mut self) {
-
-          if self.debug_enabled {
-        if !self.vm.halted {
-            self.vm.step();
+        if self.debug_enabled {
+            if !self.vm.halted {
+                self.vm.step();
+            }
+            return;
         }
-        return;
-    }
         for _ in 0..OPS_PER_FRAME {
             if self.vm.halted {
                 break;
@@ -108,29 +126,42 @@ impl VmRun {
     }
 
     fn run_debug(&mut self, window: &minifb::Window) -> bool {
-        const USER_ENTRY: u16 = 0x4000;
+        const USER_ENTRY: u16 = 0xE100;
 
-        if self.debug_enabled && self.vm.program_counter == USER_ENTRY {
-            self.vm.debug_break = true;
+        if self.debug_enabled && !self.hit_entry_break && self.vm.program_counter == USER_ENTRY {
+            self.hit_entry_break = true;
+            self.paused = true;
         }
 
-        if !self.debug_enabled || !self.vm.debug_break {
-            return false;
+        if !self.paused {
+            return false; 
         }
-        self.debug.render_prompt(&mut self.vm);
+
+                println!(
+    "DEBUG CHECK: enabled={}, paused={}, pc={:04X}",
+    self.debug_enabled,
+    self.paused,
+    self.vm.program_counter
+);
+
+self.vm.devices.write(registers::GPU_REG_TTY, b'D');
+
+        if self.paused && !self.debug_prompt
+        {
+                    self.debug.render_prompt(&mut self.vm);
+                    self.debug_prompt = true;
+        }
 
         // Wait for a debugger command
         if let Some(cmd) = self.debug.poll_command(window) {
             match cmd {
                 DebugCmd::Step => {
                     // Execute exactly one instruction
-                    self.vm.debug_break = false;
                     self.vm.step();
-                    self.vm.debug_break = true;
                 }
 
                 DebugCmd::Continue => {
-                    self.vm.debug_break = false;
+                    self.paused = false;
                 }
 
                 DebugCmd::Registers => {

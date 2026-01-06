@@ -2,7 +2,6 @@ mod add;
 mod and;
 mod call;
 mod cmp;
-mod debug;
 mod halt;
 mod jcr;
 mod jmp;

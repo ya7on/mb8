@@ -40,7 +40,6 @@ pub fn encode(opcode: &Opcode) -> u16 {
         Opcode::Nop => 0x0000,
         Opcode::Halt => 0x0100,
         Opcode::Sys => 0x0200,
-        Opcode::Debug => 0x300,
         Opcode::Mov { dst, src } => {
             let dst = encode_register(*dst);
             let src = encode_register(*src);

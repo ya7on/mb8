@@ -5,7 +5,6 @@ use crate::{dev::bus::Bus, registers::Registers};
 /// MB8 Virtual Machine
 #[derive(Debug)]
 pub struct VirtualMachine {
-    pub debug_break: bool,
     pub devices: Bus,
     pub registers: Registers,
     pub halted: bool,
@@ -15,7 +14,6 @@ pub struct VirtualMachine {
 impl Default for VirtualMachine {
     fn default() -> Self {
         Self {
-            debug_break: false,
             devices: Bus::default(),
             registers: Registers::default(),
             halted: false,
@@ -31,7 +29,6 @@ impl VirtualMachine {
             Opcode::Nop => self.nop(),
             Opcode::Halt => self.halt(),
             Opcode::Sys => self.sys(),
-            Opcode::Debug => self.debug(),
             Opcode::Mov { dst, src } => self.mov(*dst, *src),
             Opcode::Add { dst, src } => self.add(*dst, *src),
             Opcode::Sub { dst, src } => self.sub(*dst, *src),

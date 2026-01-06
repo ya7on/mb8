@@ -21,8 +21,7 @@ fn main() {
             let debugcli = Debug::new();
             let mut vm_desk = vmrun::VmRun::new(vm, tty, debugcli);
             if debug {
-                vm_desk.vm.debug_break = true;
-                //vm_desk.debug_enabled = true;
+                vm_desk.debug_enabled = true;
             }
             vm_desk.run_desktop(kernel, user, cli.seed);
         }
