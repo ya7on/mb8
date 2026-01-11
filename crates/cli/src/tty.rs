@@ -160,11 +160,7 @@ pub struct Tty {
     head: usize,
     tail: usize,
     full: bool,
-
-    cursor_x :usize,
-    cursor_y: usize,
-
-    cols: usize,
+    pub cols: usize,
     rows: usize,
 }
 
@@ -174,23 +170,11 @@ impl Tty {
             buffer: vec![' '; capacity],
             head: 0,
             tail: 0,
-            cursor_x: 0,
-            cursor_y: 0,
             full: false,
             cols: col,
             rows: row,
         }
     }
-
-    fn put_char(&mut self, byte: u8) {
-    if self.cursor_x >= self.cols || self.cursor_y >= self.rows {
-        return;
-    }
-
-    let idx = self.cursor_y * self.cols + self.cursor_x;
-    self.buffer[idx] = byte as char;
-}
-
 
     pub fn push_char(&mut self, c: char) {
         self.buffer[self.tail] = c;
@@ -201,42 +185,14 @@ impl Tty {
         }
     }
 
-    /*pub fn write_byte(&mut self, byte: u8) {
+    pub fn write_byte(&mut self, byte: u8) {
         let c = byte as char;
 
         match c {
             '\n' => self.move_to_next_line(),
             _ => self.push_char(c),
         }
-    }*/
-
-    pub fn write_byte(&mut self, byte: u8) {
-    match byte {
-        b'\n' => {
-            self.cursor_x = 0;
-            self.cursor_y += 1;
-        }
-        b'\r' => {
-            self.cursor_x = 0;
-        }
-        _ => {
-            self.put_char(byte);
-            self.cursor_x += 1;
-        }
     }
-
-    // line wrap
-    if self.cursor_x >= self.cols {
-        self.cursor_x = 0;
-        self.cursor_y += 1;
-    }
-
-    // scroll or clamp
-    if self.cursor_y >= self.rows {
-        self.cursor_y = self.rows - 1;
-    }
-}
-
 
     fn move_to_next_line(&mut self) {
         if self.tail + self.cols < self.buffer.len() {
@@ -292,12 +248,28 @@ impl Tty {
         }
     }
 
-    pub fn clear(&mut self) {
-    for ch in &mut self.buffer {
-        *ch = ' ';
+    pub fn load_from_slice(&mut self, src: &[u8]) {
+        self.head = 0;
+        self.tail = 0;
+        self.full = false;
+
+        for &b in src {
+            self.push_char(b as char);
+        }
     }
-    self.head = 0;
-    self.tail = 0;
-    self.full = false;
-}
+
+    pub fn reset_stream(&mut self) {
+        self.head = 0;
+        self.tail = 0;
+        self.full = false;
+    }
+
+    pub fn clear(&mut self) {
+        for ch in &mut self.buffer {
+            *ch = ' ';
+        }
+        self.head = 0;
+        self.tail = 0;
+        self.full = false;
+    }
 }
