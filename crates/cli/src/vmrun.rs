@@ -12,12 +12,6 @@ const OPS_PER_FRAME: u32 = 1024;
 const RENDER_INTERVAL: u32 = 1000;
 
 #[derive(Debug)]
-enum ScreenOwner {
-    Gpu,
-    Debug,
-}
-
-#[derive(Debug)]
 pub struct VmRun {
     pub vm: vm::VirtualMachine,
     pub tty: Tty,
