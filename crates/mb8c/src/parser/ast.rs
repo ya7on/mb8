@@ -108,4 +108,12 @@ pub enum ASTExpr {
         args: Vec<ASTExpr>,
         span: Span,
     },
+    AddressOf {
+        expr: Box<ASTExpr>,
+        span: Span,
+    },
+    Dereference {
+        expr: Box<ASTExpr>,
+        span: Span,
+    },
 }

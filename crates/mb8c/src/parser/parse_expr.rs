@@ -87,7 +87,35 @@ where
                 just(TokenKind::RightParenthesis),
             ));
 
-        let product = primary.clone().foldl_with(
+        let unary = recursive(|unary| {
+            just(TokenKind::OperatorAmpersand)
+                .then(unary.clone())
+                .map_with(|(_, expr), extra| {
+                    let span: SimpleSpan = extra.span();
+                    ASTExpr::AddressOf {
+                        expr: Box::new(expr),
+                        span: Span {
+                            start: span.start,
+                            end: span.end,
+                        },
+                    }
+                })
+                .or(just(TokenKind::OperatorAsterisk)
+                    .then(unary.clone())
+                    .map_with(|(_, expr), extra| {
+                        let span: SimpleSpan = extra.span();
+                        ASTExpr::Dereference {
+                            expr: Box::new(expr),
+                            span: Span {
+                                start: span.start,
+                                end: span.end,
+                            },
+                        }
+                    }))
+                .or(primary.clone())
+        });
+
+        let product = unary.clone().foldl_with(
             (just(TokenKind::OperatorAsterisk)
                 .to(ASTBinaryOp::Mul)
                 .or(just(TokenKind::OperatorSlash).to(ASTBinaryOp::Div)))
@@ -148,4 +176,73 @@ where
 
         equality
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn parse_expr(input: &[TokenKind]) -> ASTExpr {
+        expr_parser().parse(input).unwrap()
+    }
+
+    #[test]
+    fn test_plus() {
+        let result = parse_expr(&[
+            TokenKind::LiteralU8(1),
+            TokenKind::OperatorPlus,
+            TokenKind::LiteralU8(2),
+        ]);
+        assert_eq!(
+            result,
+            ASTExpr::BinaryOp {
+                op: ASTBinaryOp::Add,
+                lhs: Box::new(ASTExpr::LiteralU8 {
+                    value: 1,
+                    span: Span { start: 0, end: 1 }
+                }),
+                rhs: Box::new(ASTExpr::LiteralU8 {
+                    value: 2,
+                    span: Span { start: 2, end: 3 }
+                }),
+                span: Span { start: 0, end: 3 }
+            }
+        );
+    }
+
+    #[test]
+    fn test_address_of() {
+        let result = parse_expr(&[
+            TokenKind::OperatorAmpersand,
+            TokenKind::Ident("varname".to_string()),
+        ]);
+        assert_eq!(
+            result,
+            ASTExpr::AddressOf {
+                expr: Box::new(ASTExpr::Var {
+                    name: "varname".to_string(),
+                    span: Span { start: 1, end: 2 }
+                }),
+                span: Span { start: 0, end: 2 }
+            }
+        );
+    }
+
+    #[test]
+    fn test_dereference() {
+        let result = parse_expr(&[
+            TokenKind::OperatorAsterisk,
+            TokenKind::Ident("varname".to_string()),
+        ]);
+        assert_eq!(
+            result,
+            ASTExpr::Dereference {
+                expr: Box::new(ASTExpr::Var {
+                    name: "varname".to_string(),
+                    span: Span { start: 1, end: 2 }
+                }),
+                span: Span { start: 0, end: 2 }
+            }
+        );
+    }
 }
