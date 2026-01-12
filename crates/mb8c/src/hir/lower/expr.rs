@@ -225,6 +225,12 @@ impl HIRLowerer {
             ASTExpr::UnaryOp { op, expr, span } => self.analyze_unary_op_expr(op, expr, span),
             ASTExpr::Var { name, span } => self.analyze_var_expr(name, span),
             ASTExpr::Call { name, args, span } => self.analyze_call_expr(name, args, span),
+            ASTExpr::AddressOf { expr, span } => {
+                unimplemented!()
+            }
+            ASTExpr::Dereference { expr, span } => {
+                unimplemented!()
+            }
         }
     }
 }
