@@ -82,17 +82,26 @@ impl HIRLowerer {
 
     fn analyze_unary_op_expr(
         &mut self,
-        _op: &ASTUnaryOp,
+        op: &ASTUnaryOp,
         expr: &ASTExpr,
         _span: &Span,
     ) -> CompileResult<HIRExpr> {
         let expr = self.analyze_expr(expr)?;
         let ty = fetch_expr_type(&expr);
-        Ok(HIRExpr::Unary {
-            op: HIRUnaryOp::Neg,
-            expr: Box::new(expr),
-            ty,
-        })
+
+        match op {
+            ASTUnaryOp::Neg => Ok(HIRExpr::Unary {
+                op: HIRUnaryOp::Neg,
+                expr: Box::new(expr),
+                ty,
+            }),
+            ASTUnaryOp::AddressOf => {
+                unimplemented!()
+            }
+            ASTUnaryOp::Dereference => {
+                unimplemented!()
+            }
+        }
     }
 
     fn analyze_var_expr(&mut self, name: &str, span: &Span) -> CompileResult<HIRExpr> {
@@ -211,6 +220,15 @@ impl HIRLowerer {
         })
     }
 
+    // fn analyze_(
+    //     &mut self,
+    //     name: &str,
+    //     args: &[ASTExpr],
+    //     span: &Span,
+    // ) -> CompileResult<HIRExpr> {
+    //     unimplemented!()
+    // }
+
     /// Analyze AST Expression and lower it to HIR typed expression
     ///
     /// # Errors
@@ -225,12 +243,6 @@ impl HIRLowerer {
             ASTExpr::UnaryOp { op, expr, span } => self.analyze_unary_op_expr(op, expr, span),
             ASTExpr::Var { name, span } => self.analyze_var_expr(name, span),
             ASTExpr::Call { name, args, span } => self.analyze_call_expr(name, args, span),
-            ASTExpr::AddressOf { expr, span } => {
-                unimplemented!()
-            }
-            ASTExpr::Dereference { expr, span } => {
-                unimplemented!()
-            }
         }
     }
 }

@@ -407,7 +407,7 @@ impl Mb8Codegen {
                                 register: "R0".to_string(),
                             });
                         }
-                        TypeKind::Unsigned16 => {
+                        TypeKind::Unsigned16 | TypeKind::Pointer { .. } => {
                             self.result.push(Mb8Asm::Push {
                                 register: "R0".to_string(),
                             });

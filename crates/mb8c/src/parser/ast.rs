@@ -76,6 +76,8 @@ pub enum ASTBinaryOp {
 #[derive(Clone, Debug, PartialEq)]
 pub enum ASTUnaryOp {
     Neg,
+    AddressOf,
+    Dereference,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -106,14 +108,6 @@ pub enum ASTExpr {
     Call {
         name: String,
         args: Vec<ASTExpr>,
-        span: Span,
-    },
-    AddressOf {
-        expr: Box<ASTExpr>,
-        span: Span,
-    },
-    Dereference {
-        expr: Box<ASTExpr>,
         span: Span,
     },
 }

@@ -113,6 +113,12 @@ impl IRLowerer {
             HIRUnaryOp::Neg => instructions.push(IRInstruction::Neg {
                 width: type_kind.width(),
             }),
+            HIRUnaryOp::AddressOf => {
+                unimplemented!()
+            }
+            HIRUnaryOp::Dereference => {
+                unimplemented!()
+            }
         }
         Ok(instructions)
     }

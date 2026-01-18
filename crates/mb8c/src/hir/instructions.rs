@@ -53,6 +53,8 @@ pub enum HIRBinaryOp {
 #[derive(Debug, Clone, Copy)]
 pub enum HIRUnaryOp {
     Neg,
+    AddressOf,
+    Dereference,
 }
 
 #[derive(Debug, Clone)]

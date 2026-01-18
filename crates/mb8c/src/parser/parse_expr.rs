@@ -13,6 +13,8 @@ use crate::{
     parser::ast::{ASTBinaryOp, ASTExpr, Span},
 };
 
+use super::ast::ASTUnaryOp;
+
 #[must_use]
 #[allow(clippy::too_many_lines)]
 pub fn expr_parser<'src, I>() -> impl Parser<'src, I, ASTExpr, Err<Simple<'src, TokenKind>>> + Clone
@@ -92,7 +94,8 @@ where
                 .then(unary.clone())
                 .map_with(|(_, expr), extra| {
                     let span: SimpleSpan = extra.span();
-                    ASTExpr::AddressOf {
+                    ASTExpr::UnaryOp {
+                        op: ASTUnaryOp::AddressOf,
                         expr: Box::new(expr),
                         span: Span {
                             start: span.start,
@@ -104,7 +107,8 @@ where
                     .then(unary.clone())
                     .map_with(|(_, expr), extra| {
                         let span: SimpleSpan = extra.span();
-                        ASTExpr::Dereference {
+                        ASTExpr::UnaryOp {
+                            op: ASTUnaryOp::Dereference,
                             expr: Box::new(expr),
                             span: Span {
                                 start: span.start,
@@ -112,6 +116,19 @@ where
                             },
                         }
                     }))
+                .or(just(TokenKind::OperatorMinus).then(unary.clone()).map_with(
+                    |(_, expr), extra| {
+                        let span: SimpleSpan = extra.span();
+                        ASTExpr::UnaryOp {
+                            op: ASTUnaryOp::Neg,
+                            expr: Box::new(expr),
+                            span: Span {
+                                start: span.start,
+                                end: span.end,
+                            },
+                        }
+                    },
+                ))
                 .or(primary.clone())
         });
 
@@ -211,14 +228,15 @@ mod tests {
     }
 
     #[test]
-    fn test_address_of() {
+    fn test_neg() {
         let result = parse_expr(&[
-            TokenKind::OperatorAmpersand,
+            TokenKind::OperatorMinus,
             TokenKind::Ident("varname".to_string()),
         ]);
         assert_eq!(
             result,
-            ASTExpr::AddressOf {
+            ASTExpr::UnaryOp {
+                op: ASTUnaryOp::Neg,
                 expr: Box::new(ASTExpr::Var {
                     name: "varname".to_string(),
                     span: Span { start: 1, end: 2 }
@@ -229,19 +247,70 @@ mod tests {
     }
 
     #[test]
-    fn test_dereference() {
+    fn test_address_of() {
+        let result = parse_expr(&[
+            TokenKind::OperatorAmpersand,
+            TokenKind::Ident("varname".to_string()),
+        ]);
+        assert_eq!(
+            result,
+            ASTExpr::UnaryOp {
+                op: ASTUnaryOp::AddressOf,
+                expr: Box::new(ASTExpr::Var {
+                    name: "varname".to_string(),
+                    span: Span { start: 1, end: 2 }
+                }),
+                span: Span { start: 0, end: 2 }
+            }
+        );
+    }
+
+    #[test]
+    fn test_dereference_simple() {
         let result = parse_expr(&[
             TokenKind::OperatorAsterisk,
             TokenKind::Ident("varname".to_string()),
         ]);
         assert_eq!(
             result,
-            ASTExpr::Dereference {
+            ASTExpr::UnaryOp {
+                op: ASTUnaryOp::Dereference,
                 expr: Box::new(ASTExpr::Var {
                     name: "varname".to_string(),
                     span: Span { start: 1, end: 2 }
                 }),
                 span: Span { start: 0, end: 2 }
+            }
+        );
+    }
+
+    #[test]
+    fn test_dereference_add() {
+        let result = parse_expr(&[
+            TokenKind::OperatorAsterisk,
+            TokenKind::LeftParenthesis,
+            TokenKind::Ident("varname".to_string()),
+            TokenKind::OperatorPlus,
+            TokenKind::LiteralU8(1),
+            TokenKind::RightParenthesis,
+        ]);
+        assert_eq!(
+            result,
+            ASTExpr::UnaryOp {
+                op: ASTUnaryOp::Dereference,
+                expr: Box::new(ASTExpr::BinaryOp {
+                    op: ASTBinaryOp::Add,
+                    lhs: Box::new(ASTExpr::Var {
+                        name: "varname".to_string(),
+                        span: Span { start: 2, end: 3 }
+                    }),
+                    rhs: Box::new(ASTExpr::LiteralU8 {
+                        value: 1,
+                        span: Span { start: 4, end: 5 }
+                    }),
+                    span: Span { start: 2, end: 5 }
+                }),
+                span: Span { start: 0, end: 6 }
             }
         );
     }
