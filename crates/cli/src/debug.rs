@@ -2,7 +2,8 @@ use std::fmt::format;
 
 //write a debug helper that can be used by both architectures.
 use crate::tty::Tty;
-use mb8::{dev::bus::{self, Bus}, vm::VirtualMachine};
+use mb8::{dev::bus::{self, Bus},  vm::VirtualMachine}; //registers::Registers,
+use mb8_isa::{registers::Register, REGISTERS_COUNT};
 use minifb::Key;
 
 #[derive(Debug)]
@@ -49,6 +50,11 @@ impl Debug {
     pub fn print_registers(&mut self, vm: &mut VirtualMachine, tty: &mut Tty) {
         let regs = format!("{:?}\n", vm.registers);
         self.tty_write_line(&regs, tty);
+
+        let r = &vm.registers;
+
+        self.tty_write_line(&format!("R0:  {:02X}", r.read(Registers::R0)), tty);
+
     }
 
     //this is wrong but I will fix it once I can actually read it.

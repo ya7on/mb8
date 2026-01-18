@@ -135,6 +135,18 @@ static FONT: [[u8; 8]; 128] = [
 fn draw_glyph(framebuffer: &mut [u32], fb_width: usize, x: usize, y: usize, ch: usize, color: u32) {
     let glyph = FONT[ch];
 
+    let fb_height = framebuffer.len() / fb_width;
+
+    debug_assert!(
+    x + 8 <= fb_width && y + 8 <= framebuffer.len() / fb_width,
+    "Glyph out of bounds: x={}, y={}, fb={}x{}",
+    x,
+    y,
+    fb_width,
+    framebuffer.len() / fb_width
+);
+
+
     for (gy, row) in glyph.iter().enumerate() {
         let mut reverse_row = 0;
         for i in 0..8 {
@@ -146,22 +158,22 @@ fn draw_glyph(framebuffer: &mut [u32], fb_width: usize, x: usize, y: usize, ch: 
             let px = x + gx;
             let py = y + gy;
 
-            if px < fb_width && py < fb_width {
+            if px < fb_width && py < fb_height {
                 framebuffer[py * fb_width + px] = if bit == 1 { color } else { PIXEL_OFF_COLOR }
             }
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[must_use]
 pub struct Tty {
     buffer: Vec<char>,
-    head: usize,
-    tail: usize,
+    pub head: usize,
+    pub tail: usize,
     full: bool,
     pub cols: usize,
-    rows: usize,
+    pub rows: usize,
 }
 
 impl Tty {
@@ -195,16 +207,15 @@ impl Tty {
     }
 
     fn move_to_next_line(&mut self) {
-        if self.tail + self.cols < self.buffer.len() {
-            self.tail += self.cols;
-        } else {
-            self.tail %= self.buffer.len();
-        }
+    let col = self.tail % self.cols;
+    let advance = self.cols - col;
 
-        if self.tail == self.head {
-            self.head = (self.head + self.cols) % self.buffer.len();
-        }
+    self.tail = (self.tail + advance) % self.buffer.len();
+
+    if self.tail == self.head {
+        self.head = (self.head + advance) % self.buffer.len();
     }
+}
 
     pub fn get_visible(&mut self) -> Vec<char> {
         let visible_len = self.rows * self.cols;
@@ -230,7 +241,7 @@ impl Tty {
         out
     }
 
-    pub fn render(&mut self, framebuffer: &mut [u32], fb_width: usize) {
+  /*   pub fn render(&mut self, framebuffer: &mut [u32], fb_width: usize) {
         let chars = self.get_visible();
 
         for row in 0..self.rows {
@@ -243,10 +254,47 @@ impl Tty {
                     PIXEL_ON_COLOR
                 };
 
-                draw_glyph(framebuffer, fb_width, col * 8, row * 8, ch, color);
+                draw_glyph(framebuffer, fb_width ,col * 8, row * 8, ch, color);
             }
         }
+    }*/
+
+    pub fn render(&mut self, framebuffer: &mut [u32], fb_width: usize) {
+    let fb_height = framebuffer.len() / fb_width;
+
+    let max_rows = fb_height / 8;
+    let max_cols = fb_width / 8;
+
+    let chars = self.get_visible();
+
+    let rows = self.rows.min(max_rows);
+    let cols = self.cols.min(max_cols);
+
+    for row in 0..rows {
+        for col in 0..cols {
+            let idx = row * cols + col;
+            if idx >= chars.len() {
+                return;
+            }
+
+            let ch = chars[idx] as usize;
+            let color = if ch == 0 {
+                PIXEL_OFF_COLOR
+            } else {
+                PIXEL_ON_COLOR
+            };
+
+            draw_glyph(
+                framebuffer,
+                fb_width,
+                col * 8,
+                row * 8,
+                ch,
+                color,
+            );
+        }
     }
+}
 
     pub fn load_from_slice(&mut self, src: &[u8]) {
         self.head = 0;

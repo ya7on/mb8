@@ -1,5 +1,4 @@
-use std::{path::PathBuf, time::Instant};
-
+use std::{path::PathBuf};
 use crate::{filesystem::makefs, keyboard::Keyboard};
 
 use mb8::vm;
@@ -10,6 +9,12 @@ use crate::tty::Tty;
 
 const OPS_PER_FRAME: u32 = 1024;
 const RENDER_INTERVAL: u32 = 1000;
+
+#[derive(Debug)]
+pub enum ScreenMode {
+    Vm,
+    Debug,
+}
 
 #[derive(Debug)]
 pub struct VmRun {
@@ -25,6 +30,8 @@ pub struct VmRun {
     pub hit_entry_break: bool,
     pub paused: bool,
     pub debug_prompt: bool,
+    pub debug_tty: Tty,
+    pub screen_mode: ScreenMode,
 }
 
 impl VmRun {
@@ -32,6 +39,9 @@ impl VmRun {
     pub fn new(vm: vm::VirtualMachine, tty: Tty, debug: Debug) -> Self {
         let window = Window::new("MB8", 640, 480, WindowOptions::default())
             .expect("Failed to create window");
+
+        let debug_tty = Tty::new(40, 25, 64000);
+        
         Self {
             vm,
             tty,
@@ -45,6 +55,8 @@ impl VmRun {
             hit_entry_break: false,
             paused: false,
             debug_prompt: false,
+            debug_tty,
+            screen_mode: ScreenMode::Vm,
         }
     }
 
@@ -65,7 +77,7 @@ impl VmRun {
         let r_shift = false;
         let key = &mut Keyboard::new(l_shift, r_shift);
 
-        while !self.vm.halted && self.window.is_open() {
+      /*   while !self.vm.halted && self.window.is_open() {
             let paused = self.run_debug();
 
             if paused {
@@ -77,7 +89,34 @@ impl VmRun {
             }
 
             self.render();
+        }*/
+
+
+        while self.window.is_open() && !self.vm.halted {
+    match self.screen_mode {
+        ScreenMode::Vm => {
+
+            Keyboard::key_pressed(key, &self.window, &mut self.vm);
+            Keyboard::key_released(key, &self.window);
+            self.render();
+            self.vm_step();
+            self.run_debug();
+
+            println!("debug enabled: {}", self.debug_enabled);
+
+            if self.debug_enabled {
+                
+                self.run_debug();
+            }
         }
+
+        ScreenMode::Debug => {
+            self.render_debug();
+            self.poll_debug_keys();
+        }
+    }
+}
+
     }
 
     fn vm_step(&mut self) {
@@ -103,18 +142,18 @@ impl VmRun {
             self.hit_entry_break = true;
             //
             self.paused = true;
+            self.screen_mode = ScreenMode::Debug;
         }
 
         if !self.paused {
             return false;
         }
 
-
         if self.paused && !self.debug_prompt {
 
-            self.tty.clear();
-            self.tty.reset_stream();
-            self.debug.print_help(&mut self.tty);
+            self.debug_tty.clear();
+            self.debug_tty.reset_stream();
+            self.debug.print_help(&mut self.debug_tty);
             self.debug_prompt = true;
 
         }
@@ -122,28 +161,35 @@ impl VmRun {
     }
 
     fn render(&mut self) {
+
         let mut buf = vec![0u32; self.width * self.height];
-        let gpu = self.vm.devices.gpu();
 
-        if !self.paused {
-            self.tty.load_from_slice(gpu.tty_buffer());
-        }
-
-        // self.tty.reset_stream();
+        self.tty.load_from_slice(self.vm.devices.gpu().tty_buffer());
 
         self.tty.render(&mut buf, self.width);
 
         let _ = self
             .window
-            .update_with_buffer(&buf, self.width, self.height);
+            .update_with_buffer(&buf, 320, 200);
     }
+
+    fn render_debug(&mut self) {
+    let mut buf = vec![0u32; self.width * self.height];
+
+    self.tty.load_from_slice(self.vm.devices.gpu().tty_buffer());
+
+    self.debug_tty.render(&mut buf, self.width);
+
+    let _ = self.window.update_with_buffer(&buf, 320, 200);
+}
+
 
     fn poll_debug_keys(&mut self) {
         for key in self.window.get_keys_pressed(minifb::KeyRepeat::No) {
             if let Some(byte) = Debug::map_debug_key(key) {
                 self.debug.handle_debug_byte(
                     byte,
-                    &mut self.tty,
+                    &mut self.debug_tty,
                     &mut self.vm,
                     &mut self.debug_input,
                 );
