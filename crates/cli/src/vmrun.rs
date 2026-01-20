@@ -1,10 +1,10 @@
-use std::{path::PathBuf};
 use crate::{filesystem::makefs, keyboard::Keyboard};
+use std::path::PathBuf;
 
 use mb8::vm;
 use minifb::{Window, WindowOptions};
 
-use crate::debug::Debug;
+use crate::debug::{Debug, DebugCmd};
 use crate::tty::Tty;
 
 const OPS_PER_FRAME: u32 = 1024;
@@ -29,20 +29,18 @@ pub struct VmRun {
     pub debug_enabled: bool,
     pub hit_entry_break: bool,
     pub paused: bool,
-    pub debug_prompt: bool,
     pub debug_tty: Tty,
     pub screen_mode: ScreenMode,
 }
 
 impl VmRun {
     #[must_use]
-    pub fn new(vm: vm::VirtualMachine, tty: Tty, debug: Debug) -> Self {
-        let window = Window::new("MB8", 640, 480, WindowOptions::default())
-            .expect("Failed to create window");
+    pub fn new(vm: vm::VirtualMachine, tty: Tty, debug: Debug) -> Result<Self, minifb::Error> {
+        let window = Window::new("MB8", 640, 480, WindowOptions::default())?;
 
         let debug_tty = Tty::new(40, 25, 64000);
-        
-        Self {
+
+        Ok(Self {
             vm,
             tty,
             window,
@@ -54,10 +52,9 @@ impl VmRun {
             debug_enabled: false,
             hit_entry_break: false,
             paused: false,
-            debug_prompt: false,
             debug_tty,
             screen_mode: ScreenMode::Vm,
-        }
+        })
     }
 
     pub fn run_desktop(&mut self, kernel: PathBuf, user: Vec<PathBuf>, seed: Option<u16>) {
@@ -77,46 +74,28 @@ impl VmRun {
         let r_shift = false;
         let key = &mut Keyboard::new(l_shift, r_shift);
 
-      /*   while !self.vm.halted && self.window.is_open() {
-            let paused = self.run_debug();
-
-            if paused {
-                self.poll_debug_keys();
-            } else {
-                Keyboard::key_pressed(key, &self.window, &mut self.vm);
-                Keyboard::key_released(key, &self.window);
-                self.vm_step();
-            }
-
-            self.render();
-        }*/
-
-
         while self.window.is_open() && !self.vm.halted {
-    match self.screen_mode {
-        ScreenMode::Vm => {
+            match self.screen_mode {
+                ScreenMode::Vm => {
+                    Keyboard::key_pressed(key, &self.window, &mut self.vm);
+                    Keyboard::key_released(key, &self.window);
+                    self.render();
+                    self.vm_step();
+                    self.run_debug();
 
-            Keyboard::key_pressed(key, &self.window, &mut self.vm);
-            Keyboard::key_released(key, &self.window);
-            self.render();
-            self.vm_step();
-            self.run_debug();
+                    println!("debug enabled: {}", self.debug_enabled);
 
-            println!("debug enabled: {}", self.debug_enabled);
+                    if self.debug_enabled {
+                        self.run_debug();
+                    }
+                }
 
-            if self.debug_enabled {
-                
-                self.run_debug();
+                ScreenMode::Debug => {
+                    self.render_debug();
+                    self.poll_debug_keys();
+                }
             }
         }
-
-        ScreenMode::Debug => {
-            self.render_debug();
-            self.poll_debug_keys();
-        }
-    }
-}
-
     }
 
     fn vm_step(&mut self) {
@@ -149,51 +128,104 @@ impl VmRun {
             return false;
         }
 
-        if self.paused && !self.debug_prompt {
-
+        if self.paused {
             self.debug_tty.clear();
             self.debug_tty.reset_stream();
             self.debug.print_help(&mut self.debug_tty);
-            self.debug_prompt = true;
-
         }
         true
     }
 
     fn render(&mut self) {
-
         let mut buf = vec![0u32; self.width * self.height];
 
         self.tty.load_from_slice(self.vm.devices.gpu().tty_buffer());
 
         self.tty.render(&mut buf, self.width);
 
-        let _ = self
-            .window
-            .update_with_buffer(&buf, 320, 200);
+        let _ = self.window.update_with_buffer(&buf, 320, 200);
     }
 
     fn render_debug(&mut self) {
-    let mut buf = vec![0u32; self.width * self.height];
+        let mut buf = vec![0u32; self.width * self.height];
 
-    self.tty.load_from_slice(self.vm.devices.gpu().tty_buffer());
+        self.tty.load_from_slice(self.vm.devices.gpu().tty_buffer());
 
-    self.debug_tty.render(&mut buf, self.width);
+        self.debug_tty.render(&mut buf, self.width);
 
-    let _ = self.window.update_with_buffer(&buf, 320, 200);
-}
-
+        let _ = self.window.update_with_buffer(&buf, 320, 200);
+    }
 
     fn poll_debug_keys(&mut self) {
         for key in self.window.get_keys_pressed(minifb::KeyRepeat::No) {
             if let Some(byte) = Debug::map_debug_key(key) {
-                self.debug.handle_debug_byte(
+                if let Some(cmd) = self.debug.handle_debug_byte(
                     byte,
                     &mut self.debug_tty,
                     &mut self.vm,
                     &mut self.debug_input,
-                );
+                ) {
+                    self.apply_debug_cmd(&cmd);
+                    self.debug_input.clear();
+
+                    self.debug_tty.write_byte(b'\n');
+                    self.debug_tty.write_byte(b'>');
+                    self.debug_tty.write_byte(b' ');
+                }
             }
+        }
+    }
+
+    pub fn execute_next_instruction(&mut self) {
+        if self.vm.halted {
+            return;
+        }
+
+        self.vm.step();
+
+        self.paused = true;
+    }
+
+    pub fn continue_normal_execution(&mut self) {
+        self.paused = false;
+        self.screen_mode = ScreenMode::Vm;
+
+        self.debug_enabled = false;
+    }
+
+    fn apply_debug_cmd(&mut self, cmd: &DebugCmd) {
+        match cmd {
+            DebugCmd::Step => {
+                self.vm.step();
+                self.debug_tty.clear();
+                self.debug
+                    .print_registers(&mut self.vm, &mut self.debug_tty);
+            }
+            DebugCmd::Continue => {
+                self.paused = false;
+                self.screen_mode = ScreenMode::Vm;
+                self.debug_tty.clear();
+            }
+            DebugCmd::Memory => {
+                self.debug_tty.clear();
+                self.debug.print_memory(&mut self.vm, &mut self.debug_tty);
+            }
+            DebugCmd::Registers => {
+                self.debug_tty.clear();
+                self.debug
+                    .print_registers(&mut self.vm, &mut self.debug_tty);
+            }
+            DebugCmd::Help => {
+                self.debug_tty.clear();
+                self.debug.print_help(&mut self.debug_tty);
+            }
+            DebugCmd::Invalid => {
+                self.debug_tty.clear();
+                self.debug_tty.write_byte(b'?');
+                self.debug_tty.write_byte(b'\n');
+                self.debug.print_help(&mut self.debug_tty);
+            }
+            DebugCmd::None => {}
         }
     }
 }

@@ -19,7 +19,7 @@ fn main() {
             let vm = vm::VirtualMachine::default();
             let tty = Tty::new(TTY_COLS as usize, TTY_ROWS as usize, 1024);
             let debugcli = Debug::new();
-            let mut vm_desk = vmrun::VmRun::new(vm, tty, debugcli);
+            let mut vm_desk = vmrun::VmRun::new(vm, tty, debugcli).expect("failed to init VM");
             if debug {
                 vm_desk.debug_enabled = true;
             }
