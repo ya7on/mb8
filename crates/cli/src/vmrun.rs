@@ -159,12 +159,10 @@ impl VmRun {
     fn poll_debug_keys(&mut self) {
         for key in self.window.get_keys_pressed(minifb::KeyRepeat::No) {
             if let Some(byte) = Debug::map_debug_key(key) {
-                if let Some(cmd) = self.debug.handle_debug_byte(
-                    byte,
-                    &mut self.debug_tty,
-                    &mut self.vm,
-                    &mut self.debug_input,
-                ) {
+                if let Some(cmd) =
+                    self.debug
+                        .handle_debug_byte(byte, &mut self.debug_tty, &mut self.debug_input)
+                {
                     self.apply_debug_cmd(&cmd);
                     self.debug_input.clear();
 
@@ -206,9 +204,19 @@ impl VmRun {
                 self.screen_mode = ScreenMode::Vm;
                 self.debug_tty.clear();
             }
-            DebugCmd::Memory => {
+            DebugCmd::Memory(arg) => {
                 self.debug_tty.clear();
-                self.debug.print_memory(&mut self.vm, &mut self.debug_tty);
+                if let Some(addr_str) = arg {
+                    self.debug
+                        .parse_and_print_memory(addr_str, &mut self.vm, &mut self.debug_tty);
+                } else {
+                    self.debug.print_memory_range(
+                        &mut self.vm,
+                        &mut self.debug_tty,
+                        0x0000,
+                        0x00FF,
+                    );
+                }
             }
             DebugCmd::Registers => {
                 self.debug_tty.clear();
