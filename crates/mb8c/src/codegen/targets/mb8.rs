@@ -420,6 +420,12 @@ impl Mb8Codegen {
                         }
                     }
                 }
+                IRInstruction::Dereference { symbol, width } => {
+                    unimplemented!()
+                }
+                IRInstruction::AddressOf { symbol, width } => {
+                    unimplemented!()
+                }
             }
         }
 

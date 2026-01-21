@@ -96,10 +96,22 @@ impl HIRLowerer {
                 ty,
             }),
             ASTUnaryOp::AddressOf => {
-                unimplemented!()
+                // TODO: check if the expression is lvalue
+
+                Ok(HIRExpr::Unary {
+                    op: HIRUnaryOp::AddressOf,
+                    expr: Box::new(expr),
+                    ty: self.ctx.type_table.entry(TypeKind::Pointer { pointee: ty }),
+                })
             }
             ASTUnaryOp::Dereference => {
-                unimplemented!()
+                // TODO: check if the expression is pointer type
+
+                Ok(HIRExpr::Unary {
+                    op: HIRUnaryOp::Dereference,
+                    expr: Box::new(expr),
+                    ty: self.ctx.type_table.entry(TypeKind::Pointer { pointee: ty }),
+                })
             }
         }
     }
