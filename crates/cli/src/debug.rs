@@ -1,10 +1,8 @@
 //write a debug helper that can be used by both architectures.
-use crate::tty::Tty;
 use mb8::vm::VirtualMachine;
 use mb8_isa::registers::Register;
 use minifb::Key;
-
-const DUMP_ROWS: usize = 16;
+use std::io::{self, Write};
 
 #[derive(Debug)]
 pub enum DebugCmd {
@@ -48,65 +46,64 @@ impl Debug {
         None
     }
 
-    pub fn print_registers(&mut self, vm: &mut VirtualMachine, tty: &mut Tty) {
+    pub fn print_registers(&mut self, vm: &mut VirtualMachine) {
         let r = &vm.registers;
-        Self::tty_write_line("=== CURRENT STEP REGISTERS ===", tty);
-        Self::tty_write_line(&format!("R0:  {:02X}", r.read(Register::R0)), tty);
-        Self::tty_write_line(&format!("R1:  {:02X}", r.read(Register::R1)), tty);
-        Self::tty_write_line(&format!("R2:  {:02X}", r.read(Register::R2)), tty);
-        Self::tty_write_line(&format!("R3:  {:02X}", r.read(Register::R3)), tty);
-        Self::tty_write_line(&format!("R4:  {:02X}", r.read(Register::R4)), tty);
-        Self::tty_write_line(&format!("R5:  {:02X}", r.read(Register::R5)), tty);
-        Self::tty_write_line(&format!("R6:  {:02X}", r.read(Register::R6)), tty);
-        Self::tty_write_line(&format!("R7:  {:02X}", r.read(Register::R7)), tty);
-        Self::tty_write_line(&format!("R8:  {:02X}", r.read(Register::R8)), tty);
-        Self::tty_write_line(&format!("R9:  {:02X}", r.read(Register::R9)), tty);
-        Self::tty_write_line(&format!("R10:  {:02X}", r.read(Register::R10)), tty);
-        Self::tty_write_line(&format!("R11:  {:02X}", r.read(Register::R11)), tty);
-        Self::tty_write_line(&format!("R12:  {:02X}", r.read(Register::R12)), tty);
-        Self::tty_write_line(&format!("R13:  {:02X}", r.read(Register::R13)), tty);
-        Self::tty_write_line(&format!("R14:  {:02X}", r.read(Register::R14)), tty);
-        Self::tty_write_line(&format!("R15:  {:02X}", r.read(Register::R15)), tty);
+        println!("=== CURRENT STEP REGISTERS ===");
+        println!("R0:  {:02X}", r.read(Register::R0));
+        println!("R1:  {:02X}", r.read(Register::R1));
+        println!("R2:  {:02X}", r.read(Register::R2));
+        println!("R3:  {:02X}", r.read(Register::R3));
+        println!("R4:  {:02X}", r.read(Register::R4));
+        println!("R5:  {:02X}", r.read(Register::R5));
+        println!("R6:  {:02X}", r.read(Register::R6));
+        println!("R7:  {:02X}", r.read(Register::R7));
+        println!("R8:  {:02X}", r.read(Register::R8));
+        println!("R9:  {:02X}", r.read(Register::R9));
+        println!("R10:  {:02X}", r.read(Register::R10));
+        println!("R11:  {:02X}", r.read(Register::R11));
+        println!("R12:  {:02X}", r.read(Register::R12));
+        println!("R13:  {:02X}", r.read(Register::R13));
+        println!("R14:  {:02X}", r.read(Register::R14));
+        println!("R15:  {:02X}", r.read(Register::R15));
     }
 
-    pub fn print_help(&mut self, tty: &mut Tty) {
-        Self::tty_write_line("DEBUGGER COMMANDS", tty);
-        Self::tty_write_line("", tty);
-        Self::tty_write_line("Commands:", tty);
-        Self::tty_write_line("  n  - Step Instruction", tty);
-        Self::tty_write_line("  c  - Continue Execution", tty);
-        Self::tty_write_line("  r  - Print Registers", tty);
-        Self::tty_write_line("  m  - Print Memory", tty);
-        Self::tty_write_line("  h  - Help", tty);
-        Self::tty_write_line("", tty);
+    pub fn print_help(&mut self) {
+        println!("DEBUGGER COMMANDS");
+        println!(" ");
+        println!("Commands: ");
+        println!("  n  - Step Instruction");
+        println!("  c  - Continue Execution");
+        println!("  r  - Print Registers");
+        println!("  m  - Print Memory");
+        println!("  h  - Help");
+        println!(" ");
     }
 
-    pub fn handle_debug_byte(
-        &mut self,
-        byte: u8,
-        tty: &mut Tty,
-        debug_input: &mut Vec<u8>,
-    ) -> Option<DebugCmd> {
+    pub fn handle_debug_byte(&mut self, byte: u8, debug_input: &mut Vec<u8>) -> Option<DebugCmd> {
         match byte {
             b'\n' => {
-                tty.write_byte(b'\n');
+                println!();
+                let _ = io::stdout().flush();
                 let cmd = Self::execute_debug_command(debug_input);
                 Some(cmd)
             }
             0x08 => {
                 debug_input.pop();
-                tty.write_byte(0x08);
+
+                print!("\x08 \x08");
+                let _ = io::stdout().flush();
                 None
             }
             _ => {
                 debug_input.push(byte);
-                tty.write_byte(byte);
+                print!("{}", byte as char);
+                let _ = io::stdout().flush();
                 None
             }
         }
     }
 
-    fn execute_debug_command(debug_input: &mut Vec<u8>) -> DebugCmd {
+    fn execute_debug_command(debug_input: &mut [u8]) -> DebugCmd {
         let input = core::str::from_utf8(debug_input).unwrap_or("").trim();
         let mut parts = input.split_whitespace();
         let cmd = parts.next().unwrap_or("");
@@ -123,8 +120,7 @@ impl Debug {
             _ => DebugCmd::Invalid,
         }
     }
-    //seperating debug completely from the client
-    //so you would complete independent functionality , as much as possible.
+
     #[must_use]
     pub fn map_debug_key(key: Key) -> Option<u8> {
         Some(match key {
@@ -162,81 +158,128 @@ impl Debug {
         })
     }
 
-    pub fn dump_region(&mut self, tty: &mut Tty, vm: &mut VirtualMachine, start: u16, end: u16) {
-        let mut lines_printed = 0;
-
+    pub fn dump_region_stdout(&mut self, vm: &mut VirtualMachine, start: u16, end: u16) {
         let mut addr = start;
         while addr <= end {
-            if lines_printed >= DUMP_ROWS {
-                Self::tty_write_line("-- more --", tty);
-                return; // stop here
-            }
-
-            let mut line = format!("{addr:04X}: ");
-
+            print!("{addr:04X}: ");
             for i in 0..16 {
                 let a = addr + i;
                 if a > end {
                     break;
                 }
                 let val = vm.devices.read(a);
-                line.push_str(&format!("{val:02X} "));
+                print!("{val:02X} ");
             }
-
-            Self::tty_write_line(&line, tty);
-
+            println!();
             addr += 16;
-            lines_printed += 1;
         }
     }
 
-    fn tty_write_line(line: &str, tty: &mut Tty) {
-        for b in line.bytes() {
-            tty.write_byte(b);
+    pub fn parse_and_print_memory_stdout(&mut self, arg: &str, vm: &mut VirtualMachine) {
+        let arg = arg.trim();
+
+        if arg.is_empty() {
+            println!("Usage: m <addr> or m <start>-<end>");
+            return;
         }
-        tty.write_byte(b'\n');
-    }
 
-    pub fn print_memory_range(
-        &mut self,
-        vm: &mut VirtualMachine,
-        tty: &mut Tty,
-        start: u16,
-        end: u16,
-    ) {
-        tty.clear();
-        tty.reset_stream();
-        Self::tty_write_line(
-            &format!("=== MEMORY DUMP {start:04X}-{end:04X} ==="),
-            tty,
-        );
-        self.dump_region(tty, vm, start, end);
-    }
-
-    pub fn print_memory_addr(&mut self, vm: &mut VirtualMachine, tty: &mut Tty, addr: u16) {
-        tty.clear();
-        tty.reset_stream();
-        let val = vm.devices.read(addr);
-        Self::tty_write_line(&format!("Address {addr:04X}: {val:02X}"), tty);
-    }
-
-    pub fn parse_and_print_memory(&mut self, arg: &str, vm: &mut VirtualMachine, tty: &mut Tty) {
         if let Some((start_str, end_str)) = arg.split_once('-') {
-            if let (Ok(start), Ok(end)) = (
-                u16::from_str_radix(start_str.trim_start_matches("0x"), 16),
-                u16::from_str_radix(end_str.trim_start_matches("0x"), 16),
-            ) {
-                self.print_memory_range(vm, tty, start, end);
-            } else {
-                Self::tty_write_line("Invalid memory range.", tty);
+            let start = match Self::parse_hex_u16(start_str) {
+                Ok(addr) => addr,
+                Err(_) => {
+                    println!("Invalid start address: {start_str}");
+                    return;
+                }
+            };
+            let end = match Self::parse_hex_u16(end_str) {
+                Ok(addr) => addr,
+                Err(_) => {
+                    println!("Invalid end address: {end_str}");
+                    return;
+                }
+            };
+
+            if end < start {
+                println!("Invalid range: end < start");
+                return;
             }
+
+            println!("=== MEMORY DUMP {start:04X}-{end:04X} ===");
+
+            let max_addr = 0xFFFF;
+            let end = end.min(max_addr);
+
+            self.dump_region_stdout(vm, start, end);
         } else {
-            // Single address
-            if let Ok(addr) = u16::from_str_radix(arg.trim_start_matches("0x"), 16) {
-                self.print_memory_addr(vm, tty, addr);
-            } else {
-                Self::tty_write_line("Invalid memory address.", tty);
+            let addr = match Self::parse_hex_u16(arg) {
+                Ok(a) => a,
+                Err(_) => {
+                    println!("Invalid memory address: {arg}");
+                    return;
+                }
+            };
+
+            let max_addr = 0xFFFF;
+            if addr > max_addr {
+                println!("Address out of bounds: {addr:04X}");
+                return;
             }
+
+            let val = vm.devices.read(addr);
+            println!("{addr:04X}: {val:02X}");
         }
+    }
+
+    fn parse_hex_u16(s: &str) -> Result<u16, ()> {
+        let s = s.trim();
+
+        let s = s
+            .strip_prefix("0x")
+            .or_else(|| s.strip_prefix("0X"))
+            .unwrap_or(s);
+
+        u16::from_str_radix(s, 16).map_err(|_| ())
+    }
+
+    pub fn print_memory_range_stdout(&mut self, vm: &mut VirtualMachine, start: u16, end: u16) {
+        const BYTES_PER_ROW: usize = 16;
+
+        let mut addr = start;
+
+        while addr < end {
+            print!("{addr:04X}: ");
+
+            for i in 0..BYTES_PER_ROW {
+                let cur = addr.wrapping_add(i as u16);
+
+                if cur < end {
+                    let byte = vm.devices.read(cur);
+                    print!("{byte:02X} ");
+                } else {
+                    print!("   ");
+                }
+            }
+            print!("|");
+            for i in 0..BYTES_PER_ROW {
+                let cur = addr.wrapping_add(i as u16);
+
+                if cur < end {
+                    let b = vm.devices.read(cur);
+                    let c = if b.is_ascii_graphic() || b == b' ' {
+                        b as char
+                    } else {
+                        '.'
+                    };
+                    print!("{c}");
+                } else {
+                    print!(" ");
+                }
+            }
+            println!("|");
+
+            addr = addr.wrapping_add(BYTES_PER_ROW as u16);
+        }
+
+        let _ = io::stdout().flush();
     }
 }

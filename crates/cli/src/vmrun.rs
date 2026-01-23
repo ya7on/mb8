@@ -7,14 +7,10 @@ use minifb::{Window, WindowOptions};
 use crate::debug::{Debug, DebugCmd};
 use crate::tty::Tty;
 
+use std::io::{self, Write};
+
 const OPS_PER_FRAME: u32 = 1024;
 const RENDER_INTERVAL: u32 = 1000;
-
-#[derive(Debug)]
-pub enum ScreenMode {
-    Vm,
-    Debug,
-}
 
 #[derive(Debug)]
 pub struct VmRun {
@@ -30,7 +26,6 @@ pub struct VmRun {
     pub hit_entry_break: bool,
     pub paused: bool,
     pub debug_tty: Tty,
-    pub screen_mode: ScreenMode,
 }
 
 impl VmRun {
@@ -53,7 +48,6 @@ impl VmRun {
             hit_entry_break: false,
             paused: false,
             debug_tty,
-            screen_mode: ScreenMode::Vm,
         })
     }
 
@@ -75,25 +69,23 @@ impl VmRun {
         let key = &mut Keyboard::new(l_shift, r_shift);
 
         while self.window.is_open() && !self.vm.halted {
-            match self.screen_mode {
-                ScreenMode::Vm => {
-                    Keyboard::key_pressed(key, &self.window, &mut self.vm);
-                    Keyboard::key_released(key, &self.window);
-                    self.render();
-                    self.vm_step();
-                    self.run_debug();
+            // Always process keyboard for VM
+            Keyboard::key_pressed(key, &self.window, &mut self.vm);
+            Keyboard::key_released(key, &self.window);
 
-                    println!("debug enabled: {}", self.debug_enabled);
+            // Render VM output (graphics / TTY)
+            self.render();
 
-                    if self.debug_enabled {
-                        self.run_debug();
-                    }
+            if self.debug_enabled {
+                let paused = self.run_debug();
+                // Debugger controls execution
+                if paused {
+                    self.poll_debug_keys_stdout();
+                    continue;
                 }
 
-                ScreenMode::Debug => {
-                    self.render_debug();
-                    self.poll_debug_keys();
-                }
+                // Normal execution
+                self.vm_step();
             }
         }
     }
@@ -117,23 +109,21 @@ impl VmRun {
 
     fn run_debug(&mut self) -> bool {
         const USER_ENTRY: u16 = 0xE100;
+
+        // Break at user entry exactly once
         if self.debug_enabled && !self.hit_entry_break && self.vm.program_counter == USER_ENTRY {
             self.hit_entry_break = true;
-            //
             self.paused = true;
-            self.screen_mode = ScreenMode::Debug;
+
+            // Clear terminal + show debugger help once
+            print!("\x1B[2J\x1B[H");
+            println!("--- Debugger Break @ {:04X} ---", USER_ENTRY);
+            self.debug.print_help();
+
+            self.run_stdout_debugger();
         }
 
-        if !self.paused {
-            return false;
-        }
-
-        if self.paused {
-            self.debug_tty.clear();
-            self.debug_tty.reset_stream();
-            self.debug.print_help(&mut self.debug_tty);
-        }
-        true
+        self.paused
     }
 
     fn render(&mut self) {
@@ -146,29 +136,17 @@ impl VmRun {
         let _ = self.window.update_with_buffer(&buf, 320, 200);
     }
 
-    fn render_debug(&mut self) {
-        let mut buf = vec![0u32; self.width * self.height];
-
-        self.tty.load_from_slice(self.vm.devices.gpu().tty_buffer());
-
-        self.debug_tty.render(&mut buf, self.width);
-
-        let _ = self.window.update_with_buffer(&buf, 320, 200);
-    }
-
-    fn poll_debug_keys(&mut self) {
+    fn poll_debug_keys_stdout(&mut self) {
         for key in self.window.get_keys_pressed(minifb::KeyRepeat::No) {
             if let Some(byte) = Debug::map_debug_key(key) {
-                if let Some(cmd) =
-                    self.debug
-                        .handle_debug_byte(byte, &mut self.debug_tty, &mut self.debug_input)
-                {
-                    self.apply_debug_cmd(&cmd);
+                if let Some(cmd) = self.debug.handle_debug_byte(byte, &mut self.debug_input) {
+                    self.apply_debug_cmd_stdout(&cmd);
                     self.debug_input.clear();
 
-                    self.debug_tty.write_byte(b'\n');
-                    self.debug_tty.write_byte(b'>');
-                    self.debug_tty.write_byte(b' ');
+                    // Print prompt
+                    println!();
+                    print!("> ");
+                    let _ = io::stdout().flush();
                 }
             }
         }
@@ -186,54 +164,120 @@ impl VmRun {
 
     pub fn continue_normal_execution(&mut self) {
         self.paused = false;
-        self.screen_mode = ScreenMode::Vm;
 
         self.debug_enabled = false;
     }
 
-    fn apply_debug_cmd(&mut self, cmd: &DebugCmd) {
+    fn apply_debug_cmd_stdout(&mut self, cmd: &DebugCmd) {
         match cmd {
             DebugCmd::Step => {
                 self.vm.step();
-                self.debug_tty.clear();
-                self.debug
-                    .print_registers(&mut self.vm, &mut self.debug_tty);
+
+                print!("\x1B[2J\x1B[H");
+                let _ = io::stdout().flush();
+
+                self.debug.print_registers(&mut self.vm);
             }
+
             DebugCmd::Continue => {
                 self.paused = false;
-                self.screen_mode = ScreenMode::Vm;
-                self.debug_tty.clear();
+
+                print!("\x1B[2J\x1B[H");
+                let _ = io::stdout().flush();
             }
+
             DebugCmd::Memory(arg) => {
-                self.debug_tty.clear();
+                print!("\x1B[2J\x1B[H");
+                let _ = io::stdout().flush();
+
                 if let Some(addr_str) = arg {
                     self.debug
-                        .parse_and_print_memory(addr_str, &mut self.vm, &mut self.debug_tty);
+                        .parse_and_print_memory_stdout(addr_str, &mut self.vm);
                 } else {
-                    self.debug.print_memory_range(
-                        &mut self.vm,
-                        &mut self.debug_tty,
-                        0x0000,
-                        0x00FF,
-                    );
+                    self.debug
+                        .print_memory_range_stdout(&mut self.vm, 0x0000, 0x00FF);
                 }
             }
+
             DebugCmd::Registers => {
-                self.debug_tty.clear();
-                self.debug
-                    .print_registers(&mut self.vm, &mut self.debug_tty);
+                print!("\x1B[2J\x1B[H");
+                let _ = io::stdout().flush();
+
+                self.debug.print_registers(&mut self.vm);
             }
+
             DebugCmd::Help => {
-                self.debug_tty.clear();
-                self.debug.print_help(&mut self.debug_tty);
+                print!("\x1B[2J\x1B[H");
+                let _ = io::stdout().flush();
+
+                self.debug.print_help();
             }
+
             DebugCmd::Invalid => {
-                self.debug_tty.clear();
-                self.debug_tty.write_byte(b'?');
-                self.debug_tty.write_byte(b'\n');
-                self.debug.print_help(&mut self.debug_tty);
+                print!("\x1B[2J\x1B[H");
+                println!("?");
+                self.debug.print_help();
+                let _ = io::stdout().flush();
             }
+
             DebugCmd::None => {}
         }
+    }
+
+    fn run_debug_repl(&mut self) {
+        let mut input = String::new();
+
+        loop {
+            print!("> ");
+            let _ = io::stdout().flush();
+
+            input.clear();
+            if io::stdin().read_line(&mut input).is_err() {
+                println!("Failed to read input");
+                continue;
+            }
+
+            let input_trimmed = input.trim();
+            if input_trimmed.is_empty() {
+                continue;
+            }
+
+            let mut bytes = input_trimmed.bytes().collect::<Vec<u8>>();
+            bytes.push(b'\n');
+
+            let mut debug_input: Vec<u8> = Vec::new();
+            let mut cmd_opt: Option<DebugCmd> = None;
+
+            for b in bytes {
+                if let Some(cmd) = self.debug.handle_debug_byte(b, &mut debug_input) {
+                    cmd_opt = Some(cmd);
+                }
+            }
+
+            if let Some(cmd) = cmd_opt {
+                self.apply_debug_cmd_stdout(&cmd);
+            }
+
+            if !self.paused {
+                break;
+            }
+        }
+    }
+
+    pub fn run_stdout_debugger(&mut self) {
+        self.paused = true;
+        self.debug_enabled = true;
+
+        while !self.vm.halted {
+            if self.paused {
+                self.run_debug_repl();
+            }
+
+            if !self.paused {
+                self.vm_step();
+            }
+        }
+
+        println!("--- VM Halted ---");
     }
 }

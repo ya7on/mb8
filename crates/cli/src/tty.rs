@@ -240,24 +240,6 @@ impl Tty {
         out
     }
 
-    /*   pub fn render(&mut self, framebuffer: &mut [u32], fb_width: usize) {
-        let chars = self.get_visible();
-
-        for row in 0..self.rows {
-            for col in 0..self.cols {
-                let ch = chars[row * self.cols + col] as usize;
-
-                let color = if chars[row * self.cols + col] == '\0' {
-                    PIXEL_OFF_COLOR
-                } else {
-                    PIXEL_ON_COLOR
-                };
-
-                draw_glyph(framebuffer, fb_width ,col * 8, row * 8, ch, color);
-            }
-        }
-    }*/
-
     pub fn render(&mut self, framebuffer: &mut [u32], fb_width: usize) {
         let fb_height = framebuffer.len() / fb_width;
 
