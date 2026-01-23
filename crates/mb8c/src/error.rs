@@ -34,6 +34,15 @@ pub enum CompileError {
         start: usize,
         end: usize,
     },
+    ExpectedLValue {
+        start: usize,
+        end: usize,
+    },
+    ExpectedPointer {
+        actual: TypeKind,
+        start: usize,
+        end: usize,
+    },
     SymbolIsNotCallable {
         symbol: String,
         start: usize,

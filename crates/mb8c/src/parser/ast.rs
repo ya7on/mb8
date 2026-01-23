@@ -4,11 +4,12 @@ pub struct Span {
     pub end: usize,
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ASTType {
     Void,
     Unsigned8,
     Unsigned16,
+    Pointer(Box<ASTType>),
 }
 
 #[derive(Clone, Debug, PartialEq)]

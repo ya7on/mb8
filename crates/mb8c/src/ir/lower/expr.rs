@@ -1,6 +1,6 @@
 use crate::{
     context::{SymbolId, TypeId},
-    error::CompileResult,
+    error::{CompileError, CompileResult},
     hir::instructions::{HIRBinaryOp, HIRExpr, HIRUnaryOp, Literal},
     ir::instructions::IRInstruction,
 };
@@ -105,19 +105,29 @@ impl IRLowerer {
         ty: &TypeId,
     ) -> CompileResult<Vec<IRInstruction>> {
         let mut instructions = Vec::new();
-        instructions.extend(self.lower_expr(expr)?);
-
-        let type_kind = self.ctx.type_table.lookup(*ty).ok_or_else(|| todo!())?;
 
         match op {
-            HIRUnaryOp::Neg => instructions.push(IRInstruction::Neg {
-                width: type_kind.width(),
-            }),
+            HIRUnaryOp::Neg => {
+                instructions.extend(self.lower_expr(expr)?);
+                let type_kind = self.ctx.type_table.lookup(*ty).ok_or_else(|| todo!())?;
+                instructions.push(IRInstruction::Neg {
+                    width: type_kind.width(),
+                });
+            }
             HIRUnaryOp::AddressOf => {
-                unimplemented!()
+                let HIRExpr::Var { symbol, .. } = expr else {
+                    return Err(CompileError::InternalError {
+                        message: "Address-of expects variable".to_string(),
+                    });
+                };
+                instructions.push(IRInstruction::AddressOf { symbol: *symbol });
             }
             HIRUnaryOp::Dereference => {
-                unimplemented!()
+                instructions.extend(self.lower_expr(expr)?);
+                let type_kind = self.ctx.type_table.lookup(*ty).ok_or_else(|| todo!())?;
+                instructions.push(IRInstruction::Dereference {
+                    width: type_kind.width(),
+                });
             }
         }
         Ok(instructions)

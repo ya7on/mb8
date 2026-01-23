@@ -11,6 +11,8 @@ pub enum Mb8Asm {
     Pop { register: String },
     St { address: u16, register: String },
     Ld { register: String, address: u16 },
+    LdIndirect { dst: String, hi: String, lo: String },
+    StIndirect { hi: String, lo: String, src: String },
     Ldi { register: String, value: u8 },
     Mov { dst: String, src: String },
     Cmp { dst: String, src: String },
@@ -39,6 +41,12 @@ impl Display for Mb8Asm {
             Mb8Asm::Pop { register } => write!(f, "\tPOP {register}"),
             Mb8Asm::St { address, register } => write!(f, "\tST [0x{address:X}] {register}"),
             Mb8Asm::Ld { register, address } => write!(f, "\tLD {register} [0x{address:X}]"),
+            Mb8Asm::LdIndirect { dst, hi, lo } => {
+                write!(f, "\tLD {dst} [{hi}:{lo}]")
+            }
+            Mb8Asm::StIndirect { hi, lo, src } => {
+                write!(f, "\tST [{hi}:{lo}] {src}")
+            }
             Mb8Asm::Ldi { register, value } => write!(f, "\tLDI {register} {value}"),
             Mb8Asm::Mov { dst, src } => write!(f, "\tMOV {dst} {src}"),
             Mb8Asm::Cmp { dst, src } => write!(f, "\tCMP {dst} {src}"),

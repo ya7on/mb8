@@ -32,7 +32,7 @@ impl HIRLowerer {
         op: &ASTBinaryOp,
         lhs: &ASTExpr,
         rhs: &ASTExpr,
-        _span: &Span,
+        span: &Span,
     ) -> CompileResult<HIRExpr> {
         let lhs_expr = self.analyze_expr(lhs)?;
         let rhs_expr = self.analyze_expr(rhs)?;
@@ -61,8 +61,8 @@ impl HIRLowerer {
                     .lookup(rhs_ty)
                     .cloned()
                     .unwrap_or_default(),
-                start: 0,
-                end: 0,
+                start: span.start,
+                end: span.end,
             });
         }
 
@@ -84,19 +84,31 @@ impl HIRLowerer {
         &mut self,
         op: &ASTUnaryOp,
         expr: &ASTExpr,
-        _span: &Span,
+        span: &Span,
     ) -> CompileResult<HIRExpr> {
-        let expr = self.analyze_expr(expr)?;
-        let ty = fetch_expr_type(&expr);
-
         match op {
-            ASTUnaryOp::Neg => Ok(HIRExpr::Unary {
-                op: HIRUnaryOp::Neg,
-                expr: Box::new(expr),
-                ty,
-            }),
+            ASTUnaryOp::Neg => {
+                let expr = self.analyze_expr(expr)?;
+                let ty = fetch_expr_type(&expr);
+                Ok(HIRExpr::Unary {
+                    op: HIRUnaryOp::Neg,
+                    expr: Box::new(expr),
+                    ty,
+                })
+            }
             ASTUnaryOp::AddressOf => {
-                // TODO: check if the expression is lvalue
+                let ASTExpr::Var {
+                    name,
+                    span: var_span,
+                } = expr
+                else {
+                    return Err(CompileError::ExpectedLValue {
+                        start: span.start,
+                        end: span.end,
+                    });
+                };
+                let expr = self.analyze_var_expr(name, var_span)?;
+                let ty = fetch_expr_type(&expr);
 
                 Ok(HIRExpr::Unary {
                     op: HIRUnaryOp::AddressOf,
@@ -105,12 +117,21 @@ impl HIRLowerer {
                 })
             }
             ASTUnaryOp::Dereference => {
-                // TODO: check if the expression is pointer type
+                let expr = self.analyze_expr(expr)?;
+                let ty = fetch_expr_type(&expr);
+                let Some(TypeKind::Pointer { pointee }) = self.ctx.type_table.lookup(ty).cloned()
+                else {
+                    return Err(CompileError::ExpectedPointer {
+                        actual: self.ctx.type_table.lookup(ty).cloned().unwrap_or_default(),
+                        start: span.start,
+                        end: span.end,
+                    });
+                };
 
                 Ok(HIRExpr::Unary {
                     op: HIRUnaryOp::Dereference,
                     expr: Box::new(expr),
-                    ty: self.ctx.type_table.entry(TypeKind::Pointer { pointee: ty }),
+                    ty: pointee,
                 })
             }
         }

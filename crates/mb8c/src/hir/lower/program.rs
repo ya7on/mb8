@@ -17,7 +17,7 @@ impl HIRLowerer {
 
         let mut globals = Vec::with_capacity(program.globals.len());
         for global in &program.globals {
-            let type_id = self.ctx.type_table.entry(lower_type(global.ty));
+            let type_id = lower_type(&mut self.ctx, &global.ty);
             let symbol = self.ctx.symbol_table.allocate(Symbol {
                 name: global.name.clone(),
                 kind: SymbolKind::Global { address: global.at },

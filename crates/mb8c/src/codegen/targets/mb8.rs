@@ -420,11 +420,87 @@ impl Mb8Codegen {
                         }
                     }
                 }
-                IRInstruction::Dereference { symbol, width } => {
-                    unimplemented!()
-                }
-                IRInstruction::AddressOf { symbol, width } => {
-                    unimplemented!()
+                IRInstruction::Dereference { width } => match width {
+                    1 => {
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R1".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R0".to_string(),
+                        });
+                        self.result.push(Mb8Asm::LdIndirect {
+                            dst: "R2".to_string(),
+                            hi: "R0".to_string(),
+                            lo: "R1".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Push {
+                            register: "R2".to_string(),
+                        });
+                    }
+                    2 => {
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R1".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Pop {
+                            register: "R0".to_string(),
+                        });
+                        self.result.push(Mb8Asm::LdIndirect {
+                            dst: "R2".to_string(),
+                            hi: "R0".to_string(),
+                            lo: "R1".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Ldi {
+                            register: "R4".to_string(),
+                            value: 1,
+                        });
+                        self.result.push(Mb8Asm::Add {
+                            dst: "R1".to_string(),
+                            src: "R4".to_string(),
+                        });
+                        let sublabel_id = self.result.len();
+                        self.result
+                            .push(Mb8Asm::Jncr(format!(".no_carry_{sublabel_id}")));
+                        self.result.push(Mb8Asm::Add {
+                            dst: "R0".to_string(),
+                            src: "R4".to_string(),
+                        });
+                        self.result
+                            .push(Mb8Asm::Sublabel(format!("no_carry_{sublabel_id}")));
+                        self.result.push(Mb8Asm::LdIndirect {
+                            dst: "R3".to_string(),
+                            hi: "R0".to_string(),
+                            lo: "R1".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Push {
+                            register: "R2".to_string(),
+                        });
+                        self.result.push(Mb8Asm::Push {
+                            register: "R3".to_string(),
+                        });
+                    }
+                    _ => unimplemented!(),
+                },
+                IRInstruction::AddressOf { symbol } => {
+                    let place = self.layout.lookup(*symbol).ok_or_else(|| todo!())?;
+                    let address = match place {
+                        Place::Global { address } => *address,
+                        Place::StaticFrame { offset } => *offset,
+                    };
+                    let [hi, lo] = address.to_be_bytes();
+                    self.result.push(Mb8Asm::Ldi {
+                        register: "R0".to_string(),
+                        value: hi,
+                    });
+                    self.result.push(Mb8Asm::Ldi {
+                        register: "R1".to_string(),
+                        value: lo,
+                    });
+                    self.result.push(Mb8Asm::Push {
+                        register: "R0".to_string(),
+                    });
+                    self.result.push(Mb8Asm::Push {
+                        register: "R1".to_string(),
+                    });
                 }
             }
         }

@@ -53,7 +53,7 @@ pub enum IRInstruction {
     Div { width: u8 },
     Eq { width: u8 },
     Neg { width: u8 },
-    Dereference { symbol: SymbolId, width: u8 },
-    AddressOf { symbol: SymbolId, width: u8 },
+    Dereference { width: u8 },
+    AddressOf { symbol: SymbolId },
     Call { symbol: SymbolId, argc: usize },
 }
