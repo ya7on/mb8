@@ -8,9 +8,12 @@ use crate::debug::{Debug, DebugCmd};
 use crate::tty::Tty;
 
 use std::io::{self, Write};
+use std::time::{Duration, Instant};
 
 const OPS_PER_FRAME: u32 = 1024;
 const RENDER_INTERVAL: u32 = 1000;
+const WIDTH: usize = 320;
+const HEIGHT: usize = 200;
 const FRAME_DURATION_MS: u64 = 16;
 
 #[derive(Debug)]
@@ -19,8 +22,6 @@ pub struct VmRun {
     pub tty: Tty,
     pub window: Window,
     ticks: u32,
-    width: usize,
-    height: usize,
     debug: Debug,
     debug_input: Vec<u8>,
     pub debug_enabled: bool,
@@ -42,8 +43,6 @@ impl VmRun {
             tty,
             window,
             ticks: 0,
-            width: 320,
-            height: 200,
             debug,
             debug_input: Vec::new(),
             debug_enabled: false,
@@ -68,32 +67,36 @@ impl VmRun {
         let l_shift = false;
         let r_shift = false;
         let key = &mut Keyboard::new(l_shift, r_shift);
+
+        //pre allocate the buffer.. maybe that will help.
+        let mut buf = vec![0u32; WIDTH * HEIGHT];
+
         let mut last_frame = std::time::Instant::now();
 
         while self.window.is_open() && !self.vm.halted {
             Keyboard::key_pressed(key, &self.window, &mut self.vm);
             Keyboard::key_released(key, &self.window);
+            if self.debug_enabled {
+                // Step VM once to finish printing any pending TTY output
+                self.vm_step();
 
-            let paused = if self.debug_enabled {
-                self.run_debug()
+                // Enter debug mode
+                let paused = self.run_debug();
+                if paused {
+                    self.poll_debug_keys_stdout();
+                    continue; // skip rest of loop while paused
+                }
             } else {
-                false
-            };
-
-            if paused {
-                self.poll_debug_keys_stdout();
-                continue;
+                self.vm_step();
             }
 
-            self.vm_step();
-
-            if last_frame.elapsed().as_millis() >= FRAME_DURATION_MS as u128 {
-                self.render();
-                last_frame = std::time::Instant::now();
+            if last_frame.elapsed() >= Duration::from_millis(FRAME_DURATION_MS) {
+                self.render(&mut buf);
+                last_frame = Instant::now();
             }
         }
 
-        self.render();
+        self.render(&mut buf);
     }
 
     fn vm_step(&mut self) {
@@ -132,20 +135,20 @@ impl VmRun {
         self.paused
     }
 
-    fn render(&mut self) {
-        let mut buf = vec![0u32; self.width * self.height];
-
-        self.tty.load_from_slice(self.vm.devices.gpu().tty_buffer());
-
+    fn render(&mut self, buf: &mut [u32]) {
         let gpu_tty = self.vm.devices.gpu().tty_buffer();
+        self.tty.load_from_slice(gpu_tty);
 
         if gpu_tty.iter().all(|&b| b == 0) {
             println!("GPU TTY BUFFER IS EMPTY");
         }
 
-        self.tty.render(&mut buf, self.width);
+        self.tty.render(buf, WIDTH);
 
-        let _ = self.window.update_with_buffer(&buf, 320, 200);
+        // Update window and handle errors
+        if let Err(e) = self.window.update_with_buffer(buf, WIDTH, HEIGHT) {
+            eprintln!("Failed to update window: {e:?}");
+        }
     }
 
     fn poll_debug_keys_stdout(&mut self) {
