@@ -1,5 +1,5 @@
 use crate::{
-    error::CompileResult,
+    error::{CompileError, CompileResult},
     hir::instructions::HIRFunction,
     ir::{bb::BasicBlockTable, instructions::IRFunction},
 };
@@ -15,15 +15,26 @@ impl IRLowerer {
         let mut bbtable = BasicBlockTable::default();
         let mut basic_blocks = Vec::new();
 
-        let mut builder = bbtable.bb();
+        let mut builder = Some(bbtable.bb());
         for stmt in &function.body {
-            let (maybe_builder, blocks) = self.lower_stmt(stmt, builder, &mut bbtable)?;
-            basic_blocks.extend(blocks);
-            let Some(new_builder) = maybe_builder else {
+            let Some(active_builder) = builder else {
                 break;
             };
-            builder = new_builder;
+
+            let (active_builder, blocks) = self.lower_stmt(stmt, active_builder, &mut bbtable)?;
+            basic_blocks.extend(blocks);
+            builder = active_builder;
         }
+        if builder.is_some() {
+            let symbol = self.ctx.lookup(function.id).ok_or_else(|| todo!())?;
+            return Err(CompileError::InternalError {
+                message: format!(
+                    "Function {:?} does not end with a return statement",
+                    symbol.name
+                ),
+            });
+        }
+
         Ok(IRFunction {
             id: function.id,
             basic_blocks,
