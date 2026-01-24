@@ -113,7 +113,7 @@ impl Debug {
             "c" => DebugCmd::Continue,
             "r" => DebugCmd::Registers,
             "m" => {
-                let arg = parts.next().map(|s| s.to_string());
+                let arg = parts.next().map(ToString::to_string);
                 DebugCmd::Memory(arg)
             }
             "h" => DebugCmd::Help,
@@ -184,19 +184,14 @@ impl Debug {
         }
 
         if let Some((start_str, end_str)) = arg.split_once('-') {
-            let start = match Self::parse_hex_u16(start_str) {
-                Ok(addr) => addr,
-                Err(_) => {
-                    println!("Invalid start address: {start_str}");
-                    return;
-                }
+            let Ok(start) = Self::parse_hex_u16(start_str) else {
+                println!("Invalid start address: {start_str}");
+                return;
             };
-            let end = match Self::parse_hex_u16(end_str) {
-                Ok(addr) => addr,
-                Err(_) => {
-                    println!("Invalid end address: {end_str}");
-                    return;
-                }
+
+            let Ok(end) = Self::parse_hex_u16(end_str) else {
+                println!("Invalid end address: {end_str}");
+                return;
             };
 
             if end < start {
@@ -211,12 +206,9 @@ impl Debug {
 
             self.dump_region_stdout(vm, start, end);
         } else {
-            let addr = match Self::parse_hex_u16(arg) {
-                Ok(a) => a,
-                Err(_) => {
-                    println!("Invalid memory address: {arg}");
-                    return;
-                }
+            let Ok(addr) = Self::parse_hex_u16(arg) else {
+                println!("Invalid memory address: {arg}");
+                return;
             };
 
             let max_addr = 0xFFFF;

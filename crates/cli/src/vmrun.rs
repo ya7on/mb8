@@ -11,6 +11,7 @@ use std::io::{self, Write};
 
 const OPS_PER_FRAME: u32 = 1024;
 const RENDER_INTERVAL: u32 = 1000;
+const FRAME_DURATION_MS: u64 = 16;
 
 #[derive(Debug)]
 pub struct VmRun {
@@ -25,16 +26,17 @@ pub struct VmRun {
     pub debug_enabled: bool,
     pub hit_entry_break: bool,
     pub paused: bool,
-    pub debug_tty: Tty,
 }
 
 impl VmRun {
-    #[must_use]
+    /// Create a bew VM Runtime
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(minifb::Error)` if the window or framebuffer
+    /// cannot be initialized.
     pub fn new(vm: vm::VirtualMachine, tty: Tty, debug: Debug) -> Result<Self, minifb::Error> {
         let window = Window::new("MB8", 640, 480, WindowOptions::default())?;
-
-        let debug_tty = Tty::new(40, 25, 64000);
-
         Ok(Self {
             vm,
             tty,
@@ -47,7 +49,6 @@ impl VmRun {
             debug_enabled: false,
             hit_entry_break: false,
             paused: false,
-            debug_tty,
         })
     }
 
@@ -67,27 +68,32 @@ impl VmRun {
         let l_shift = false;
         let r_shift = false;
         let key = &mut Keyboard::new(l_shift, r_shift);
+        let mut last_frame = std::time::Instant::now();
 
         while self.window.is_open() && !self.vm.halted {
-            // Always process keyboard for VM
             Keyboard::key_pressed(key, &self.window, &mut self.vm);
             Keyboard::key_released(key, &self.window);
 
-            // Render VM output (graphics / TTY)
-            self.render();
+            let paused = if self.debug_enabled {
+                self.run_debug()
+            } else {
+                false
+            };
 
-            if self.debug_enabled {
-                let paused = self.run_debug();
-                // Debugger controls execution
-                if paused {
-                    self.poll_debug_keys_stdout();
-                    continue;
-                }
+            if paused {
+                self.poll_debug_keys_stdout();
+                continue;
+            }
 
-                // Normal execution
-                self.vm_step();
+            self.vm_step();
+
+            if last_frame.elapsed().as_millis() >= FRAME_DURATION_MS as u128 {
+                self.render();
+                last_frame = std::time::Instant::now();
             }
         }
+
+        self.render();
     }
 
     fn vm_step(&mut self) {
@@ -117,7 +123,7 @@ impl VmRun {
 
             // Clear terminal + show debugger help once
             print!("\x1B[2J\x1B[H");
-            println!("--- Debugger Break @ {:04X} ---", USER_ENTRY);
+            println!("--- Debugger Break @ {USER_ENTRY:04X} ---");
             self.debug.print_help();
 
             self.run_stdout_debugger();
@@ -131,6 +137,12 @@ impl VmRun {
 
         self.tty.load_from_slice(self.vm.devices.gpu().tty_buffer());
 
+        let gpu_tty = self.vm.devices.gpu().tty_buffer();
+
+        if gpu_tty.iter().all(|&b| b == 0) {
+            println!("GPU TTY BUFFER IS EMPTY");
+        }
+
         self.tty.render(&mut buf, self.width);
 
         let _ = self.window.update_with_buffer(&buf, 320, 200);
@@ -143,7 +155,6 @@ impl VmRun {
                     self.apply_debug_cmd_stdout(&cmd);
                     self.debug_input.clear();
 
-                    // Print prompt
                     println!();
                     print!("> ");
                     let _ = io::stdout().flush();
