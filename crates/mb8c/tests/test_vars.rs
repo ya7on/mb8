@@ -8,6 +8,7 @@ fn test_var_assign() {
         c: u8;
     begin
         c = (a - 2u8) + (b + 2u8);
+        return;
     end
     ";
     compile(input).unwrap();
