@@ -287,12 +287,11 @@ impl VmRun {
                 self.run_debug_repl();
             }
 
+            if self.paused {
+                break;
+            }
+            self.vm_step();
             if !self.paused {
-                self.vm_step();
-                if !self.paused {
-                    break;
-                }
-            } else {
                 break;
             }
         }
