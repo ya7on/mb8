@@ -497,6 +497,7 @@ dependencies = [
  "clap",
  "console_error_panic_hook",
  "mb8",
+ "mb8-isa",
  "mb8c",
  "minifb",
  "tempfile",
