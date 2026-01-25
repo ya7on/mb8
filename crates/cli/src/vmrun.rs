@@ -286,9 +286,9 @@ impl VmRun {
             if self.paused {
                 self.run_debug_repl();
             }
-
+            self.vm_step();
             if !self.paused {
-                self.vm_step();
+                break;
             }
         }
 
