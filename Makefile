@@ -29,6 +29,9 @@ kernel/tests/%.bin: kernel/tests/%.asm $(KERNEL_MAIN)
 run: $(KERNEL_MAIN) $(USER_TARGETS)
 	cargo run --features desktop --bin cli-desktop -- run $^
 
+debug: $(KERNEL_MAIN) $(USER_TARGETS)
+	cargo run --features desktop --bin cli-desktop -- run --debug $^
+
 clean:
 	rm -f kernel/*.bin user/*.bin kernel/tests/*.bin
 
