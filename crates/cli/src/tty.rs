@@ -248,4 +248,19 @@ impl Tty {
             }
         }
     }
+
+    pub fn load_from_slice(&mut self, src: &[u8]) {
+        self.buffer.fill(' ');
+        self.head = 0;
+        self.tail = 0;
+        for &b in src {
+            self.write_byte(b);
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.buffer.fill(' ');
+        self.head = 0;
+        self.tail = 0;
+    }
 }

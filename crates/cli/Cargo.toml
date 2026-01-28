@@ -24,6 +24,7 @@ minifb = "0.28.0"
 
 mb8 = { path = "../mb8" }
 mb8c = { path = "../mb8c" }
+mb8-isa = { path = "../mb8-isa"}
 
 # WASM
 wasm-bindgen = { version = "0.2", optional = true }
