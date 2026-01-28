@@ -1,15 +1,19 @@
 use crate::{
-    context::{types::TypeKind, TypeId},
+    context::{types::TypeKind, CompileContext, TypeId},
     hir::instructions::HIRExpr,
     parser::ast::ASTType,
 };
 
 #[must_use]
-pub fn lower_type(ty: ASTType) -> TypeKind {
+pub fn lower_type(ctx: &mut CompileContext, ty: &ASTType) -> TypeId {
     match ty {
-        ASTType::Void => TypeKind::Void,
-        ASTType::Unsigned8 => TypeKind::Unsigned8,
-        ASTType::Unsigned16 => TypeKind::Unsigned16,
+        ASTType::Void => ctx.type_table.entry(TypeKind::Void),
+        ASTType::Unsigned8 => ctx.type_table.entry(TypeKind::Unsigned8),
+        ASTType::Unsigned16 => ctx.type_table.entry(TypeKind::Unsigned16),
+        ASTType::Pointer(inner) => {
+            let pointee = lower_type(ctx, inner);
+            ctx.type_table.entry(TypeKind::Pointer { pointee })
+        }
     }
 }
 

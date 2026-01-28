@@ -92,6 +92,9 @@ pub enum TokenKind {
     /// Equal equal ==
     #[token("==")]
     OperatorEqEq,
+    /// Ampersand &
+    #[token("&")]
+    OperatorAmpersand,
 
     /* Delimiters */
     /// Left parenthesis (
@@ -155,7 +158,7 @@ mod tests {
         if then
         while do
         return
-        + - * / = ==
+        + - * / = == &
         ( ) , : ; @
         ";
 
@@ -194,6 +197,7 @@ mod tests {
                 TokenKind::OperatorSlash,
                 TokenKind::OperatorEq,
                 TokenKind::OperatorEqEq,
+                TokenKind::OperatorAmpersand,
                 TokenKind::LeftParenthesis,
                 TokenKind::RightParenthesis,
                 TokenKind::Comma,

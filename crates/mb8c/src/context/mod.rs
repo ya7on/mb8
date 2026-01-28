@@ -1,5 +1,5 @@
 use symbols::{Symbol, SymbolKind, SymbolTable};
-use types::{TypeKind, TypeTable};
+use types::TypeTable;
 
 pub mod symbols;
 pub mod types;
@@ -17,21 +17,19 @@ pub struct CompileContext {
 }
 
 impl CompileContext {
-    pub fn allocate_parameter(&mut self, name: &str, ty: TypeKind) -> SymbolId {
-        let type_id = self.type_table.entry(ty);
+    pub fn allocate_parameter(&mut self, name: &str, ty: TypeId) -> SymbolId {
         self.symbol_table.allocate(Symbol {
             name: name.to_owned(),
             kind: SymbolKind::Parameter,
-            ty: type_id,
+            ty,
         })
     }
 
-    pub fn allocate_local(&mut self, name: &str, ty: TypeKind) -> SymbolId {
-        let type_id = self.type_table.entry(ty);
+    pub fn allocate_local(&mut self, name: &str, ty: TypeId) -> SymbolId {
         self.symbol_table.allocate(Symbol {
             name: name.to_owned(),
             kind: SymbolKind::Local,
-            ty: type_id,
+            ty,
         })
     }
 

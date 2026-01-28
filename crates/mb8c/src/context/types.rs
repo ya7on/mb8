@@ -13,6 +13,9 @@ pub enum TypeKind {
         params: Vec<TypeId>,
         ret: TypeId,
     },
+    Pointer {
+        pointee: TypeId,
+    },
 }
 
 impl TypeKind {
@@ -21,7 +24,7 @@ impl TypeKind {
         match self {
             TypeKind::Void | TypeKind::Function { .. } => 0,
             TypeKind::Bool | TypeKind::Unsigned8 => 1,
-            TypeKind::Unsigned16 => 2,
+            TypeKind::Unsigned16 | TypeKind::Pointer { .. } => 2,
         }
     }
 }

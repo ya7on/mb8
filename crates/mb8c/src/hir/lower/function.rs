@@ -19,9 +19,9 @@ impl HIRLowerer {
         let params = function
             .params
             .iter()
-            .map(|(_name, ty)| self.ctx.type_table.entry(lower_type(*ty)))
+            .map(|(_name, ty)| lower_type(&mut self.ctx, ty))
             .collect();
-        let ret = self.ctx.type_table.entry(lower_type(function.return_type));
+        let ret = lower_type(&mut self.ctx, &function.return_type);
         let type_id = self
             .ctx
             .type_table
@@ -56,7 +56,8 @@ impl HIRLowerer {
         let mut params = Vec::with_capacity(function.params.len());
         // Collect params
         for (name, ty) in &function.params {
-            let symbol = self.ctx.allocate_parameter(name, lower_type(*ty));
+            let ty = lower_type(&mut self.ctx, ty);
+            let symbol = self.ctx.allocate_parameter(name, ty);
             scope.allocate(name.to_owned(), symbol, &function.span)?;
             params.push(symbol);
         }
@@ -64,12 +65,13 @@ impl HIRLowerer {
         let mut locals = Vec::with_capacity(function.vars.len());
         // Collects local variables
         for (name, ty) in &function.vars {
-            let symbol = self.ctx.allocate_local(name, lower_type(*ty));
+            let ty = lower_type(&mut self.ctx, ty);
+            let symbol = self.ctx.allocate_local(name, ty);
             scope.allocate(name.to_owned(), symbol, &function.span)?;
             locals.push(symbol);
         }
 
-        let return_type_id = self.ctx.type_table.entry(lower_type(function.return_type));
+        let return_type_id = lower_type(&mut self.ctx, &function.return_type);
 
         let body = self.analyze_stmt(&function.body, return_type_id)?;
 

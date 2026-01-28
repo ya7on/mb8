@@ -32,7 +32,7 @@ impl HIRLowerer {
         op: &ASTBinaryOp,
         lhs: &ASTExpr,
         rhs: &ASTExpr,
-        _span: &Span,
+        span: &Span,
     ) -> CompileResult<HIRExpr> {
         let lhs_expr = self.analyze_expr(lhs)?;
         let rhs_expr = self.analyze_expr(rhs)?;
@@ -61,8 +61,8 @@ impl HIRLowerer {
                     .lookup(rhs_ty)
                     .cloned()
                     .unwrap_or_default(),
-                start: 0,
-                end: 0,
+                start: span.start,
+                end: span.end,
             });
         }
 
@@ -82,17 +82,59 @@ impl HIRLowerer {
 
     fn analyze_unary_op_expr(
         &mut self,
-        _op: &ASTUnaryOp,
+        op: &ASTUnaryOp,
         expr: &ASTExpr,
-        _span: &Span,
+        span: &Span,
     ) -> CompileResult<HIRExpr> {
-        let expr = self.analyze_expr(expr)?;
-        let ty = fetch_expr_type(&expr);
-        Ok(HIRExpr::Unary {
-            op: HIRUnaryOp::Neg,
-            expr: Box::new(expr),
-            ty,
-        })
+        match op {
+            ASTUnaryOp::Neg => {
+                let expr = self.analyze_expr(expr)?;
+                let ty = fetch_expr_type(&expr);
+                Ok(HIRExpr::Unary {
+                    op: HIRUnaryOp::Neg,
+                    expr: Box::new(expr),
+                    ty,
+                })
+            }
+            ASTUnaryOp::AddressOf => {
+                let ASTExpr::Var {
+                    name,
+                    span: var_span,
+                } = expr
+                else {
+                    return Err(CompileError::ExpectedLValue {
+                        start: span.start,
+                        end: span.end,
+                    });
+                };
+                let expr = self.analyze_var_expr(name, var_span)?;
+                let ty = fetch_expr_type(&expr);
+
+                Ok(HIRExpr::Unary {
+                    op: HIRUnaryOp::AddressOf,
+                    expr: Box::new(expr),
+                    ty: self.ctx.type_table.entry(TypeKind::Pointer { pointee: ty }),
+                })
+            }
+            ASTUnaryOp::Dereference => {
+                let expr = self.analyze_expr(expr)?;
+                let ty = fetch_expr_type(&expr);
+                let Some(TypeKind::Pointer { pointee }) = self.ctx.type_table.lookup(ty).cloned()
+                else {
+                    return Err(CompileError::ExpectedPointer {
+                        actual: self.ctx.type_table.lookup(ty).cloned().unwrap_or_default(),
+                        start: span.start,
+                        end: span.end,
+                    });
+                };
+
+                Ok(HIRExpr::Unary {
+                    op: HIRUnaryOp::Dereference,
+                    expr: Box::new(expr),
+                    ty: pointee,
+                })
+            }
+        }
     }
 
     fn analyze_var_expr(&mut self, name: &str, span: &Span) -> CompileResult<HIRExpr> {
@@ -210,6 +252,15 @@ impl HIRLowerer {
             ty: ret,
         })
     }
+
+    // fn analyze_(
+    //     &mut self,
+    //     name: &str,
+    //     args: &[ASTExpr],
+    //     span: &Span,
+    // ) -> CompileResult<HIRExpr> {
+    //     unimplemented!()
+    // }
 
     /// Analyze AST Expression and lower it to HIR typed expression
     ///
