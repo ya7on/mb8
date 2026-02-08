@@ -1,6 +1,8 @@
+use crate::bitmap::Bitmap;
 use crate::{filesystem::makefs, keyboard::Keyboard};
 use std::path::PathBuf;
 
+use mb8::dev::gpu::Mode;
 use mb8::vm;
 use minifb::{Window, WindowOptions};
 
@@ -20,6 +22,7 @@ const FRAME_DURATION_MS: u64 = 16;
 pub struct VmRun {
     pub vm: vm::VirtualMachine,
     pub tty: Tty,
+    pub bitmap: Bitmap,
     pub window: Window,
     ticks: u32,
     debug: Debug,
@@ -36,11 +39,17 @@ impl VmRun {
     ///
     /// Returns `Err(minifb::Error)` if the window or framebuffer
     /// cannot be initialized.
-    pub fn new(vm: vm::VirtualMachine, tty: Tty, debug: Debug) -> Result<Self, minifb::Error> {
+    pub fn new(
+        vm: vm::VirtualMachine,
+        tty: Tty,
+        bitmap: Bitmap,
+        debug: Debug,
+    ) -> Result<Self, minifb::Error> {
         let window = Window::new("MB8", 640, 480, WindowOptions::default())?;
         Ok(Self {
             vm,
             tty,
+            bitmap,
             window,
             ticks: 0,
             debug,
@@ -136,14 +145,26 @@ impl VmRun {
     }
 
     fn render(&mut self, buf: &mut [u32]) {
-        let gpu_tty = self.vm.devices.gpu().tty_buffer();
-        self.tty.load_from_slice(gpu_tty);
+        let gpu = self.vm.devices.gpu();
+        match gpu.current_mode() {
+            Mode::Off => {}
+            Mode::Tty => {
+                let gpu_tty = gpu.tty_buffer();
+                self.tty.load_from_slice(gpu_tty);
 
-        if gpu_tty.iter().all(|&b| b == 0) {
-            println!("GPU TTY BUFFER IS EMPTY");
+                if gpu_tty.iter().all(|&b| b == 0) {
+                    println!("GPU TTY BUFFER IS EMPTY");
+                }
+
+                self.tty.render(buf, WIDTH);
+            }
+            Mode::Bitmap => {
+                let gpu_bitmap = gpu.bitmap_buffer();
+                self.bitmap.load_from_slice(gpu_bitmap);
+
+                self.bitmap.render(buf, WIDTH, HEIGHT);
+            }
         }
-
-        self.tty.render(buf, WIDTH);
 
         // Update window and handle errors
         if let Err(e) = self.window.update_with_buffer(buf, WIDTH, HEIGHT) {

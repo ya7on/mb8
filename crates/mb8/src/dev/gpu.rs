@@ -9,6 +9,7 @@ pub mod registers {
 
     pub const GPU_MODE_OFF: u8 = 0x00;
     pub const GPU_MODE_TTY: u8 = 0x01;
+    pub const GPU_MODE_BITMAP: u8 = 0x02;
 
     pub const GPU_REG_MODE: u16 = 0x0000;
     /// TTY mode registers
@@ -18,13 +19,20 @@ pub mod registers {
     pub const VRAM_CURSOR_Y: usize = 0x0001;
     pub const VRAM_TTY_START: usize = 0x0002;
     pub const VRAM_TTY_END: usize = VRAM_TTY_START + TTY_CELLS;
+
+    /// Bitmap mode registers
+    pub const GPU_REG_BITMAP_START: u16 = 0x0001;
+    pub const GPU_REG_BITMAP_END: u16 = 0x0F00;
+    pub const BITMAP_WIDTH: usize = 64;
+    pub const BITMAP_HEIGHT: usize = 32;
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
-enum Mode {
+pub enum Mode {
     #[default]
     Off,
     Tty,
+    Bitmap,
 }
 
 impl From<u8> for Mode {
@@ -32,6 +40,7 @@ impl From<u8> for Mode {
         match value {
             registers::GPU_MODE_OFF => Mode::Off,
             registers::GPU_MODE_TTY => Mode::Tty,
+            registers::GPU_MODE_BITMAP => Mode::Bitmap,
             _ => unimplemented!(),
         }
     }
@@ -42,6 +51,7 @@ impl From<Mode> for u8 {
         match value {
             Mode::Off => registers::GPU_MODE_OFF,
             Mode::Tty => registers::GPU_MODE_TTY,
+            Mode::Bitmap => registers::GPU_MODE_BITMAP,
         }
     }
 }
@@ -49,7 +59,8 @@ impl From<Mode> for u8 {
 #[derive(Debug)]
 pub struct GPU {
     mode: Mode,
-    vram: Box<[u8; registers::TTY_CELLS + 2]>,
+    tty_vram: Box<[u8; registers::TTY_CELLS + 2]>,
+    bitmap_vram: Box<[u8; (registers::BITMAP_WIDTH * registers::BITMAP_HEIGHT) / 8]>,
     redraw: bool,
 }
 
@@ -57,7 +68,8 @@ impl Default for GPU {
     fn default() -> Self {
         Self {
             mode: Mode::Off,
-            vram: empty_memory(),
+            tty_vram: empty_memory(),
+            bitmap_vram: empty_memory(),
             redraw: false,
         }
     }
@@ -66,7 +78,17 @@ impl Default for GPU {
 impl GPU {
     #[must_use]
     pub fn tty_buffer(&self) -> &[u8] {
-        &self.vram[registers::VRAM_TTY_START..registers::VRAM_TTY_END]
+        &self.tty_vram[registers::VRAM_TTY_START..registers::VRAM_TTY_END]
+    }
+
+    #[must_use]
+    pub fn bitmap_buffer(&self) -> &[u8] {
+        &self.bitmap_vram[0..(registers::BITMAP_WIDTH * registers::BITMAP_HEIGHT) / 8]
+    }
+
+    #[must_use]
+    pub fn current_mode(&self) -> Mode {
+        self.mode
     }
 
     pub fn redraw(&mut self) -> bool {
@@ -89,15 +111,18 @@ impl Device for GPU {
 
     fn write(&mut self, addr: u16, value: u8) {
         match addr {
-            registers::GPU_REG_MODE => self.mode = value.into(),
+            registers::GPU_REG_MODE => {
+                self.bitmap_vram.fill(0x00);
+                self.mode = value.into();
+            }
             registers::GPU_REG_TTY if self.mode == Mode::Tty => {
                 self.redraw = true;
                 let (mut cursor_x, mut cursor_y) = (
-                    self.vram[registers::VRAM_CURSOR_X],
-                    self.vram[registers::VRAM_CURSOR_Y],
+                    self.tty_vram[registers::VRAM_CURSOR_X],
+                    self.tty_vram[registers::VRAM_CURSOR_Y],
                 );
 
-                let tty_buf = &mut self.vram[registers::VRAM_TTY_START..VRAM_TTY_END];
+                let tty_buf = &mut self.tty_vram[registers::VRAM_TTY_START..VRAM_TTY_END];
                 let cols = registers::TTY_COLS as usize;
 
                 match value {
@@ -150,9 +175,16 @@ impl Device for GPU {
                     cursor_y = registers::TTY_ROWS - 1;
                 }
 
-                self.vram[registers::VRAM_CURSOR_X] = cursor_x;
-                self.vram[registers::VRAM_CURSOR_Y] = cursor_y;
+                self.tty_vram[registers::VRAM_CURSOR_X] = cursor_x;
+                self.tty_vram[registers::VRAM_CURSOR_Y] = cursor_y;
             }
+            registers::GPU_REG_BITMAP_START..=registers::GPU_REG_BITMAP_END
+                if self.mode == Mode::Bitmap =>
+            {
+                let address = addr - 1;
+                self.bitmap_vram[address as usize] = value;
+            }
+
             _ => unimplemented!(),
         }
     }

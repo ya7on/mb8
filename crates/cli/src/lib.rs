@@ -1,6 +1,10 @@
 #[cfg(feature = "desktop")]
 pub mod config;
 
+pub const PIXEL_ON_COLOR: u32 = 0x006a_bfc6;
+pub const PIXEL_OFF_COLOR: u32 = 0x0050_459b;
+
+pub mod bitmap;
 pub mod debug;
 pub mod filesystem;
 pub mod keyboard;

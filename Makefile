@@ -13,7 +13,7 @@ USER_SOURCES := hello
 user/%.asm: user/%.mc8
 	cargo run -- compile $< > $@
 
-USER_BINS := exit help hello ls sh
+USER_BINS := exit help hello ls sh pxl
 USER_TARGETS := $(USER_BINS:%=user/%.bin)
 user: $(USER_TARGETS)
 user/%.bin: user/%.asm $(KERNEL_MAIN)

@@ -12,7 +12,7 @@ System calls live at `0xE500` (`kernel/syscalls.asm`). To invoke one, load the c
   Input: `R1:R2` address of a zero-terminated string. Streams characters to the TTY data register until `0x00`.
 
 - **0x04 — SYS_WAIT_FOR_KEY**  
-  Blocks until the keyboard status register (`0xF100`) is non-zero. No outputs.
+  Blocks until the keyboard status register (`0xF101`) is non-zero. No outputs.
 
 - **0x05 — SYS_READ_KEY**  
   Output: `R0` key code popped from the keyboard data register (`0xF101`). Returns `0` if the queue was empty.
