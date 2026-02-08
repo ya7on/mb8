@@ -10,7 +10,7 @@ The MB8 VM exposes a single 64 KiB address space. All reads and writes go throug
 | `0xC000` – `0xDFFF` | 8 KiB | Reserved MMIO (not wired yet) |
 | `0xE000` – `0xEFFF` | 4 KiB | ROM |
 | `0xF000` – `0xF0FF` | 256 B | GPU registers |
-| `0xF100` – `0xF1FF` | 256 B | Keyboard registers |
+| `0xF101` – `0xF1FF` | 256 B | Keyboard registers |
 | `0xF200` – `0xF3FF` | 512 B | Disk registers and buffer |
 | `0xF400` | 1 B | Random number generator |
 | `0xF401` – `0xFFFF` | 3071 B | Reserved MMIO (not wired yet) |
@@ -36,7 +36,7 @@ The bus rejects the reserved regions with `unimplemented!()`.
 - Reading `0x0000` returns the current mode. Other reads are currently unimplemented.
 
 ## Keyboard (`crates/mb8/src/dev/keyboard.rs`)
-- Registers at `0xF100` (offsets relative to that base):
+- Registers at `0xF101` (offsets relative to that base):
   - `0x00` — `STATUS`. Returns `1` when keys are queued, otherwise `0`.
   - `0x01` — `DATA`. Reading pops the next key code from the queue; returns `0` when empty.
 - Writes are ignored.

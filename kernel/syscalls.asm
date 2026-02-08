@@ -156,9 +156,9 @@ sys_tty_writeln:
 sys_wait_for_key:
     ; Locals
     ; R5 key
-    ; R6:R7 = 0xF100
+    ; R6:R7 = 0xF101
     LDI R6 0xF1
-    LDI R7 0x00
+    LDI R7 0x01
 .loop:
     LD R5 [R6:R7]
     CMPI R5 0x00
@@ -175,9 +175,9 @@ sys_wait_for_key:
 sys_read_key:
     ; Locals
     ; R0 - return value
-    ; R6:R7 = 0xF101
+    ; R6:R7 = 0xF102
     LDI R6 0xF1
-    LDI R7 0x01
+    LDI R7 0x02
     LD R0 [R6:R7]
     RET
 

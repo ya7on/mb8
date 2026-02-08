@@ -1,5 +1,4 @@
-const PIXEL_ON_COLOR: u32 = 0x006a_bfc6;
-const PIXEL_OFF_COLOR: u32 = 0x0050_459b;
+use crate::{PIXEL_OFF_COLOR, PIXEL_ON_COLOR};
 
 static FONT: [[u8; 8]; 128] = [
     [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // U+0000 (nul)

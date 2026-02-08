@@ -4,6 +4,8 @@
 ; Minimal shell: read a line, exec filename at 0x0200 when Enter is pressed.
 
 start:
+    LDI R1 0x01
+    ST [0xF000] R1
 prompt:
     PUSH R2
     LDI R0 0x02       ; SYS_WRITE
