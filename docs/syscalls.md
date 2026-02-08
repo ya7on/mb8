@@ -15,7 +15,7 @@ System calls live at `0xE500` (`kernel/syscalls.asm`). To invoke one, load the c
   Blocks until the keyboard status register (`0xF101`) is non-zero. No outputs.
 
 - **0x05 — SYS_READ_KEY**  
-  Output: `R0` key code popped from the keyboard data register (`0xF101`). Returns `0` if the queue was empty.
+  Output: `R0` key code popped from the keyboard data register (`0xF102`). Returns `0` if the queue was empty.
 
 - **0x06 — SYS_DISK_SET_BLOCK**  
   Input: `R1` block index. Stores it in the disk block register at `0xF200` for later operations.
