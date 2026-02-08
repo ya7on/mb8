@@ -1,4 +1,5 @@
 use crate::{PIXEL_OFF_COLOR, PIXEL_ON_COLOR};
+const BORDER_COLOR: u32 = PIXEL_ON_COLOR;
 
 #[derive(Debug)]
 pub struct Bitmap {
@@ -43,34 +44,47 @@ impl Bitmap {
         if fb_len == 0 || framebuffer.is_empty() {
             return;
         }
+        if self.width == 0 || self.height == 0 {
+            return;
+        }
 
         let clear_len = fb_len.min(framebuffer.len());
-        framebuffer[..clear_len].fill(PIXEL_OFF_COLOR);
+        framebuffer[..clear_len].fill(BORDER_COLOR);
 
-        let x_off = if width > self.width {
-            (width - self.width) / 2
+        // Fill full window width (no left/right bars), keep aspect ratio.
+        // Remaining top/bottom area is left as white border.
+        let target_w = width;
+        let target_h = self.height.saturating_mul(target_w) / self.width;
+        if target_h == 0 {
+            return;
+        }
+
+        let (y_off, crop_top) = if target_h <= height {
+            ((height - target_h) / 2, 0)
         } else {
-            0
-        };
-        let y_off = if height > self.height {
-            (height - self.height) / 2
-        } else {
-            0
+            (0, (target_h - height) / 2)
         };
 
-        for y in 0..self.height {
-            for x in 0..self.width {
-                let idx = y * self.width + x;
+        for y in 0..height {
+            let scaled_y = if target_h <= height {
+                if y < y_off || y >= y_off + target_h {
+                    continue;
+                }
+                y - y_off
+            } else {
+                y + crop_top
+            };
+            let src_y = scaled_y.saturating_mul(self.height) / target_h;
+
+            for x in 0..width {
+                let src_x = x.saturating_mul(self.width) / target_w;
+                let idx = src_y.saturating_mul(self.width) + src_x;
                 let set = self.data.get(idx).copied().unwrap_or(false);
                 let color = if set { PIXEL_ON_COLOR } else { PIXEL_OFF_COLOR };
 
-                let fb_x = x + x_off;
-                let fb_y = y + y_off;
-                if fb_x < width && fb_y < height {
-                    let fb_idx = fb_y * width + fb_x;
-                    if fb_idx < framebuffer.len() {
-                        framebuffer[fb_idx] = color;
-                    }
+                let fb_idx = y.saturating_mul(width) + x;
+                if fb_idx < framebuffer.len() {
+                    framebuffer[fb_idx] = color;
                 }
             }
         }
