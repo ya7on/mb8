@@ -15,5 +15,4 @@ HELP_TEXT:
     #d "Commands:\n"
     #d "help  - Display help information\n"
     #d "ls    - List files\n"
-    #d "hello - Hello World\n"
     #d "exit  - Exit the system\n\0"

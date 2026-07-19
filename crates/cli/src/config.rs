@@ -24,9 +24,4 @@ pub enum Commands {
         #[arg(long)]
         debug: bool,
     },
-    /// Compile a source file to an executable file
-    Compile {
-        /// Path to the source file
-        source: PathBuf,
-    },
 }
