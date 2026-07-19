@@ -12,7 +12,7 @@ pub mod flags {
 }
 
 /// List of registers supported by the MB8 VM.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Register {
     /// General-purpose register 0
     R0,
