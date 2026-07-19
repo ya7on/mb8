@@ -5,7 +5,6 @@ use mb8::{
 };
 use mb8_cli::{bitmap::Bitmap, config, debug::Debug};
 use mb8_cli::{tty::Tty, vmrun};
-use mb8c::compile;
 
 fn main() {
     let cli = config::Cli::parse();
@@ -31,21 +30,6 @@ fn main() {
                 vm_desk.debug_enabled = true;
             }
             vm_desk.run_desktop(kernel, user, cli.seed);
-        }
-        config::Commands::Compile { source } => {
-            let code = match std::fs::read_to_string(source) {
-                Ok(code) => code,
-                Err(err) => {
-                    eprintln!("Failed to read source file: {err}");
-                    return;
-                }
-            };
-            match compile(&code) {
-                Ok(()) => {}
-                Err(err) => {
-                    eprintln!("Compilation error: {err:?}");
-                }
-            }
         }
     }
 }

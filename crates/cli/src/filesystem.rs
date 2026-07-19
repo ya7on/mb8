@@ -63,7 +63,6 @@ pub fn makefs_wasm(vm: &mut VirtualMachine) {
         (include_bytes!("../../../user/sh.bin"), "sh"),
         (include_bytes!("../../../user/ls.bin"), "ls"),
         (include_bytes!("../../../user/exit.bin"), "exit"),
-        (include_bytes!("../../../user/hello.bin"), "hello"),
         (include_bytes!("../../../user/help.bin"), "help"),
     ];
 

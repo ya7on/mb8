@@ -50,6 +50,10 @@ User-space programs live under `user/`. For a minimal shell example, see `user/s
 make run
 ```
 
+## High-level language compiler
+
+There was an attempt to build a compiler for a high-level programming language targeting this platform, but it did not work out. The latest work on that compiler can be seen in commit [`57ce5eba284f069251eb0563cf06fe6a24da53d7`](https://github.com/ya7on/mb8/commit/57ce5eba284f069251eb0563cf06fe6a24da53d7).
+
 # Architecture
 
 Full documentation can be found in the [`book`](https://ya7on.github.io/mb8/).
