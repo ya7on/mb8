@@ -45,32 +45,32 @@
     ; Jump to an absolute label using a relative offset
     JR [{ addr: u16 }] => {
         offset = addr - $ - 2
-        assert(offset <= 127)
-        assert(offset >= -128)
+        $assert(offset <= 127)
+        $assert(offset >= -128)
         0x31 @ offset`8
     }
 
     ; Jump if zero flag is set to an absolute label
     JZR [{ addr: u16 }] => {
         offset = addr - $ - 2
-        assert(offset <= 127)
-        assert(offset >= -128)
+        $assert(offset <= 127)
+        $assert(offset >= -128)
         0x32 @ offset`8
     }
 
     ; Jump if zero flag is not set to an absolute label
     JNZR [{ addr: u16 }] => {
         offset = addr - $ - 2
-        assert(offset <= 127)
-        assert(offset >= -128)
+        $assert(offset <= 127)
+        $assert(offset >= -128)
         0x33 @ offset`8
     }
 
     ; Jump if zero flag is not set to an absolute label
     JNCR [{ addr: u16 }] => {
         offset = addr - $ - 2
-        assert(offset <= 127)
-        assert(offset >= -128)
+        $assert(offset <= 127)
+        $assert(offset >= -128)
         0x35 @ offset`8
     }
 
