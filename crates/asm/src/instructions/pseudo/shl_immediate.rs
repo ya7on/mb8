@@ -9,7 +9,7 @@ use crate::{
 use super::super::InstructionDefinition;
 
 pub(in crate::instructions) const DESUGAR: InstructionDefinition = InstructionDefinition {
-    mnemonic: "shli",
+    mnemonic: "shl",
     handler: desugar,
 };
 
@@ -19,7 +19,7 @@ pub(super) fn desugar(
     _id: usize,
 ) -> Option<Vec<IRItem>> {
     let (
-        "shli",
+        "shl",
         Some(Operand::Raw(DataSource::Register(reg))),
         Some(Operand::Raw(DataSource::Immediate(value))),
         None,

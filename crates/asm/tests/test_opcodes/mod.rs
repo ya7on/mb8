@@ -273,18 +273,18 @@ fn cmp_immediate() -> Result<(), asm::AsmFailure> {
 }
 
 #[test]
-fn shri() -> Result<(), asm::AsmFailure> {
+fn shr_immediate() -> Result<(), asm::AsmFailure> {
     assert_eq!(
-        compile("shri r1, 0x04")?,
+        compile("shr r1, 0x04")?,
         vec![0x42, 0x00, 0x20, 0x04, 0x16, 0x10, 0x43, 0x00]
     );
     Ok(())
 }
 
 #[test]
-fn shli() -> Result<(), asm::AsmFailure> {
+fn shl_immediate() -> Result<(), asm::AsmFailure> {
     assert_eq!(
-        compile("shli r1, 0x04")?,
+        compile("shl r1, 0x04")?,
         vec![0x42, 0x00, 0x20, 0x04, 0x17, 0x10, 0x43, 0x00]
     );
     Ok(())

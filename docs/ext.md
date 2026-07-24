@@ -14,8 +14,8 @@ Assembler-only helpers. They rewrite into core opcodes and often use `A` plus th
 - [INC16](#inc16)
 - [NOT](#not)
 - [CMP (immediate)](#cmp-immediate)
-- [SHRI](#shri)
-- [SHLI](#shli)
+- [SHR (immediate)](#shr-immediate)
+- [SHL (immediate)](#shl-immediate)
 - [SWAP](#swap)
 - [MUL](#mul)
 
@@ -253,11 +253,11 @@ POP A
 
 ---
 
-## SHRI
+## SHR (immediate)
 
 **Syntax**:
 ```asm
-SHRI rD imm
+SHR rD imm
 ```
 
 **Expands to**:
@@ -270,15 +270,15 @@ POP A
 
 **Scratch**: uses `A`, stack  
 **Flags**: from `SHR` (Z/N/C)  
-**Description**: Shift right by an immediate count.
+**Description**: Overloaded immediate form of `SHR`; shifts right by an immediate count.<br>
 
 ---
 
-## SHLI
+## SHL (immediate)
 
 **Syntax**:
 ```asm
-SHLI rD imm
+SHL rD imm
 ```
 
 **Expands to**:
@@ -291,7 +291,7 @@ POP A
 
 **Scratch**: uses `A`, stack  
 **Flags**: from `SHL` (Z/N/C)  
-**Description**: Shift left by an immediate count.
+**Description**: Overloaded immediate form of `SHL`; shifts left by an immediate count.<br>
 
 ---
 

@@ -131,20 +131,20 @@
 
     ; Shift register value right by a given immediate value
     ; WARNING: This macro may modify the stack pointer.
-    SHRI { reg: register } { val: u8 } => asm {
-        PUSH R7
-        LDI R7 {val}
-        SHR {reg} R7
-        POP R7
+    SHR { reg: register } { val: u8 } => asm {
+        PUSH A
+        LDI A {val}
+        SHR {reg} A
+        POP A
     }
 
     ; Shift register value left by a given immediate value
     ; WARNING: This macro may modify the stack pointer.
-    SHLI { reg: register } { val: u8 } => asm {
-        PUSH R7
-        LDI R7 {val}
-        SHL {reg} R7
-        POP R7
+    SHL { reg: register } { val: u8 } => asm {
+        PUSH A
+        LDI A {val}
+        SHL {reg} A
+        POP A
     }
 
     ; Swap the values of two registers

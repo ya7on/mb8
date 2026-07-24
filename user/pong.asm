@@ -264,7 +264,7 @@ draw_ball:
     PUSH R2
 
     MOV R4 R2
-    SHRI R4 0x03
+    SHR R4 0x03
 
     MOV R5 R2
     LDI R0 0x07
@@ -288,7 +288,7 @@ clear_ball:
     PUSH R1
     PUSH R2
     MOV R4 R2
-    SHRI R4 0x03
+    SHR R4 0x03
     MOV R2 R4
     ZERO R3
     CALL [plot_byte]
@@ -320,7 +320,7 @@ plot_byte:
     LDI R7 0x01
 
     MOV R4 R1
-    SHLI R4 0x03
+    SHL R4 0x03
     ADD R7 R4
     JNCR [.no_carry_y]
     INC R6
