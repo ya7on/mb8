@@ -42,7 +42,7 @@ pub(super) const HANDLERS: &[InstructionDefinition] = &[
     pseudo::call_immediate::DESUGAR,
     pseudo::call_label::DESUGAR,
     cmp::DESUGAR,
-    pseudo::cmpi::DESUGAR,
+    pseudo::cmp_immediate::DESUGAR,
     pseudo::dec::DESUGAR,
     halt::DESUGAR,
     halt_immediate::DESUGAR,

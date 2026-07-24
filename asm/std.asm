@@ -34,7 +34,7 @@
         CMP {i} {j}
         JNZR [error]
 
-        CMPI {j} "\0"
+        CMP {j} "\0"
         JZR [success]
 
         INC16 {srchi}:{srclo}

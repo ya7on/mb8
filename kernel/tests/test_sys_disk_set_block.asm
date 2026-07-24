@@ -9,8 +9,8 @@
 }
 
 start:
-    LDI R0 SYS_DISK_SET_BLOCK
-    LDI R1 0x01
+    LDI R1 SYS_DISK_SET_BLOCK
+    LDI R2 0x01
     CALL [K_SYSCALL_ENTRY]
     HALT
 

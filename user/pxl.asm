@@ -24,7 +24,7 @@ start:
     ST [IH:IL] R3
     INC16 IH:IL
     SUB R5 R0
-    CMPI R5 0x00
+    CMP R5 0x00
     JNZR [.col_loop]
 
     ; Small delay so rows appear gradually
@@ -33,16 +33,16 @@ start:
     LDI R5 0xFF
 .delay_inner:
     SUB R5 R0
-    CMPI R5 0x00
+    CMP R5 0x00
     JNZR [.delay_inner]
     SUB R6 R0
-    CMPI R6 0x00
+    CMP R6 0x00
     JNZR [.delay_outer]
 
     ; Next row
     SUB R4 R0
-    CMPI R4 0x00
+    CMP R4 0x00
     JNZR [.row_loop]
 
-    LDI R0 0x0F
+    LDI R1 0x0F
     CALL [0xE500]

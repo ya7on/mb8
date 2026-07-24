@@ -13,7 +13,7 @@ Assembler-only helpers. They rewrite into core opcodes and often use `A` plus th
 - [DEC](#dec)
 - [INC16](#inc16)
 - [NOT](#not)
-- [CMPI](#cmpi)
+- [CMP (immediate)](#cmp-immediate)
 - [SHRI](#shri)
 - [SHLI](#shli)
 - [SWAP](#swap)
@@ -194,7 +194,7 @@ INC16 rH:rL
 
 **Expands to**:
 ```asm
-CMPI rL 0xFF
+CMP rL 0xFF
 JZR inc_hi
 INC rL
 JR end
@@ -206,7 +206,7 @@ NOP
 ```
 
 **Scratch**: uses `A`, stack via `INC`  
-**Flags**: from `CMPI`, `INC` (Z/N/C)  
+**Flags**: from `CMP`, `INC` (Z/N/C)<br>
 **Description**: Increment a 16-bit register pair in-place.
 
 ---
@@ -232,24 +232,24 @@ POP A
 
 ---
 
-## CMPI
+## CMP (immediate)
 
 **Syntax**:
 ```asm
-CMPI rD imm
+CMP rD imm
 ```
 
 **Expands to**:
 ```asm
 PUSH A
 LDI A imm
-SUB A rD
+CMP rD A
 POP A
 ```
 
 **Scratch**: uses `A`, stack  
-**Flags**: from `SUB` (Z/N/C)  
-**Description**: Compare a register with an immediate; flags reflect `imm - rD`.
+**Flags**: from `CMP` (Z/N/C)<br>
+**Description**: Overloaded immediate form of `CMP`; flags reflect `rD - imm`.
 
 ---
 
@@ -329,11 +329,11 @@ PUSH rB
 iter:
     ADD rD rA
     DEC rB
-    CMPI rB 0
+    CMP rB 0
     JNZR iter
 POP rB
 ```
 
 **Scratch**: uses `A`, `rB`, stack  
-**Flags**: from `ADD`, `DEC`, `CMPI` (Z/N/C)  
+**Flags**: from `ADD`, `DEC`, `CMP` (Z/N/C)<br>
 **Description**: Unsigned multiply by repeated addition; destroys `rB` during the loop, restores it after.

@@ -96,7 +96,7 @@ SYS
 
 **Flags**: None
 
-**Description**: Enter the system call handler. Callers place the syscall ID in `R0` and jump to `0xE500` (see system calls doc) to execute OS services.
+**Description**: Enter the system call handler. Callers place the syscall ID in `R1` and jump to `0xE500` (see system calls doc) to execute OS services.
 
 ---
 

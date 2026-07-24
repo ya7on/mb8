@@ -1,6 +1,6 @@
 pub(super) mod call_immediate;
 pub(super) mod call_label;
-pub(super) mod cmpi;
+pub(super) mod cmp_immediate;
 pub(super) mod dec;
 pub(super) mod inc;
 pub(super) mod inc16;

@@ -264,10 +264,10 @@ fn not() -> Result<(), asm::AsmFailure> {
 }
 
 #[test]
-fn cmpi() -> Result<(), asm::AsmFailure> {
+fn cmp_immediate() -> Result<(), asm::AsmFailure> {
     assert_eq!(
-        compile("cmpi r1, 0x42")?,
-        vec![0x42, 0x00, 0x20, 0x42, 0x12, 0x01, 0x43, 0x00]
+        compile("cmp r1, 0x42")?,
+        vec![0x42, 0x00, 0x20, 0x42, 0x18, 0x10, 0x43, 0x00]
     );
     Ok(())
 }

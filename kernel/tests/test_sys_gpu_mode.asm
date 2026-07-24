@@ -9,8 +9,8 @@
 }
 
 start:
-    LDI R0 SYS_GPU_MODE
-    LDI R1 0x01
+    LDI R1 SYS_GPU_MODE
+    LDI R2 0x01
     CALL [K_SYSCALL_ENTRY]
     HALT
 
