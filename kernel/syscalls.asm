@@ -303,13 +303,13 @@ sys_fs_find:
     JMP [.next_file]
 
 .metadata:
-    INC16 R4 R5 ; start_block
+    INC16 R4:R5 ; start_block
     LD R0 [R4:R5]
     PUSH R0
-    INC16 R4 R5 ; size
+    INC16 R4:R5 ; size
     LD R0 [R4:R5]
     PUSH R0
-    INC16 R4 R5 ; filename
+    INC16 R4:R5 ; filename
 
     PUSH R1
     PUSH R2
@@ -331,7 +331,7 @@ sys_fs_find:
     LDI R4 0xF2 ; buffer ptr high
     LDI R5 0x02 ; buffer ptr low
 .iter:
-    INC16 R4 R5
+    INC16 R4:R5
     DEC R6
     CMPI R6 0x00
     JNZR [.iter]

@@ -99,7 +99,7 @@
 
     ; Increment register pair as 16 bit value
     ; WARNING: This macro may modify the stack pointer.
-    INC16 { hi: register } { lo: register } => asm {
+    INC16 { hi: register }:{ lo: register } => asm {
         CMPI {lo} 0xFF
         JZR [inc_hi]
         INC {lo}

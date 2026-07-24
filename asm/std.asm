@@ -17,8 +17,8 @@
             JZR [end]
             INC A
 
-            INC16 {srchi} {srclo}
-            INC16 {dsthi} {dstlo}
+            INC16 {srchi}:{srclo}
+            INC16 {dsthi}:{dstlo}
 
             JR [loop]
         end:
@@ -37,8 +37,8 @@
         CMPI {j} "\0"
         JZR [success]
 
-        INC16 {srchi} {srclo}
-        INC16 {dsthi} {dstlo}
+        INC16 {srchi}:{srclo}
+        INC16 {dsthi}:{dstlo}
 
         JMP [loop]
 

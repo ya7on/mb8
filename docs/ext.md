@@ -189,7 +189,7 @@ POP A
 
 **Syntax**:
 ```asm
-INC16 rH rL
+INC16 rH:rL
 ```
 
 **Expands to**:

@@ -22,7 +22,7 @@ start:
     LDI R5 0x08
 .col_loop:
     ST [IH:IL] R3
-    INC16 IH IL
+    INC16 IH:IL
     SUB R5 R0
     CMPI R5 0x00
     JNZR [.col_loop]
