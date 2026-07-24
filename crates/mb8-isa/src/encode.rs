@@ -87,7 +87,7 @@ pub fn encode(opcode: &Opcode) -> u16 {
         }
         Opcode::Ldi { dst, value } => {
             let dst = encode_register(*dst);
-            0x2000 | (dst as u16) << 4 | *value as u16
+            0x2000 | (dst as u16) << 8 | *value as u16
         }
         Opcode::Jmp { hi, lo } => {
             let hi = encode_register(*hi);

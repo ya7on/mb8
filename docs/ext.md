@@ -1,6 +1,6 @@
 # Pseudo-instructions
 
-Assembler-only helpers from `asm/ext.asm`. They rewrite into core opcodes and often use `R7` plus the stack as scratch.
+Assembler-only helpers. They rewrite into core opcodes and often use `A` plus the stack as scratch.
 
 - [LDI (16-bit)](#ldi-16-bit)
 - [CALL (abs)](#call-abs)
@@ -49,12 +49,12 @@ CALL [addr16]
 
 **Expands to**:
 ```asm
-LDI R6 (addr16 >> 8)
-LDI R7 (addr16 & 0xFF)
-CALL [R6:R7]
+LDI IH (addr16 >> 8)
+LDI IL (addr16 & 0xFF)
+CALL [IH:IL]
 ```
 
-**Scratch**: uses `R6`, `R7`  
+**Scratch**: uses `IH`, `IL`  
 **Flags**: none  
 **Description**: Absolute subroutine call to a 16-bit address.
 
@@ -69,12 +69,12 @@ JMP addr16
 
 **Expands to**:
 ```asm
-LDI R6 (addr16 >> 8)
-LDI R7 (addr16 & 0xFF)
-JMP R6 R7
+LDI IH (addr16 >> 8)
+LDI IL (addr16 & 0xFF)
+JMP [IH:IL]
 ```
 
-**Scratch**: uses `R6`, `R7`  
+**Scratch**: uses `IH`, `IL`  
 **Flags**: none  
 **Description**: Absolute jump to a 16-bit address.
 
@@ -152,13 +152,13 @@ INC rD
 
 **Expands to**:
 ```asm
-PUSH R7
-LDI R7 1
-ADD rD R7
-POP R7
+PUSH A
+LDI A 1
+ADD rD A
+POP A
 ```
 
-**Scratch**: uses `R7`, stack  
+**Scratch**: uses `A`, stack  
 **Flags**: from `ADD` (Z/N/C)  
 **Description**: Increment a register by one.
 
@@ -173,13 +173,13 @@ DEC rD
 
 **Expands to**:
 ```asm
-PUSH R7
-LDI R7 1
-SUB rD R7
-POP R7
+PUSH A
+LDI A 1
+SUB rD A
+POP A
 ```
 
-**Scratch**: uses `R7`, stack  
+**Scratch**: uses `A`, stack  
 **Flags**: from `SUB` (Z/N/C)  
 **Description**: Decrement a register by one.
 
@@ -205,7 +205,7 @@ end:
 NOP
 ```
 
-**Scratch**: stack via `INC`  
+**Scratch**: uses `A`, stack via `INC`  
 **Flags**: from `CMPI`, `INC` (Z/N/C)  
 **Description**: Increment a 16-bit register pair in-place.
 
@@ -220,13 +220,13 @@ NOT rD
 
 **Expands to**:
 ```asm
-PUSH R7
-LDI R7 0xFF
-XOR rD R7
-POP R7
+PUSH A
+LDI A 0xFF
+XOR rD A
+POP A
 ```
 
-**Scratch**: uses `R7`, stack  
+**Scratch**: uses `A`, stack  
 **Flags**: from `XOR` (Z/N, clears C)  
 **Description**: Bitwise invert a register.
 
@@ -241,13 +241,13 @@ CMPI rD imm
 
 **Expands to**:
 ```asm
-PUSH R7
-LDI R7 imm
-SUB R7 rD
-POP R7
+PUSH A
+LDI A imm
+SUB A rD
+POP A
 ```
 
-**Scratch**: uses `R7`, stack  
+**Scratch**: uses `A`, stack  
 **Flags**: from `SUB` (Z/N/C)  
 **Description**: Compare a register with an immediate; flags reflect `imm - rD`.
 
@@ -262,13 +262,13 @@ SHRI rD imm
 
 **Expands to**:
 ```asm
-PUSH R7
-LDI R7 imm
-SHR rD R7
-POP R7
+PUSH A
+LDI A imm
+SHR rD A
+POP A
 ```
 
-**Scratch**: uses `R7`, stack  
+**Scratch**: uses `A`, stack  
 **Flags**: from `SHR` (Z/N/C)  
 **Description**: Shift right by an immediate count.
 
@@ -283,13 +283,13 @@ SHLI rD imm
 
 **Expands to**:
 ```asm
-PUSH R7
-LDI R7 imm
-SHL rD R7
-POP R7
+PUSH A
+LDI A imm
+SHL rD A
+POP A
 ```
 
-**Scratch**: uses `R7`, stack  
+**Scratch**: uses `A`, stack  
 **Flags**: from `SHL` (Z/N/C)  
 **Description**: Shift left by an immediate count.
 
@@ -334,6 +334,6 @@ iter:
 POP rB
 ```
 
-**Scratch**: uses `rB`, stack  
+**Scratch**: uses `A`, `rB`, stack  
 **Flags**: from `ADD`, `DEC`, `CMPI` (Z/N/C)  
 **Description**: Unsigned multiply by repeated addition; destroys `rB` during the loop, restores it after.
