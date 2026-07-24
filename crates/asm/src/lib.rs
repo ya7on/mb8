@@ -3,6 +3,7 @@ mod desugar;
 pub mod diagnostics;
 pub mod error;
 mod include;
+mod instructions;
 mod ir;
 mod lower;
 mod parser;

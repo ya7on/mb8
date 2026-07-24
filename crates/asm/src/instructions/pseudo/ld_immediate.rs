@@ -1,0 +1,60 @@
+use mb8_isa::registers::Register;
+
+use crate::{
+    ast::{ASTInstruction, DataSource, Operand},
+    diagnostics::{Span, Spanned},
+    ir::{Expression, IRInstruction, IRItem},
+};
+
+use super::super::InstructionDefinition;
+
+pub(in crate::instructions) const DESUGAR: InstructionDefinition = InstructionDefinition {
+    mnemonic: "ld",
+    handler: desugar,
+};
+
+pub(super) fn desugar(
+    instruction: &ASTInstruction,
+    span: &Span,
+    _id: usize,
+) -> Option<Vec<IRItem>> {
+    let (
+        "ld",
+        Some(Operand::Raw(DataSource::Register(dst))),
+        Some(Operand::MemoryWrapped(DataSource::Immediate(address))),
+        None,
+    ) = (
+        instruction.mnemonic.as_str(),
+        instruction.operands.first(),
+        instruction.operands.get(1),
+        instruction.operands.get(2),
+    )
+    else {
+        return None;
+    };
+
+    Some(vec![
+        IRItem::Instruction(Spanned {
+            value: IRInstruction::Ldi {
+                dst: Register::IH,
+                src: Expression::Immediate(address >> 8),
+            },
+            span: span.clone(),
+        }),
+        IRItem::Instruction(Spanned {
+            value: IRInstruction::Ldi {
+                dst: Register::IL,
+                src: Expression::Immediate(address & 0x00FF),
+            },
+            span: span.clone(),
+        }),
+        IRItem::Instruction(Spanned {
+            value: IRInstruction::Ld {
+                dst: *dst,
+                hi: Register::IH,
+                lo: Register::IL,
+            },
+            span: span.clone(),
+        }),
+    ])
+}
