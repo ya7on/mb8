@@ -9,7 +9,7 @@ use crate::{
 use super::super::InstructionDefinition;
 
 pub(in crate::instructions) const DESUGAR: InstructionDefinition = InstructionDefinition {
-    mnemonic: "shli",
+    mnemonic: "cmp",
     handler: desugar,
 };
 
@@ -19,7 +19,7 @@ pub(super) fn desugar(
     _id: usize,
 ) -> Option<Vec<IRItem>> {
     let (
-        "shli",
+        "cmp",
         Some(Operand::Raw(DataSource::Register(reg))),
         Some(Operand::Raw(DataSource::Immediate(value))),
         None,
@@ -46,7 +46,7 @@ pub(super) fn desugar(
             span: span.clone(),
         }),
         IRItem::Instruction(Spanned {
-            value: IRInstruction::Shl {
+            value: IRInstruction::Cmp {
                 dst: *reg,
                 src: Register::R0,
             },

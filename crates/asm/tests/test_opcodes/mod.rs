@@ -244,7 +244,7 @@ fn dec() -> Result<(), asm::AsmFailure> {
 #[test]
 fn inc16() -> Result<(), asm::AsmFailure> {
     assert_eq!(
-        compile("inc16 r1, r2")?,
+        compile("inc16 r1:r2")?,
         vec![
             0x42, 0x00, 0x20, 0xff, 0x12, 0x02, 0x43, 0x00, 0x32, 0x0a, 0x42, 0x00, 0x20, 0x01,
             0x11, 0x20, 0x43, 0x00, 0x31, 0x0a, 0x22, 0x00, 0x42, 0x00, 0x20, 0x01, 0x11, 0x10,
@@ -264,27 +264,27 @@ fn not() -> Result<(), asm::AsmFailure> {
 }
 
 #[test]
-fn cmpi() -> Result<(), asm::AsmFailure> {
+fn cmp_immediate() -> Result<(), asm::AsmFailure> {
     assert_eq!(
-        compile("cmpi r1, 0x42")?,
-        vec![0x42, 0x00, 0x20, 0x42, 0x12, 0x01, 0x43, 0x00]
+        compile("cmp r1, 0x42")?,
+        vec![0x42, 0x00, 0x20, 0x42, 0x18, 0x10, 0x43, 0x00]
     );
     Ok(())
 }
 
 #[test]
-fn shri() -> Result<(), asm::AsmFailure> {
+fn shr_immediate() -> Result<(), asm::AsmFailure> {
     assert_eq!(
-        compile("shri r1, 0x04")?,
+        compile("shr r1, 0x04")?,
         vec![0x42, 0x00, 0x20, 0x04, 0x16, 0x10, 0x43, 0x00]
     );
     Ok(())
 }
 
 #[test]
-fn shli() -> Result<(), asm::AsmFailure> {
+fn shl_immediate() -> Result<(), asm::AsmFailure> {
     assert_eq!(
-        compile("shli r1, 0x04")?,
+        compile("shl r1, 0x04")?,
         vec![0x42, 0x00, 0x20, 0x04, 0x17, 0x10, 0x43, 0x00]
     );
     Ok(())

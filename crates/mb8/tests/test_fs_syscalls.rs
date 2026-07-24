@@ -32,9 +32,9 @@ fn test_sys_fs_find() {
     vm.load_rom(bin);
     vm.run();
 
-    assert_eq!(vm.registers.read(Register::R0), 0);
-    assert_eq!(vm.registers.read(Register::R1), 2);
-    assert_eq!(vm.registers.read(Register::R2), 1);
+    assert_eq!(vm.registers.read(Register::R1), 0);
+    assert_eq!(vm.registers.read(Register::R2), 2);
+    assert_eq!(vm.registers.read(Register::R3), 1);
 }
 
 #[test]
@@ -51,7 +51,7 @@ fn test_sys_fs_find_not_exist() {
     vm.load_rom(bin);
     vm.run();
 
-    assert_eq!(vm.registers.read(Register::R0), 1);
+    assert_eq!(vm.registers.read(Register::R1), 1);
 }
 
 #[test]
@@ -69,7 +69,7 @@ fn test_sys_fs_read() {
     vm.load_rom(bin);
     vm.run();
 
-    assert_eq!(vm.registers.read(Register::R0), 0);
+    assert_eq!(vm.registers.read(Register::R1), 0);
 
     for i in 0..256 * 2 {
         assert_eq!(vm.devices.read(i), 1, "{i:?}");

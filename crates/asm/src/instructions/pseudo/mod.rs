@@ -1,6 +1,6 @@
 pub(super) mod call_immediate;
 pub(super) mod call_label;
-pub(super) mod cmpi;
+pub(super) mod cmp_immediate;
 pub(super) mod dec;
 pub(super) mod inc;
 pub(super) mod inc16;
@@ -23,8 +23,8 @@ pub(super) mod ldi_register_pair_immediate;
 pub(super) mod ldi_register_pair_label;
 pub(super) mod mul;
 pub(super) mod not;
-pub(super) mod shli;
-pub(super) mod shri;
+pub(super) mod shl_immediate;
+pub(super) mod shr_immediate;
 pub(super) mod st_immediate;
 pub(super) mod st_label;
 pub(super) mod swap;

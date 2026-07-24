@@ -8,7 +8,7 @@ We assemble with [`customasm`](https://github.com/hlorenzi/customasm).
 
 ## Includes
 - Always include `asm/cpu.asm` to get the core ISA and register definitions.
-- Optionally include `asm/ext.asm` to unlock pseudo-instructions like `INC`, `JMP addr`, `CMPI`, etc.
+- Optionally include `asm/ext.asm` to unlock pseudo-instructions like `INC`, `JMP addr`, etc.
 
 ```asm
 #include "../asm/cpu.asm"

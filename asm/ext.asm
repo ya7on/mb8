@@ -99,8 +99,8 @@
 
     ; Increment register pair as 16 bit value
     ; WARNING: This macro may modify the stack pointer.
-    INC16 { hi: register } { lo: register } => asm {
-        CMPI {lo} 0xFF
+    INC16 { hi: register }:{ lo: register } => asm {
+        CMP {lo} 0xFF
         JZR [inc_hi]
         INC {lo}
         JR [end]
@@ -122,29 +122,29 @@
 
     ; Compare register value with an immediate value and set flags accordingly
     ; WARNING: This macro may modify the stack pointer.
-    CMPI { reg: register } { val: u8 } => asm {
-        PUSH R7
-        LDI R7 {val}
-        SUB R7 {reg}
-        POP R7
+    CMP { reg: register } { val: u8 } => asm {
+        PUSH A
+        LDI A {val}
+        CMP {reg} A
+        POP A
     }
 
     ; Shift register value right by a given immediate value
     ; WARNING: This macro may modify the stack pointer.
-    SHRI { reg: register } { val: u8 } => asm {
-        PUSH R7
-        LDI R7 {val}
-        SHR {reg} R7
-        POP R7
+    SHR { reg: register } { val: u8 } => asm {
+        PUSH A
+        LDI A {val}
+        SHR {reg} A
+        POP A
     }
 
     ; Shift register value left by a given immediate value
     ; WARNING: This macro may modify the stack pointer.
-    SHLI { reg: register } { val: u8 } => asm {
-        PUSH R7
-        LDI R7 {val}
-        SHL {reg} R7
-        POP R7
+    SHL { reg: register } { val: u8 } => asm {
+        PUSH A
+        LDI A {val}
+        SHL {reg} A
+        POP A
     }
 
     ; Swap the values of two registers
@@ -162,7 +162,7 @@
         iter:
             ADD {dst} {a}
             DEC {b}
-            CMPI {b} 0
+            CMP {b} 0
             JNZR [iter]
         POP {b}
     }

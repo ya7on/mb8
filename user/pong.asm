@@ -46,18 +46,18 @@ main_loop:
 
 read_input:
 .loop:
-    LDI R0 0x05
+    LDI R1 0x05
     CALL [0xE500]
 
-    CMPI R0 0x00
+    CMP R1 0x00
     JNZR [.check_w]
     RET
 
 .check_w:
-    CMPI R0 "w"
+    CMP R1 "w"
     JNZR [.check_s]
     LD R1 [P1_Y]
-    CMPI R1 0x00
+    CMP R1 0x00
     JNZR [.w_move]
     JMP [.done]
 .w_move:
@@ -66,10 +66,10 @@ read_input:
     JMP [.loop]
 
 .check_s:
-    CMPI R0 "s"
+    CMP R1 "s"
     JNZR [.check_o]
     LD R1 [P1_Y]
-    CMPI R1 PADDLE_MAX_Y
+    CMP R1 PADDLE_MAX_Y
     JNZR [.s_move]
     JMP [.done]
 .s_move:
@@ -78,10 +78,10 @@ read_input:
     JMP [.loop]
 
 .check_o:
-    CMPI R0 "o"
+    CMP R1 "o"
     JNZR [.check_l]
     LD R1 [P2_Y]
-    CMPI R1 0x00
+    CMP R1 0x00
     JNZR [.o_move]
     JMP [.done]
 .o_move:
@@ -90,10 +90,10 @@ read_input:
     JMP [.loop]
 
 .check_l:
-    CMPI R0 "l"
+    CMP R1 "l"
     JNZR [.check_esc]
     LD R1 [P2_Y]
-    CMPI R1 PADDLE_MAX_Y
+    CMP R1 PADDLE_MAX_Y
     JNZR [.l_move]
     JMP [.done]
 .l_move:
@@ -102,9 +102,9 @@ read_input:
     JMP [.loop]
 
 .check_esc:
-    CMPI R0 0x1B
+    CMP R1 0x1B
     JNZR [.done]
-    LDI R0 0x0F
+    LDI R1 0x0F
     CALL [0xE500]
 
 .done:
@@ -114,17 +114,17 @@ update_ball:
     LD R1 [BALL_Y]
     LD R2 [DY]
 
-    CMPI R1 0x00
+    CMP R1 0x00
     JNZR [.check_bottom]
-    CMPI R2 0xFF
+    CMP R2 0xFF
     JNZR [.check_bottom]
     LDI R2 0x01
     ST [DY] R2
 
 .check_bottom:
-    CMPI R1 0x1F
+    CMP R1 0x1F
     JNZR [.apply_y]
-    CMPI R2 0x01
+    CMP R2 0x01
     JNZR [.apply_y]
     LDI R2 0xFF
     ST [DY] R2
@@ -138,9 +138,9 @@ update_ball:
     LD R1 [BALL_X]
     LD R2 [DX]
 
-    CMPI R1 0x01
+    CMP R1 0x01
     JNZR [.check_right_paddle]
-    CMPI R2 0xFF
+    CMP R2 0xFF
     JNZR [.check_right_paddle]
 
     LD R3 [BALL_Y]
@@ -166,9 +166,9 @@ update_ball:
     LD R1 [BALL_X]
     LD R2 [DX]
 
-    CMPI R1 0x3E
+    CMP R1 0x3E
     JNZR [.apply_x]
-    CMPI R2 0x01
+    CMP R2 0x01
     JNZR [.apply_x]
 
     LD R3 [BALL_Y]
@@ -196,7 +196,7 @@ update_ball:
     ADD R1 R2
     ST [BALL_X] R1
 
-    CMPI R1 0x00
+    CMP R1 0x00
     JNZR [.check_miss_right]
     LDI R1 0x20
     ST [BALL_X] R1
@@ -207,7 +207,7 @@ update_ball:
     RET
 
 .check_miss_right:
-    CMPI R1 0x3F
+    CMP R1 0x3F
     JNZR [.end]
     LDI R1 0x20
     ST [BALL_X] R1
@@ -264,7 +264,7 @@ draw_ball:
     PUSH R2
 
     MOV R4 R2
-    SHRI R4 0x03
+    SHR R4 0x03
 
     MOV R5 R2
     LDI R0 0x07
@@ -288,7 +288,7 @@ clear_ball:
     PUSH R1
     PUSH R2
     MOV R4 R2
-    SHRI R4 0x03
+    SHR R4 0x03
     MOV R2 R4
     ZERO R3
     CALL [plot_byte]
@@ -311,7 +311,7 @@ draw_paddle:
 
     INC R1
     DEC R4
-    CMPI R4 0x00
+    CMP R4 0x00
     JNZR [.loop]
     RET
 
@@ -320,7 +320,7 @@ plot_byte:
     LDI R7 0x01
 
     MOV R4 R1
-    SHLI R4 0x03
+    SHL R4 0x03
     ADD R7 R4
     JNCR [.no_carry_y]
     INC R6
@@ -349,11 +349,11 @@ clear_bitmap:
     ADD R6 R0
 .no_carry:
     DEC R5
-    CMPI R5 0x00
+    CMP R5 0x00
     JNZR [.col_loop]
 
     DEC R4
-    CMPI R4 0x00
+    CMP R4 0x00
     JNZR [.row_loop]
     RET
 
@@ -363,10 +363,10 @@ delay:
     LDI R5 0xFF
 .inner:
     DEC R5
-    CMPI R5 0x00
+    CMP R5 0x00
     JNZR [.inner]
     DEC R4
-    CMPI R4 0x00
+    CMP R4 0x00
     JNZR [.outer]
     RET
 

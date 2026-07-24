@@ -31,5 +31,5 @@ These live in the `F` register and are rewritten by arithmetic/logic/shift instr
 
 Notes:
 - Instructions not listed leave flags unchanged.
-- Pseudo-instructions (`INC`, `DEC`, `CMP`, `CMPI`, shifts) inherit flag behavior from the underlying ops.
+- Pseudo-instructions (`INC`, `DEC`, shifts) inherit flag behavior from the underlying ops.
 - Flags 0x08, 0x10, 0x20, 0x40, 0x80 are reserved for future use.

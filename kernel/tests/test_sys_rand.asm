@@ -17,10 +17,10 @@ start:
 
 rand_loop:
 
-    LDI R0 SYS_RAND
-    CALL [K_SYSCALL_ENTRY]    ; result returned in R0
+    LDI R1 SYS_RAND
+    CALL [K_SYSCALL_ENTRY]    ; result returned in R1
 
-    ST [R3:R4] R0
+    ST [R3:R4] R1
 
 
     LDI R6 1

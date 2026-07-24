@@ -13,4 +13,4 @@ Helper macros from `asm/std.asm`. Include them after `cpu.asm`/`ext.asm` to get 
 - **Inputs**: `srchi:srclo` first string pointer, `dsthi:dstlo` second string pointer.
 - **Outputs**: `i` receives `0` when strings match, `1` otherwise.
 - **Behavior**: Walks both zero-terminated strings byte-by-byte. Returns early on mismatch, or when a `0x00` terminator is reached on both sides.
-- **Scratch**: uses `i`, `j`, flags from `CMP`, `CMPI`, `JZR/JNZR`, and increments addresses with `INC16`.
+- **Scratch**: uses `i`, `j`, flags from `CMP`, `JZR/JNZR`, and increments addresses with `INC16`.

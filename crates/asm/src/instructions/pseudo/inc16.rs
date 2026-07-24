@@ -15,24 +15,18 @@ pub(in crate::instructions) const DESUGAR: InstructionDefinition = InstructionDe
 
 #[allow(clippy::too_many_lines)]
 pub(super) fn desugar(instruction: &ASTInstruction, span: &Span, id: usize) -> Option<Vec<IRItem>> {
-    let (
-        "inc16",
-        Some(Operand::Raw(DataSource::Register(hi))),
-        Some(Operand::Raw(DataSource::Register(lo))),
-        None,
-    ) = (
+    let ("inc16", Some(Operand::Raw(DataSource::RegisterPair(hi, lo))), None) = (
         instruction.mnemonic.as_str(),
         instruction.operands.first(),
         instruction.operands.get(1),
-        instruction.operands.get(2),
-    )
-    else {
+    ) else {
         return None;
     };
 
     let inc_hi = format!("__mb8_inc16_hi_{id}");
     let end = format!("__mb8_inc16_end_{id}");
-    let mut items = vec![
+
+    Some(vec![
         IRItem::Instruction(Spanned {
             value: IRInstruction::Push { src: Register::R0 },
             span: span.clone(),
@@ -55,17 +49,15 @@ pub(super) fn desugar(instruction: &ASTInstruction, span: &Span, id: usize) -> O
             value: IRInstruction::Pop { dst: Register::R0 },
             span: span.clone(),
         }),
-    ];
-    items.push(IRItem::Instruction(Spanned {
-        value: IRInstruction::Jzr {
-            offset: RelativeOffset::Address(Expression::Label(Spanned {
-                value: inc_hi.clone(),
-                span: span.clone(),
-            })),
-        },
-        span: span.clone(),
-    }));
-    items.extend([
+        IRItem::Instruction(Spanned {
+            value: IRInstruction::Jzr {
+                offset: RelativeOffset::Address(Expression::Label(Spanned {
+                    value: inc_hi.clone(),
+                    span: span.clone(),
+                })),
+            },
+            span: span.clone(),
+        }),
         IRItem::Instruction(Spanned {
             value: IRInstruction::Push { src: Register::R0 },
             span: span.clone(),
@@ -88,28 +80,26 @@ pub(super) fn desugar(instruction: &ASTInstruction, span: &Span, id: usize) -> O
             value: IRInstruction::Pop { dst: Register::R0 },
             span: span.clone(),
         }),
-    ]);
-    items.push(IRItem::Instruction(Spanned {
-        value: IRInstruction::Jr {
-            offset: RelativeOffset::Address(Expression::Label(Spanned {
-                value: end.clone(),
-                span: span.clone(),
-            })),
-        },
-        span: span.clone(),
-    }));
-    items.push(IRItem::Label(Spanned {
-        value: inc_hi,
-        span: span.clone(),
-    }));
-    items.push(IRItem::Instruction(Spanned {
-        value: IRInstruction::Ldi {
-            dst: *lo,
-            src: Expression::Immediate(0),
-        },
-        span: span.clone(),
-    }));
-    items.extend([
+        IRItem::Instruction(Spanned {
+            value: IRInstruction::Jr {
+                offset: RelativeOffset::Address(Expression::Label(Spanned {
+                    value: end.clone(),
+                    span: span.clone(),
+                })),
+            },
+            span: span.clone(),
+        }),
+        IRItem::Label(Spanned {
+            value: inc_hi,
+            span: span.clone(),
+        }),
+        IRItem::Instruction(Spanned {
+            value: IRInstruction::Ldi {
+                dst: *lo,
+                src: Expression::Immediate(0),
+            },
+            span: span.clone(),
+        }),
         IRItem::Instruction(Spanned {
             value: IRInstruction::Push { src: Register::R0 },
             span: span.clone(),
@@ -132,14 +122,13 @@ pub(super) fn desugar(instruction: &ASTInstruction, span: &Span, id: usize) -> O
             value: IRInstruction::Pop { dst: Register::R0 },
             span: span.clone(),
         }),
-    ]);
-    items.push(IRItem::Label(Spanned {
-        value: end,
-        span: span.clone(),
-    }));
-    items.push(IRItem::Instruction(Spanned {
-        value: IRInstruction::Nop,
-        span: span.clone(),
-    }));
-    Some(items)
+        IRItem::Label(Spanned {
+            value: end,
+            span: span.clone(),
+        }),
+        IRItem::Instruction(Spanned {
+            value: IRInstruction::Nop,
+            span: span.clone(),
+        }),
+    ])
 }

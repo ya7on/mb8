@@ -13,9 +13,9 @@ Assembler-only helpers. They rewrite into core opcodes and often use `A` plus th
 - [DEC](#dec)
 - [INC16](#inc16)
 - [NOT](#not)
-- [CMPI](#cmpi)
-- [SHRI](#shri)
-- [SHLI](#shli)
+- [CMP (immediate)](#cmp-immediate)
+- [SHR (immediate)](#shr-immediate)
+- [SHL (immediate)](#shl-immediate)
 - [SWAP](#swap)
 - [MUL](#mul)
 
@@ -189,12 +189,12 @@ POP A
 
 **Syntax**:
 ```asm
-INC16 rH rL
+INC16 rH:rL
 ```
 
 **Expands to**:
 ```asm
-CMPI rL 0xFF
+CMP rL 0xFF
 JZR inc_hi
 INC rL
 JR end
@@ -206,7 +206,7 @@ NOP
 ```
 
 **Scratch**: uses `A`, stack via `INC`  
-**Flags**: from `CMPI`, `INC` (Z/N/C)  
+**Flags**: from `CMP`, `INC` (Z/N/C)<br>
 **Description**: Increment a 16-bit register pair in-place.
 
 ---
@@ -232,32 +232,32 @@ POP A
 
 ---
 
-## CMPI
+## CMP (immediate)
 
 **Syntax**:
 ```asm
-CMPI rD imm
+CMP rD imm
 ```
 
 **Expands to**:
 ```asm
 PUSH A
 LDI A imm
-SUB A rD
+CMP rD A
 POP A
 ```
 
 **Scratch**: uses `A`, stack  
-**Flags**: from `SUB` (Z/N/C)  
-**Description**: Compare a register with an immediate; flags reflect `imm - rD`.
+**Flags**: from `CMP` (Z/N/C)<br>
+**Description**: Overloaded immediate form of `CMP`; flags reflect `rD - imm`.
 
 ---
 
-## SHRI
+## SHR (immediate)
 
 **Syntax**:
 ```asm
-SHRI rD imm
+SHR rD imm
 ```
 
 **Expands to**:
@@ -270,15 +270,15 @@ POP A
 
 **Scratch**: uses `A`, stack  
 **Flags**: from `SHR` (Z/N/C)  
-**Description**: Shift right by an immediate count.
+**Description**: Overloaded immediate form of `SHR`; shifts right by an immediate count.<br>
 
 ---
 
-## SHLI
+## SHL (immediate)
 
 **Syntax**:
 ```asm
-SHLI rD imm
+SHL rD imm
 ```
 
 **Expands to**:
@@ -291,7 +291,7 @@ POP A
 
 **Scratch**: uses `A`, stack  
 **Flags**: from `SHL` (Z/N/C)  
-**Description**: Shift left by an immediate count.
+**Description**: Overloaded immediate form of `SHL`; shifts left by an immediate count.<br>
 
 ---
 
@@ -329,11 +329,11 @@ PUSH rB
 iter:
     ADD rD rA
     DEC rB
-    CMPI rB 0
+    CMP rB 0
     JNZR iter
 POP rB
 ```
 
 **Scratch**: uses `A`, `rB`, stack  
-**Flags**: from `ADD`, `DEC`, `CMPI` (Z/N/C)  
+**Flags**: from `ADD`, `DEC`, `CMP` (Z/N/C)<br>
 **Description**: Unsigned multiply by repeated addition; destroys `rB` during the loop, restores it after.
