@@ -3,16 +3,17 @@ use std::collections::HashMap;
 use mb8_isa::{encode::encode, opcodes::Opcode};
 
 use crate::{
-    diagnostics::Spanned,
-    error::{AsmError, AsmErrorKind},
-    ir::{Expression, IRInstruction, IRItem, IRProgram, RelativeOffset},
+    diagnostics::{Diagnostic, DiagnosticKind, Severity, Spanned},
+    ir::{Expression, IRInstruction, IRItem, RelativeOffset, TaggedProgram},
+    pass::{AssemblerPass, PassContext},
 };
 
-pub fn lower_expression(expr: &Expression, labels: &HashMap<String, u16>) -> Result<u16, AsmError> {
+fn lower_expression(expr: &Expression, labels: &HashMap<String, u16>) -> Result<u16, Diagnostic> {
     match expr {
-        Expression::Label(label) => labels.get(&label.value).copied().ok_or_else(|| AsmError {
+        Expression::Label(label) => labels.get(&label.value).copied().ok_or_else(|| Diagnostic {
+            severity: Severity::Error,
             span: Some(label.span.clone()),
-            kind: AsmErrorKind::UnknownLabel {
+            kind: DiagnosticKind::UnknownLabel {
                 label: label.value.clone(),
             },
         }),
@@ -26,7 +27,7 @@ fn lower_instruction(
     instruction: &Spanned<IRInstruction>,
     labels: &HashMap<String, u16>,
     current_address: u16,
-) -> Result<u16, AsmError> {
+) -> Result<u16, Diagnostic> {
     let opcode = match &instruction.value {
         IRInstruction::Nop => Opcode::Nop,
         IRInstruction::Sys => Opcode::Sys,
@@ -72,9 +73,10 @@ fn lower_instruction(
             let value = lower_expression(src, labels)?;
             Opcode::Ldi {
                 dst: *dst,
-                value: u8::try_from(value).map_err(|_| AsmError {
+                value: u8::try_from(value).map_err(|_| Diagnostic {
+                    severity: Severity::Error,
                     span: Some(instruction.span.clone()),
-                    kind: AsmErrorKind::ValueOutOfRange {
+                    kind: DiagnosticKind::ValueOutOfRange {
                         value,
                         expected: "u8",
                     },
@@ -125,12 +127,13 @@ fn lower_relative_offset(
     labels: &HashMap<String, u16>,
     current_address: u16,
     span: &crate::diagnostics::Span,
-) -> Result<i8, AsmError> {
+) -> Result<i8, Diagnostic> {
     match offset {
         RelativeOffset::Immediate(value) => {
-            let value = u8::try_from(*value).map_err(|_| AsmError {
+            let value = u8::try_from(*value).map_err(|_| Diagnostic {
+                severity: Severity::Error,
                 span: Some(span.clone()),
-                kind: AsmErrorKind::ValueOutOfRange {
+                kind: DiagnosticKind::ValueOutOfRange {
                     value: *value,
                     expected: "u8",
                 },
@@ -140,46 +143,78 @@ fn lower_relative_offset(
         RelativeOffset::Address(address) => {
             let target = i32::from(lower_expression(address, labels)?);
             let offset = target - i32::from(current_address) - 2;
-            i8::try_from(offset).map_err(|_| AsmError {
+            i8::try_from(offset).map_err(|_| Diagnostic {
+                severity: Severity::Error,
                 span: Some(span.clone()),
-                kind: AsmErrorKind::RelativeJumpOutOfRange { offset },
+                kind: DiagnosticKind::RelativeJumpOutOfRange { offset },
             })
         }
     }
 }
 
-pub fn lower(ir: &IRProgram, labels: &HashMap<String, u16>) -> Result<Vec<u8>, AsmError> {
-    let mut result = Vec::new();
-    let mut current_address = ir.origin.as_ref().map_or(0, |origin| origin.value);
-    for item in &ir.items {
-        match item {
-            IRItem::Instruction(instr) => {
-                result.extend(lower_instruction(instr, labels, current_address)?.to_be_bytes());
-                current_address = current_address.checked_add(2).ok_or_else(|| AsmError {
-                    span: Some(instr.span.clone()),
-                    kind: AsmErrorKind::AddressOverflow {
-                        current: current_address,
-                    },
-                })?;
+pub(crate) struct LowerPass;
+
+impl AssemblerPass for LowerPass {
+    type Input = TaggedProgram;
+    type Output = Vec<u8>;
+
+    fn run(&mut self, input: Self::Input, context: &mut PassContext<'_>) -> Option<Self::Output> {
+        let mut result = Vec::new();
+        let mut current_address = input.ir.origin.as_ref().map_or(0, |origin| origin.value);
+
+        for item in &input.ir.items {
+            match item {
+                IRItem::Instruction(instruction) => {
+                    let encoded =
+                        match lower_instruction(instruction, &input.labels, current_address) {
+                            Ok(encoded) => encoded,
+                            Err(diagnostic) => {
+                                context.emit_fatal(diagnostic);
+                                return None;
+                            }
+                        };
+                    result.extend(encoded.to_be_bytes());
+
+                    let Some(address) = current_address.checked_add(2) else {
+                        context.emit_fatal(Diagnostic {
+                            severity: Severity::Error,
+                            span: Some(instruction.span.clone()),
+                            kind: DiagnosticKind::AddressOverflow {
+                                current: current_address,
+                            },
+                        });
+                        return None;
+                    };
+                    current_address = address;
+                }
+                IRItem::Data(data) => {
+                    result.extend(&data.value);
+                    let Ok(size) = u16::try_from(data.value.len()) else {
+                        context.emit_fatal(Diagnostic {
+                            severity: Severity::Error,
+                            span: Some(data.span.clone()),
+                            kind: DiagnosticKind::AddressOverflow {
+                                current: current_address,
+                            },
+                        });
+                        return None;
+                    };
+                    let Some(address) = current_address.checked_add(size) else {
+                        context.emit_fatal(Diagnostic {
+                            severity: Severity::Error,
+                            span: Some(data.span.clone()),
+                            kind: DiagnosticKind::AddressOverflow {
+                                current: current_address,
+                            },
+                        });
+                        return None;
+                    };
+                    current_address = address;
+                }
+                IRItem::Label(_) => {}
             }
-            IRItem::Data(data) => {
-                result.extend(&data.value);
-                current_address = current_address
-                    .checked_add(u16::try_from(data.value.len()).map_err(|_| AsmError {
-                        span: Some(data.span.clone()),
-                        kind: AsmErrorKind::AddressOverflow {
-                            current: current_address,
-                        },
-                    })?)
-                    .ok_or_else(|| AsmError {
-                        span: Some(data.span.clone()),
-                        kind: AsmErrorKind::AddressOverflow {
-                            current: current_address,
-                        },
-                    })?;
-            }
-            IRItem::Label(_) => {}
         }
+
+        Some(result)
     }
-    Ok(result)
 }

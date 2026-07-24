@@ -1,4 +1,8 @@
-use std::ops::Range;
+use std::{fmt, ops::Range};
+
+use mb8_isa::registers::Register;
+
+use crate::ast::{Directive, Operand};
 
 pub type SourceId = usize;
 
@@ -19,4 +23,142 @@ pub struct SourceFile {
     pub id: SourceId,
     pub name: String,
     pub source: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Severity {
+    Error,
+    Warning,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Diagnostic {
+    pub severity: Severity,
+    pub span: Option<Span>,
+    pub kind: DiagnosticKind,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DiagnosticKind {
+    Lex {
+        message: String,
+    },
+    Parse {
+        message: String,
+    },
+    Include {
+        message: String,
+    },
+    UnsupportedInstruction {
+        mnemonic: String,
+        operands: Vec<Operand>,
+    },
+    DuplicateLabel {
+        label: String,
+        first: Span,
+    },
+    UnknownLabel {
+        label: String,
+    },
+    UnexpectedDirective {
+        directive: Directive,
+    },
+    DuplicateOrigin {
+        first: Span,
+    },
+    AddressOverflow {
+        current: u16,
+    },
+    ValueOutOfRange {
+        value: u16,
+        expected: &'static str,
+    },
+    RelativeJumpOutOfRange {
+        offset: i32,
+    },
+    ScratchRegisterConflict {
+        mnemonic: String,
+        register: Register,
+    },
+}
+
+impl Diagnostic {
+    #[must_use]
+    pub const fn code(&self) -> &'static str {
+        match self.kind {
+            DiagnosticKind::Lex { .. } => "ASM0100",
+            DiagnosticKind::Parse { .. } => "ASM0101",
+            DiagnosticKind::Include { .. } => "ASM0200",
+            DiagnosticKind::UnsupportedInstruction { .. } => "ASM0300",
+            DiagnosticKind::DuplicateLabel { .. } => "ASM0301",
+            DiagnosticKind::UnknownLabel { .. } => "ASM0302",
+            DiagnosticKind::UnexpectedDirective { .. } => "ASM0303",
+            DiagnosticKind::DuplicateOrigin { .. } => "ASM0304",
+            DiagnosticKind::AddressOverflow { .. } => "ASM0305",
+            DiagnosticKind::ValueOutOfRange { .. } => "ASM0306",
+            DiagnosticKind::RelativeJumpOutOfRange { .. } => "ASM0307",
+            DiagnosticKind::ScratchRegisterConflict { .. } => "ASM0308",
+        }
+    }
+
+    #[must_use]
+    pub fn message(&self) -> String {
+        match &self.kind {
+            DiagnosticKind::Lex { message } => format!("Lex error: {message}"),
+            DiagnosticKind::Parse { message } => format!("Parse error: {message}"),
+            DiagnosticKind::Include { message } => format!("Include error: {message}"),
+            DiagnosticKind::UnsupportedInstruction { mnemonic, operands } => {
+                format!("Unsupported instruction form: {mnemonic} {operands:?}")
+            }
+            DiagnosticKind::DuplicateLabel { label, .. } => {
+                format!("Duplicate label: {label}")
+            }
+            DiagnosticKind::UnknownLabel { label } => format!("Unknown label: {label}"),
+            DiagnosticKind::UnexpectedDirective { directive } => {
+                format!("Unexpected directive after include expansion: {directive:?}")
+            }
+            DiagnosticKind::DuplicateOrigin { .. } => "Duplicate origin directive".to_string(),
+            DiagnosticKind::AddressOverflow { current } => {
+                format!("Address overflow at 0x{current:04x}")
+            }
+            DiagnosticKind::ValueOutOfRange { value, expected } => {
+                format!("Value 0x{value:04x} is out of range for {expected}")
+            }
+            DiagnosticKind::RelativeJumpOutOfRange { offset } => {
+                format!("Relative jump offset {offset} is out of range for i8")
+            }
+            DiagnosticKind::ScratchRegisterConflict { mnemonic, register } => {
+                format!("Scratch register {register:?} conflicts with an operand of {mnemonic}")
+            }
+        }
+    }
+}
+
+impl fmt::Display for Diagnostic {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.message())
+    }
+}
+
+#[derive(Debug)]
+pub struct DiagnosticResult<T> {
+    pub result: Option<T>,
+    pub diagnostics: Vec<Diagnostic>,
+    pub ok: bool,
+    pub sources: Vec<SourceFile>,
+}
+
+impl<T> DiagnosticResult<T> {
+    #[must_use]
+    pub fn finalize(mut self) -> Self {
+        if self
+            .diagnostics
+            .iter()
+            .any(|diagnostic| matches!(diagnostic.severity, Severity::Error))
+        {
+            self.ok = false;
+            self.result = None;
+        }
+        self
+    }
 }

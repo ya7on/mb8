@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use mb8_isa::registers::Register;
 
 use crate::diagnostics::Spanned;
@@ -6,6 +8,12 @@ use crate::diagnostics::Spanned;
 pub struct IRProgram {
     pub origin: Option<Spanned<u16>>,
     pub items: Vec<IRItem>,
+}
+
+#[derive(Debug)]
+pub(crate) struct TaggedProgram {
+    pub ir: IRProgram,
+    pub labels: HashMap<String, u16>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

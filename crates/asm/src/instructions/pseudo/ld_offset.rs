@@ -6,11 +6,14 @@ use crate::{
     ir::{Expression, IRInstruction, IRItem, RelativeOffset},
 };
 
-use super::super::InstructionDefinition;
+use super::super::{InstructionDefinition, RegisterEffect, RegisterSet};
 
 pub(in crate::instructions) const DESUGAR: InstructionDefinition = InstructionDefinition {
     mnemonic: "ld",
     handler: desugar,
+    effect: RegisterEffect {
+        scratch: RegisterSet::from_registers(&[Register::R0, Register::R7]),
+    },
 };
 
 pub(super) fn desugar(instruction: &ASTInstruction, span: &Span, id: usize) -> Option<Vec<IRItem>> {

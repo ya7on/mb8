@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: stable
+          toolchain: 1.97.1
           components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2
 
@@ -27,7 +27,7 @@ jobs:
           path: ~/.cargo/bin
           key: ${{ runner.os }}-cargo-tools-v1
       - name: Install customasm
-        run: cargo install --git https://github.com/hlorenzi/customasm
+        run: command -v customasm >/dev/null || cargo install --git https://github.com/hlorenzi/customasm
       - name: Compile asm
         run: make
       # - name: Install cargo-binstall

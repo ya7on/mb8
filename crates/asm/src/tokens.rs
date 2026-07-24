@@ -4,6 +4,11 @@ use chumsky::{extra::Err, span::SimpleSpan, Parser};
 use chumsky::{text, IterParser};
 use std::fmt;
 
+use crate::{
+    diagnostics::{Diagnostic, DiagnosticKind, Severity, SourceId, Span},
+    pass::{AssemblerPass, PassContext},
+};
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TokenKind {
     Ident(String),
@@ -16,6 +21,13 @@ pub enum TokenKind {
     Dot,
     Minus,
     Newline,
+}
+
+#[derive(Debug)]
+pub(crate) struct TokenStream {
+    pub source: SourceId,
+    pub end: usize,
+    pub tokens: Vec<(TokenKind, SimpleSpan<usize>)>,
 }
 
 impl fmt::Display for TokenKind {
@@ -36,7 +48,7 @@ impl fmt::Display for TokenKind {
 }
 
 #[must_use]
-pub fn lexer<'src>(
+fn build_lexer<'src>(
 ) -> impl Parser<'src, &'src str, Vec<(TokenKind, SimpleSpan<usize>)>, Err<Rich<'src, char>>> {
     let ident = text::ascii::ident().map(|ident: &'src str| TokenKind::Ident(ident.to_lowercase()));
 
@@ -70,4 +82,52 @@ pub fn lexer<'src>(
         .padded_by(one_of(" \t\r").repeated());
 
     token.repeated().collect().then_ignore(end())
+}
+
+pub(crate) struct LexPass;
+
+impl AssemblerPass for LexPass {
+    type Input = SourceId;
+    type Output = TokenStream;
+
+    fn run(
+        &mut self,
+        source_id: Self::Input,
+        context: &mut PassContext<'_>,
+    ) -> Option<Self::Output> {
+        let (end, parsed) = {
+            let source = context.source(source_id)?;
+            (
+                source.source.len(),
+                build_lexer().parse(source.source.as_str()),
+            )
+        };
+
+        match parsed.into_result() {
+            Ok(tokens) => Some(TokenStream {
+                source: source_id,
+                end,
+                tokens,
+            }),
+            Err(errors) => {
+                let diagnostics = errors
+                    .into_iter()
+                    .map(|error| Diagnostic {
+                        severity: Severity::Error,
+                        span: Some(Span {
+                            source: source_id,
+                            range: error.span().into_range(),
+                        }),
+                        kind: DiagnosticKind::Lex {
+                            message: format!("{error}"),
+                        },
+                    })
+                    .collect::<Vec<_>>();
+                for diagnostic in diagnostics {
+                    context.emit_fatal(diagnostic);
+                }
+                None
+            }
+        }
+    }
 }

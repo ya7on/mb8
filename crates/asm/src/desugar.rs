@@ -1,74 +1,91 @@
 use crate::{
-    ast::{ASTInstruction, ASTItem, ASTProgram, Directive},
-    diagnostics::Spanned,
-    error::{AsmError, AsmErrorKind},
+    ast::{ASTItem, ASTProgram, Directive},
+    diagnostics::{Diagnostic, DiagnosticKind, Severity, Spanned},
     instructions::HANDLERS,
     ir::{IRItem, IRProgram},
+    pass::{AssemblerPass, PassContext},
 };
 
-pub fn desugar_instruction(
-    instruction: &Spanned<ASTInstruction>,
-    id: usize,
-) -> Result<Vec<IRItem>, AsmError> {
-    HANDLERS
-        .iter()
-        .filter(|definition| definition.mnemonic == instruction.value.mnemonic)
-        .find_map(|definition| (definition.handler)(&instruction.value, &instruction.span, id))
-        .ok_or_else(|| AsmError {
-            span: Some(instruction.span.clone()),
-            kind: AsmErrorKind::UnsupportedInstruction {
-                mnemonic: instruction.value.mnemonic.clone(),
-                operands: instruction.value.operands.clone(),
-            },
-        })
-}
+pub(crate) struct DesugarPass;
 
-pub fn desugar(ast: &ASTProgram) -> Result<IRProgram, AsmError> {
-    let mut result = IRProgram {
-        origin: None,
-        items: Vec::new(),
-    };
-    for (id, item) in ast.items.iter().enumerate() {
-        match item {
-            ASTItem::Instruction(inst) => {
-                result.items.extend(desugar_instruction(inst, id)?);
-            }
-            ASTItem::Label(label) => {
-                result.items.push(IRItem::Label(label.clone()));
-            }
-            ASTItem::Directive(directive) => match &directive.value {
-                Directive::Origin(address) => {
-                    if let Some(origin) = &result.origin {
-                        return Err(AsmError {
-                            span: Some(directive.span.clone()),
-                            kind: AsmErrorKind::DuplicateOrigin {
-                                first: origin.span.clone(),
+impl AssemblerPass for DesugarPass {
+    type Input = ASTProgram;
+    type Output = IRProgram;
+
+    fn run(&mut self, input: Self::Input, context: &mut PassContext<'_>) -> Option<Self::Output> {
+        let mut result = IRProgram {
+            origin: None,
+            items: Vec::new(),
+        };
+
+        for (id, item) in input.items.iter().enumerate() {
+            match item {
+                ASTItem::Instruction(instruction) => {
+                    let Some(items) = HANDLERS
+                        .iter()
+                        .filter(|definition| definition.mnemonic == instruction.value.mnemonic)
+                        .find_map(|definition| {
+                            (definition.handler)(&instruction.value, &instruction.span, id)
+                        })
+                    else {
+                        context.emit_fatal(Diagnostic {
+                            severity: Severity::Error,
+                            span: Some(instruction.span.clone()),
+                            kind: DiagnosticKind::UnsupportedInstruction {
+                                mnemonic: instruction.value.mnemonic.clone(),
+                                operands: instruction.value.operands.clone(),
                             },
                         });
+                        return None;
+                    };
+                    result.items.extend(items);
+                }
+                ASTItem::Label(label) => {
+                    result.items.push(IRItem::Label(label.clone()));
+                }
+                ASTItem::Directive(directive) => match &directive.value {
+                    Directive::Origin(address) => {
+                        if let Some(origin) = &result.origin {
+                            context.emit_fatal(Diagnostic {
+                                severity: Severity::Error,
+                                span: Some(directive.span.clone()),
+                                kind: DiagnosticKind::DuplicateOrigin {
+                                    first: origin.span.clone(),
+                                },
+                            });
+                            return None;
+                        }
+                        result.origin = Some(Spanned {
+                            value: *address,
+                            span: directive.span.clone(),
+                        });
                     }
-                    result.origin = Some(Spanned {
-                        value: *address,
-                        span: directive.span.clone(),
-                    });
-                }
-                Directive::Data(bytes) => result.items.push(IRItem::Data(Spanned {
-                    value: bytes.clone(),
-                    span: directive.span.clone(),
-                })),
-                Directive::Ascii(text) => result.items.push(IRItem::Data(Spanned {
-                    value: text.as_bytes().to_vec(),
-                    span: directive.span.clone(),
-                })),
-                Directive::Include(_) => {
-                    return Err(AsmError {
-                        span: Some(directive.span.clone()),
-                        kind: AsmErrorKind::UnexpectedDirective {
-                            directive: directive.value.clone(),
-                        },
-                    });
-                }
-            },
+                    Directive::Data(bytes) => {
+                        result.items.push(IRItem::Data(Spanned {
+                            value: bytes.clone(),
+                            span: directive.span.clone(),
+                        }));
+                    }
+                    Directive::Ascii(text) => {
+                        result.items.push(IRItem::Data(Spanned {
+                            value: text.as_bytes().to_vec(),
+                            span: directive.span.clone(),
+                        }));
+                    }
+                    Directive::Include(_) => {
+                        context.emit_fatal(Diagnostic {
+                            severity: Severity::Error,
+                            span: Some(directive.span.clone()),
+                            kind: DiagnosticKind::UnexpectedDirective {
+                                directive: directive.value.clone(),
+                            },
+                        });
+                        return None;
+                    }
+                },
+            }
         }
+
+        Some(result)
     }
-    Ok(result)
 }

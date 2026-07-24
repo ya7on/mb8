@@ -1,3 +1,5 @@
+use mb8_isa::registers::Register;
+
 use crate::{ast::ASTInstruction, diagnostics::Span, ir::IRItem};
 
 mod add;
@@ -28,11 +30,39 @@ mod sub;
 mod sys;
 mod xor;
 
+#[derive(Clone, Copy)]
+pub(super) struct RegisterSet(u16);
+
+impl RegisterSet {
+    pub const EMPTY: Self = Self(0);
+
+    pub const fn from_registers(registers: &[Register]) -> Self {
+        let mut bits = 0u16;
+        let mut index = 0;
+
+        while index < registers.len() {
+            bits |= 1u16 << registers[index].physical_index();
+            index += 1;
+        }
+
+        Self(bits)
+    }
+
+    pub const fn contains(self, reg: Register) -> bool {
+        self.0 & (1u16 << reg.physical_index()) != 0
+    }
+}
+
+pub(super) struct RegisterEffect {
+    pub scratch: RegisterSet,
+}
+
 type Handler = fn(instruction: &ASTInstruction, span: &Span, id: usize) -> Option<Vec<IRItem>>;
 
 pub(super) struct InstructionDefinition {
     pub mnemonic: &'static str,
     pub handler: Handler,
+    pub effect: RegisterEffect,
 }
 
 pub(super) const HANDLERS: &[InstructionDefinition] = &[

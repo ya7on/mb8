@@ -3,6 +3,7 @@ use mb8_isa::registers::Register;
 use crate::{
     ast::{ASTInstruction, DataSource, Operand},
     diagnostics::{Span, Spanned},
+    instructions::{RegisterEffect, RegisterSet},
     ir::{Expression, IRInstruction, IRItem},
 };
 
@@ -11,6 +12,9 @@ use super::super::InstructionDefinition;
 pub(in crate::instructions) const DESUGAR: InstructionDefinition = InstructionDefinition {
     mnemonic: "cmp",
     handler: desugar,
+    effect: RegisterEffect {
+        scratch: RegisterSet::from_registers(&[Register::R0]),
+    },
 };
 
 pub(super) fn desugar(

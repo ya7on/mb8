@@ -1,16 +1,22 @@
 use chumsky::error::Rich;
 use chumsky::prelude::{choice, just};
-use chumsky::{extra::Err, input::ValueInput, span::SimpleSpan, Parser};
+use chumsky::{
+    extra::Err,
+    input::{Input, ValueInput},
+    span::SimpleSpan,
+    Parser,
+};
 use chumsky::{select, IterParser};
 use mb8_isa::registers::Register;
 
 use crate::ast::{ASTInstruction, ASTItem, ASTProgram, DataSource, Directive, Operand};
-use crate::diagnostics::{SourceId, Span, Spanned};
-use crate::tokens::TokenKind;
+use crate::diagnostics::{Diagnostic, DiagnosticKind, Severity, SourceId, Span, Spanned};
+use crate::pass::{AssemblerPass, PassContext};
+use crate::tokens::{TokenKind, TokenStream};
 
 #[must_use]
 #[allow(clippy::too_many_lines)]
-pub fn parser<'src, I>(
+fn build_parser<'src, I>(
     source: SourceId,
 ) -> impl Parser<'src, I, ASTProgram, Err<Rich<'src, TokenKind>>>
 where
@@ -192,4 +198,41 @@ where
         .allow_trailing()
         .collect::<Vec<_>>()
         .map(|items| ASTProgram { items })
+}
+
+pub(crate) struct ParsePass;
+
+impl AssemblerPass for ParsePass {
+    type Input = TokenStream;
+    type Output = ASTProgram;
+
+    fn run(&mut self, input: Self::Input, context: &mut PassContext<'_>) -> Option<Self::Output> {
+        let eoi = SimpleSpan::from(input.end..input.end);
+        let token_input = input.tokens.as_slice().split_token_span(eoi);
+        match build_parser(input.source).parse(token_input).into_result() {
+            Ok(ast) => Some(ast),
+            Err(errors) => {
+                let diagnostics = errors
+                    .into_iter()
+                    .map(|error| {
+                        let span = *error.span();
+                        Diagnostic {
+                            severity: Severity::Error,
+                            span: Some(Span {
+                                source: input.source,
+                                range: span.start..span.end,
+                            }),
+                            kind: DiagnosticKind::Parse {
+                                message: format!("{error}"),
+                            },
+                        }
+                    })
+                    .collect::<Vec<_>>();
+                for diagnostic in diagnostics {
+                    context.emit_fatal(diagnostic);
+                }
+                None
+            }
+        }
+    }
 }

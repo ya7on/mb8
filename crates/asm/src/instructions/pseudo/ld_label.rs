@@ -6,11 +6,14 @@ use crate::{
     ir::{Expression, IRInstruction, IRItem},
 };
 
-use super::super::InstructionDefinition;
+use super::super::{InstructionDefinition, RegisterEffect, RegisterSet};
 
 pub(in crate::instructions) const DESUGAR: InstructionDefinition = InstructionDefinition {
     mnemonic: "ld",
     handler: desugar,
+    effect: RegisterEffect {
+        scratch: RegisterSet::from_registers(&[Register::IH, Register::IL]),
+    },
 };
 
 pub(super) fn desugar(

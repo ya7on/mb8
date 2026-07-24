@@ -66,3 +66,27 @@ pub enum Register {
     /// Flag register
     F,
 }
+
+impl Register {
+    #[must_use]
+    pub const fn physical_index(&self) -> u8 {
+        match self {
+            Self::R0 | Self::A => 0,
+            Self::R1 => 1,
+            Self::R2 => 2,
+            Self::R3 => 3,
+            Self::R4 => 4,
+            Self::R5 => 5,
+            Self::R6 => 6,
+            Self::R7 => 7,
+            Self::R8 => 8,
+            Self::R9 | Self::IH => 9,
+            Self::R10 | Self::IL => 10,
+            Self::R11 | Self::FPH => 11,
+            Self::R12 | Self::FPL => 12,
+            Self::R13 | Self::SPH => 13,
+            Self::R14 | Self::SPL => 14,
+            Self::R15 | Self::F => 15,
+        }
+    }
+}
