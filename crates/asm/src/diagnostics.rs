@@ -97,21 +97,21 @@ impl Diagnostic {
     #[must_use]
     pub const fn code(&self) -> &'static str {
         match self.kind {
-            DiagnosticKind::Lex { .. } => "ASM0100",
-            DiagnosticKind::Parse { .. } => "ASM0101",
-            DiagnosticKind::Include { .. } => "ASM0200",
-            DiagnosticKind::UnsupportedInstruction { .. } => "ASM0300",
-            DiagnosticKind::DuplicateLabel { .. } => "ASM0301",
-            DiagnosticKind::UnknownLabel { .. } => "ASM0302",
-            DiagnosticKind::UnexpectedDirective { .. } => "ASM0303",
-            DiagnosticKind::DuplicateOrigin { .. } => "ASM0304",
-            DiagnosticKind::AddressOverflow { .. } => "ASM0305",
-            DiagnosticKind::ValueOutOfRange { .. } => "ASM0306",
-            DiagnosticKind::RelativeJumpOutOfRange { .. } => "ASM0307",
-            DiagnosticKind::ScratchRegisterConflict { .. } => "ASM0308",
-            DiagnosticKind::InvalidAddressDirective { .. } => "ASM0309",
-            DiagnosticKind::DuplicateConstant { .. } => "ASM0310",
-            DiagnosticKind::UnknownConstant { .. } => "ASM0311",
+            DiagnosticKind::Lex { .. } => "A0100",
+            DiagnosticKind::Parse { .. } => "A0101",
+            DiagnosticKind::Include { .. } => "A0200",
+            DiagnosticKind::UnsupportedInstruction { .. } => "A0300",
+            DiagnosticKind::DuplicateLabel { .. } => "A0301",
+            DiagnosticKind::UnknownLabel { .. } => "A0302",
+            DiagnosticKind::UnexpectedDirective { .. } => "A0303",
+            DiagnosticKind::DuplicateOrigin { .. } => "A0304",
+            DiagnosticKind::AddressOverflow { .. } => "A0305",
+            DiagnosticKind::ValueOutOfRange { .. } => "A0306",
+            DiagnosticKind::RelativeJumpOutOfRange { .. } => "A0307",
+            DiagnosticKind::ScratchRegisterConflict { .. } => "A0308",
+            DiagnosticKind::InvalidAddressDirective { .. } => "A0309",
+            DiagnosticKind::DuplicateConstant { .. } => "A0310",
+            DiagnosticKind::UnknownConstant { .. } => "A0311",
         }
     }
 
