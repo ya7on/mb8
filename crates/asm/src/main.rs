@@ -1,12 +1,30 @@
-use std::{fs, path::PathBuf, process::ExitCode};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    process::ExitCode,
+};
 
 use ariadne::{sources, Color, Label, Report, ReportKind};
-use asm::{compile_file, Diagnostic, DiagnosticKind, Severity, SourceFile};
-use clap::Parser;
+use asm::{compile_file, Diagnostic, DiagnosticKind, DiagnosticResult, Severity, SourceFile};
+use clap::{Args, Parser, Subcommand};
 
 #[derive(Debug, Parser)]
 #[command(name = "asm", version, about = "MB8 assembler")]
 struct Cli {
+    #[command(subcommand)]
+    command: Command,
+}
+
+#[derive(Debug, Subcommand)]
+enum Command {
+    /// Compile an assembly source and write its binary image.
+    Build(BuildArgs),
+    /// Compile an assembly source without writing an output file.
+    Check(CheckArgs),
+}
+
+#[derive(Debug, Args)]
+struct BuildArgs {
     input: PathBuf,
 
     #[arg(short, long)]
@@ -16,19 +34,41 @@ struct Cli {
     dump: bool,
 }
 
+#[derive(Debug, Args)]
+struct CheckArgs {
+    input: PathBuf,
+}
+
 fn main() -> ExitCode {
     let cli = Cli::parse();
+    match &cli.command {
+        Command::Build(args) => build(args),
+        Command::Check(args) => check(args),
+    }
+}
 
-    let mut compilation = compile_file(&cli.input);
+fn compile_and_report(input: &Path) -> DiagnosticResult<Vec<u8>> {
+    let compilation = compile_file(input);
     for diagnostic in &compilation.diagnostics {
         print_diagnostic(diagnostic, &compilation.sources);
     }
+    compilation
+}
 
+fn build(args: &BuildArgs) -> ExitCode {
+    let mut compilation = compile_and_report(&args.input);
+    if compilation
+        .diagnostics
+        .iter()
+        .any(|diagnostic| matches!(diagnostic.severity, Severity::Error))
+    {
+        return ExitCode::FAILURE;
+    }
     let Some(bytes) = compilation.result.take() else {
         return ExitCode::FAILURE;
     };
 
-    if cli.dump {
+    if args.dump {
         for (address, chunk) in bytes.chunks(16).enumerate() {
             print!("{:04x}:", address * 16);
             for byte in chunk {
@@ -38,14 +78,28 @@ fn main() -> ExitCode {
         }
     }
 
-    let result = fs::write(&cli.output, bytes).map_err(|err| {
-        eprintln!("failed to write {}: {err}", cli.output.display());
+    let result = fs::write(&args.output, bytes).map_err(|err| {
+        eprintln!("failed to write {}: {err}", args.output.display());
     });
     if result.is_err() {
         return ExitCode::FAILURE;
     }
 
     ExitCode::SUCCESS
+}
+
+fn check(args: &CheckArgs) -> ExitCode {
+    let compilation = compile_and_report(&args.input);
+    if compilation.result.is_none()
+        || compilation
+            .diagnostics
+            .iter()
+            .any(|diagnostic| matches!(diagnostic.severity, Severity::Error | Severity::Warning))
+    {
+        ExitCode::FAILURE
+    } else {
+        ExitCode::SUCCESS
+    }
 }
 
 fn print_diagnostic(diagnostic: &Diagnostic, source_files: &[SourceFile]) {
