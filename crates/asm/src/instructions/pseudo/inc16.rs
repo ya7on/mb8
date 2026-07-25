@@ -42,9 +42,9 @@ pub(super) fn desugar(instruction: &ASTInstruction, span: &Span, id: usize) -> O
             span: span.clone(),
         }),
         IRItem::Instruction(Spanned {
-            value: IRInstruction::Sub {
-                dst: Register::A,
-                src: *lo,
+            value: IRInstruction::Cmp {
+                dst: *lo,
+                src: Register::A,
             },
             span: span.clone(),
         }),

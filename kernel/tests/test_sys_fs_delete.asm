@@ -1,22 +1,16 @@
-#include "../../asm/isa.asm"
-
-#bankdef rom
-{
-    #addr 0xE000
-    #size 0x1000
-    #outp 0
-    #fill
-}
+.origin 0xE000
 
 start:
-    LDI R1 SYS_FS_DELETE
-    LDI R2 R3 FILENAME
+    LDI R1, @SYS_FS_DELETE
+    LDI R2:R3, FILENAME
     CALL [K_SYSCALL_ENTRY]
 
     HALT
 
-    #include "../syscalls.asm"
+    .include "../syscalls.asm"
 
 
 FILENAME:
-    #d "file\0"
+    .ascii "file\0"
+
+.addr 0xF000

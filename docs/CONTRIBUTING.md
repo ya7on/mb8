@@ -4,7 +4,6 @@ Thanks for checking out the project and wanting to help!
 
 ## Run the project locally
 - Install Rust (stable toolchain is fine).
-- Install `customasm` (steps are in `README.md`).
 - Run `make run` to start the VM with the OS.
 
 ## Workflow tips

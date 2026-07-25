@@ -19,18 +19,22 @@ MicroBot-8bit is an 8-bit microcomputer in the vein of the ZX Spectrum/Commodore
 
 ## Compile assembly
 
-We use [`customasm`](https://github.com/hlorenzi/customasm) to build all assembly sources.
-
-Install once:
-```
-cargo install --git https://github.com/hlorenzi/customasm
-```
+The assembler is implemented in Rust and is part of this workspace. No external assembler is
+required.
 
 Build everything (kernel, user-space programs, tests):
-```
+```sh
 make all
 ```
+
+To assemble one file directly:
+
+```sh
+cargo run --quiet -p asm -- user/sh.asm -o user/sh.bin
+```
+
 Targets:
+
 - `make kernel` — build the kernel image (`kernel/main.bin`)
 - `make user` — build user-space programs under `user/`
 - `make tests` — build assembly tests under `kernel/tests`
@@ -38,7 +42,7 @@ Targets:
 ## Run VM
 
 After building, run the VM with the kernel entrypoint first and then any user programs:
-```
+```sh
 make run
 ```
 The first path is always the kernel; subsequent arguments are user-space binaries loaded by the OS.
@@ -46,7 +50,7 @@ The first path is always the kernel; subsequent arguments are user-space binarie
 ## Assembly
 
 User-space programs live under `user/`. For a minimal shell example, see `user/sh.asm`; build with `make user` and run with the kernel:
-```
+```sh
 make run
 ```
 
