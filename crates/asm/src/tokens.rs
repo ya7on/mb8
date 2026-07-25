@@ -35,7 +35,7 @@ impl fmt::Display for TokenKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Ident(value) => write!(f, "{value}"),
-            Self::StringLiteral(value) => write!(f, "\"{value}\""),
+            Self::StringLiteral(value) => write!(f, "\"{}\"", value.escape_debug()),
             Self::Integer(value) => write!(f, "{value:#x}"),
             Self::LeftBracket => write!(f, "["),
             Self::RightBracket => write!(f, "]"),
@@ -54,11 +54,17 @@ fn build_lexer<'src>(
 ) -> impl Parser<'src, &'src str, Vec<(TokenKind, SimpleSpan<usize>)>, Err<Rich<'src, char>>> {
     let ident = text::ascii::ident().map(|ident: &'src str| TokenKind::Ident(ident.to_lowercase()));
 
-    let string = none_of('"')
+    let escape = just('\\').ignore_then(choice((
+        just('n').to('\n'),
+        just('0').to('\0'),
+        just('\\').to('\\'),
+        just('"').to('"'),
+    )));
+    let string = choice((escape, none_of("\\\"")))
         .repeated()
-        .to_slice()
+        .collect::<String>()
         .delimited_by(just('"'), just('"'))
-        .map(|value: &'src str| TokenKind::StringLiteral(value.to_owned()));
+        .map(TokenKind::StringLiteral);
 
     let hex_number =
         just("0x")
