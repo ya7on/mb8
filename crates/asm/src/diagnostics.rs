@@ -122,7 +122,16 @@ impl Diagnostic {
             DiagnosticKind::Parse { message } => format!("Parse error: {message}"),
             DiagnosticKind::Include { message } => format!("Include error: {message}"),
             DiagnosticKind::UnsupportedInstruction { mnemonic, operands } => {
-                format!("Unsupported instruction form: {mnemonic} {operands:?}")
+                let operands = operands
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                if operands.is_empty() {
+                    format!("Unsupported instruction form: {mnemonic}")
+                } else {
+                    format!("Unsupported instruction form: {mnemonic} {operands}")
+                }
             }
             DiagnosticKind::DuplicateLabel { label, .. } => {
                 format!("Duplicate label: {label}")
