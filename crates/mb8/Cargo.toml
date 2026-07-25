@@ -7,5 +7,8 @@ license.workspace = true
 [dependencies]
 mb8-isa = { path = "../mb8-isa" }
 
+[dev-dependencies]
+asm = { path = "../asm" }
+
 [lints]
 workspace = true
