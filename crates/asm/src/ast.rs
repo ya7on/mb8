@@ -42,6 +42,7 @@ pub enum Operand {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Directive {
     Origin(u16),
+    Address(u16),
     Include(String),
     Data(Vec<u8>),
     Ascii(String),

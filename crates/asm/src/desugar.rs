@@ -60,6 +60,12 @@ impl AssemblerPass for DesugarPass {
                             span: directive.span.clone(),
                         });
                     }
+                    Directive::Address(address) => {
+                        result.items.push(IRItem::Address(Spanned {
+                            value: *address,
+                            span: directive.span.clone(),
+                        }));
+                    }
                     Directive::Data(bytes) => {
                         result.items.push(IRItem::Data(Spanned {
                             value: bytes.clone(),

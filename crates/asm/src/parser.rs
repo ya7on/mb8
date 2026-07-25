@@ -146,6 +146,12 @@ where
             TokenKind::Integer(number) => number,
         })
         .map(Directive::Origin);
+    let address_directive = just(TokenKind::Dot)
+        .ignore_then(just(TokenKind::Ident("addr".to_string())))
+        .ignore_then(select! {
+            TokenKind::Integer(number) => number,
+        })
+        .map(Directive::Address);
     let data_directive = just(TokenKind::Dot)
         .ignore_then(just(TokenKind::Ident("data".to_string())))
         .ignore_then(
@@ -177,6 +183,7 @@ where
 
     let directive = choice((
         origin_directive,
+        address_directive,
         data_directive,
         include_directive,
         ascii_directive,

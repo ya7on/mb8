@@ -211,6 +211,21 @@ impl AssemblerPass for LowerPass {
                     };
                     current_address = address;
                 }
+                IRItem::Address(address) => {
+                    let Some(padding) = address.value.checked_sub(current_address) else {
+                        context.emit_fatal(Diagnostic {
+                            severity: Severity::Error,
+                            span: Some(address.span.clone()),
+                            kind: DiagnosticKind::InvalidAddressDirective {
+                                current: current_address,
+                                target: address.value,
+                            },
+                        });
+                        return None;
+                    };
+                    result.resize(result.len() + usize::from(padding), 0);
+                    current_address = address.value;
+                }
                 IRItem::Label(_) => {}
             }
         }

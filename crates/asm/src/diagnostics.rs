@@ -66,6 +66,10 @@ pub enum DiagnosticKind {
     DuplicateOrigin {
         first: Span,
     },
+    InvalidAddressDirective {
+        current: u16,
+        target: u16,
+    },
     AddressOverflow {
         current: u16,
     },
@@ -98,6 +102,7 @@ impl Diagnostic {
             DiagnosticKind::ValueOutOfRange { .. } => "ASM0306",
             DiagnosticKind::RelativeJumpOutOfRange { .. } => "ASM0307",
             DiagnosticKind::ScratchRegisterConflict { .. } => "ASM0308",
+            DiagnosticKind::InvalidAddressDirective { .. } => "ASM0309",
         }
     }
 
@@ -118,6 +123,11 @@ impl Diagnostic {
                 format!("Unexpected directive after include expansion: {directive:?}")
             }
             DiagnosticKind::DuplicateOrigin { .. } => "Duplicate origin directive".to_string(),
+            DiagnosticKind::InvalidAddressDirective { current, target } => {
+                format!(
+                    "Address directive targets 0x{target:04x}, but the current address is 0x{current:04x}"
+                )
+            }
             DiagnosticKind::AddressOverflow { current } => {
                 format!("Address overflow at 0x{current:04x}")
             }

@@ -21,6 +21,7 @@ pub enum IRItem {
     Instruction(Spanned<IRInstruction>),
     Label(Spanned<String>),
     Data(Spanned<Vec<u8>>),
+    Address(Spanned<u16>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

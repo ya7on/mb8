@@ -63,6 +63,20 @@ impl AssemblerPass for TagPass {
                     };
                     counter = address;
                 }
+                IRItem::Address(address) => {
+                    if address.value < counter {
+                        context.emit_fatal(Diagnostic {
+                            severity: Severity::Error,
+                            span: Some(address.span.clone()),
+                            kind: DiagnosticKind::InvalidAddressDirective {
+                                current: counter,
+                                target: address.value,
+                            },
+                        });
+                        return None;
+                    }
+                    counter = address.value;
+                }
             }
         }
 
