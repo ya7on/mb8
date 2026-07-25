@@ -30,7 +30,13 @@ make all
 To assemble one file directly:
 
 ```sh
-cargo run --quiet -p asm -- user/sh.asm -o user/sh.bin
+cargo run --quiet -p asm -- build user/sh.asm -o user/sh.bin
+```
+
+Check a source without writing a binary (warnings cause a non-zero exit code):
+
+```sh
+cargo run --quiet -p asm -- check user/sh.asm
 ```
 
 Targets:
