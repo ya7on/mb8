@@ -63,7 +63,7 @@ impl AssemblerPass for DesugarPass {
                                 operands: instruction.value.operands.clone(),
                             },
                         });
-                        return None;
+                        continue;
                     };
                     result.items.extend(items);
                 }
