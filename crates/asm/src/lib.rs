@@ -1,4 +1,5 @@
 mod ast;
+mod constants;
 mod desugar;
 pub mod diagnostics;
 mod include;
@@ -13,6 +14,7 @@ mod tokens;
 
 use std::path::Path;
 
+use constants::ConstPass;
 use desugar::DesugarPass;
 pub use diagnostics::{Diagnostic, DiagnosticKind, DiagnosticResult, Severity, SourceFile};
 use include::IncludePass;
@@ -72,6 +74,7 @@ pub fn compile_source(
     .then(LexPass)
     .then(ParsePass)
     .then(IncludePass { base_dir })
+    .then(ConstPass)
     .then(ScratchRegisterPass)
     .then(DesugarPass)
     .then(TagPass)

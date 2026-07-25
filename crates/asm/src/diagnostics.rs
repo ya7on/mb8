@@ -66,6 +66,10 @@ pub enum DiagnosticKind {
     DuplicateOrigin {
         first: Span,
     },
+    InvalidAddressDirective {
+        current: u16,
+        target: u16,
+    },
     AddressOverflow {
         current: u16,
     },
@@ -79,6 +83,13 @@ pub enum DiagnosticKind {
     ScratchRegisterConflict {
         mnemonic: String,
         register: Register,
+    },
+    DuplicateConstant {
+        name: String,
+        first: Span,
+    },
+    UnknownConstant {
+        name: String,
     },
 }
 
@@ -98,6 +109,9 @@ impl Diagnostic {
             DiagnosticKind::ValueOutOfRange { .. } => "ASM0306",
             DiagnosticKind::RelativeJumpOutOfRange { .. } => "ASM0307",
             DiagnosticKind::ScratchRegisterConflict { .. } => "ASM0308",
+            DiagnosticKind::InvalidAddressDirective { .. } => "ASM0309",
+            DiagnosticKind::DuplicateConstant { .. } => "ASM0310",
+            DiagnosticKind::UnknownConstant { .. } => "ASM0311",
         }
     }
 
@@ -118,6 +132,11 @@ impl Diagnostic {
                 format!("Unexpected directive after include expansion: {directive:?}")
             }
             DiagnosticKind::DuplicateOrigin { .. } => "Duplicate origin directive".to_string(),
+            DiagnosticKind::InvalidAddressDirective { current, target } => {
+                format!(
+                    "Address directive targets 0x{target:04x}, but the current address is 0x{current:04x}"
+                )
+            }
             DiagnosticKind::AddressOverflow { current } => {
                 format!("Address overflow at 0x{current:04x}")
             }
@@ -130,6 +149,10 @@ impl Diagnostic {
             DiagnosticKind::ScratchRegisterConflict { mnemonic, register } => {
                 format!("Scratch register {register:?} conflicts with an operand of {mnemonic}")
             }
+            DiagnosticKind::DuplicateConstant { name, .. } => {
+                format!("Duplicate constant: @{name}")
+            }
+            DiagnosticKind::UnknownConstant { name } => format!("Unknown constant: @{name}"),
         }
     }
 }

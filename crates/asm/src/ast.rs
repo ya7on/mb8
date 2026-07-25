@@ -25,6 +25,7 @@ pub enum DataSource {
     Register(Register),
     RegisterPair(Register, Register),
     Immediate(u16),
+    Constant(Spanned<String>),
     Label(Spanned<String>),
 }
 
@@ -42,7 +43,9 @@ pub enum Operand {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Directive {
     Origin(u16),
+    Address(u16),
     Include(String),
     Data(Vec<u8>),
     Ascii(String),
+    Const { name: Spanned<String>, value: u16 },
 }

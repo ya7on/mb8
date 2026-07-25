@@ -26,7 +26,11 @@ impl AssemblerPass for TagPass {
                             severity: Severity::Error,
                             span: Some(label.span.clone()),
                             kind: DiagnosticKind::DuplicateLabel {
-                                label: label.value.clone(),
+                                label: label
+                                    .value
+                                    .rsplit_once("::")
+                                    .map_or(label.value.as_str(), |(_, local)| local)
+                                    .to_string(),
                                 first,
                             },
                         });
@@ -62,6 +66,20 @@ impl AssemblerPass for TagPass {
                         return None;
                     };
                     counter = address;
+                }
+                IRItem::Address(address) => {
+                    if address.value < counter {
+                        context.emit_fatal(Diagnostic {
+                            severity: Severity::Error,
+                            span: Some(address.span.clone()),
+                            kind: DiagnosticKind::InvalidAddressDirective {
+                                current: counter,
+                                target: address.value,
+                            },
+                        });
+                        return None;
+                    }
+                    counter = address.value;
                 }
             }
         }

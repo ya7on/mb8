@@ -19,7 +19,9 @@ pub enum TokenKind {
     Comma,
     Colon,
     Dot,
+    At,
     Minus,
+    Comment(String),
     Newline,
 }
 
@@ -34,14 +36,16 @@ impl fmt::Display for TokenKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Ident(value) => write!(f, "{value}"),
-            Self::StringLiteral(value) => write!(f, "\"{value}\""),
+            Self::StringLiteral(value) => write!(f, "\"{}\"", value.escape_debug()),
             Self::Integer(value) => write!(f, "{value:#x}"),
             Self::LeftBracket => write!(f, "["),
             Self::RightBracket => write!(f, "]"),
             Self::Comma => write!(f, ","),
             Self::Colon => write!(f, ":"),
             Self::Dot => write!(f, "."),
+            Self::At => write!(f, "@"),
             Self::Minus => write!(f, "-"),
+            Self::Comment(value) => write!(f, ";{value}"),
             Self::Newline => writeln!(f),
         }
     }
@@ -52,11 +56,17 @@ fn build_lexer<'src>(
 ) -> impl Parser<'src, &'src str, Vec<(TokenKind, SimpleSpan<usize>)>, Err<Rich<'src, char>>> {
     let ident = text::ascii::ident().map(|ident: &'src str| TokenKind::Ident(ident.to_lowercase()));
 
-    let string = none_of('"')
+    let escape = just('\\').ignore_then(choice((
+        just('n').to('\n'),
+        just('0').to('\0'),
+        just('\\').to('\\'),
+        just('"').to('"'),
+    )));
+    let string = choice((escape, none_of("\\\"")))
         .repeated()
-        .to_slice()
+        .collect::<String>()
         .delimited_by(just('"'), just('"'))
-        .map(|value: &'src str| TokenKind::StringLiteral(value.to_owned()));
+        .map(TokenKind::StringLiteral);
 
     let hex_number =
         just("0x")
@@ -67,17 +77,22 @@ fn build_lexer<'src>(
                     .map_err(|_| Rich::custom(span, "HEX number does not fit in u16"))
             });
 
+    let comment = just(';')
+        .ignore_then(none_of("\r\n").repeated().to_slice())
+        .map(|value: &'src str| TokenKind::Comment(value.to_owned()));
+
     let punctuation = choice((
         just('[').to(TokenKind::LeftBracket),
         just(']').to(TokenKind::RightBracket),
         just(',').to(TokenKind::Comma),
         just(':').to(TokenKind::Colon),
         just('.').to(TokenKind::Dot),
+        just('@').to(TokenKind::At),
         just('-').to(TokenKind::Minus),
         just('\n').to(TokenKind::Newline),
     ));
 
-    let token = choice((ident, string, hex_number, punctuation))
+    let token = choice((ident, string, hex_number, comment, punctuation))
         .map_with(|token, e| (token, e.span()))
         .padded_by(one_of(" \t\r").repeated());
 

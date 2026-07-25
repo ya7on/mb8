@@ -12,7 +12,7 @@ pub(in crate::instructions) const DESUGAR: InstructionDefinition = InstructionDe
     mnemonic: "not",
     handler: desugar,
     effect: RegisterEffect {
-        scratch: RegisterSet::from_registers(&[Register::R0]),
+        scratch: RegisterSet::from_registers(&[Register::A]),
     },
 };
 
@@ -31,12 +31,12 @@ pub(super) fn desugar(
 
     Some(vec![
         IRItem::Instruction(Spanned {
-            value: IRInstruction::Push { src: Register::R0 },
+            value: IRInstruction::Push { src: Register::A },
             span: span.clone(),
         }),
         IRItem::Instruction(Spanned {
             value: IRInstruction::Ldi {
-                dst: Register::R0,
+                dst: Register::A,
                 src: Expression::Immediate(0xFF),
             },
             span: span.clone(),
@@ -44,12 +44,12 @@ pub(super) fn desugar(
         IRItem::Instruction(Spanned {
             value: IRInstruction::Xor {
                 dst: *reg,
-                src: Register::R0,
+                src: Register::A,
             },
             span: span.clone(),
         }),
         IRItem::Instruction(Spanned {
-            value: IRInstruction::Pop { dst: Register::R0 },
+            value: IRInstruction::Pop { dst: Register::A },
             span: span.clone(),
         }),
     ])

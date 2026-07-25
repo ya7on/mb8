@@ -1,52 +1,70 @@
 # Assembler syntax
 
-We assemble with [`customasm`](https://github.com/hlorenzi/customasm).
+MB8 assembly is compiled by the Rust `asm` crate in this workspace.
 
 ## Writing a program for the VM
-- Always include `asm/cpu.asm` first (see `user/sh.asm`). It defines the memory banks so your ROM segment assembles with a base address of `0x1000`.
-- When the program is launched, that ROM image is copied into RAM starting at `0x1000` and execution begins at your entry label.
 
-## Includes
-- Always include `asm/cpu.asm` to get the core ISA and register definitions.
-- Optionally include `asm/ext.asm` to unlock pseudo-instructions like `INC`, `JMP addr`, etc.
+User images start at `0x1000`, while kernel and kernel-test images start at `0xE000`. Declare that
+base once at the top of each root source:
 
 ```asm
-#include "../asm/cpu.asm"
-#include "../asm/ext.asm" ; optional
-```
+.origin 0x1000
 
-## Banks and layout
-- Kernel: uses `#bank rom` (4 KiB at `0xE000`) for executable code — see `kernel/main.asm`.
-- User programs: include `cpu.asm` and you automatically get the RAM bank defined there; you typically do **not** write your own `#bank` directives.
-- `#addr <hex>` — set the write pointer inside the active bank. Handy to place data at a specific RAM offset.
-
-Example RAM data:
-```asm
-#addr 0x0100      ; place data in general RAM (RAM bank is already active)
-SPRITE:
-    #d8 0b1111_0000
-    #d8 0b1000_1000
-```
-
-Example ROM code:
-```asm
-#bank rom         ; only in the kernel image
 start:
-    LDI R0 0x42
+    LDI R1, 0x03
     HALT
+
+.addr 0x2000
 ```
 
-## Data and literals
-- `#d8` emits bytes (comma-separated or one-per-line).
-- Labels mark addresses (`label:`). You can jump to labels or use them for data pointers.
-- Constants use `NAME = value`.
-- Literals: decimal, hex (`0xFF`), binary (`0b1010_1010`), or single-character strings (`"A"` stores ASCII).
+The final `.addr` pads the image to its 4 KiB boundary.
 
-## Comments
-- Everything after `;` on a line is ignored.
+## Instructions and operands
+
+Instructions and registers are conventionally uppercase. Separate operands with commas and write
+register pairs with a colon:
+
+```asm
+LDI R2:R3, MESSAGE
+LD R1, [R2:R3]
+ST [0xF001], R1
+CALL [0xE500]
+```
+
+The assembler provides the ISA and pseudo-instructions directly. Pseudo-instructions include
+`INC`, `DEC`, `INC16`, `MUL`, `MEMCPY`, `STRCMP`, immediate jumps, and absolute calls, loads,
+stores, and jumps; no rule-file include is needed.
+
+## Directives
+
+- `.origin <address>` sets the image base and may appear once in the root program.
+- `.addr <address>` pads with zero bytes up to an absolute address.
+- `.data <byte>, ...` emits bytes.
+- `.ascii "text"` emits a string; `\n`, `\0`, `\\`, and `\"` escapes are supported.
+- `.include "path.asm"` inserts another source relative to the containing file.
+- `.const @NAME, <value>` defines a constant; refer to it as `@NAME`.
+
+Labels beginning with `_` are local to the preceding non-local label in the same source:
+
+```asm
+.const @SYS_WRITE, 0x02
+
+write:
+    LDI R1, @SYS_WRITE
+_loop:
+    JR [_loop]
+```
+
+Numeric literals use hexadecimal notation. Character immediates should be written as their byte
+value, such as `0x0A` for newline.
 
 ## Building and running
-- Build: `customasm file.asm` → produces `file.bin`.
-- Place the executable file in the `user` directory.
-- Update `Makefile` with `USER_PROGRAMS += file.bin`.
-- Run: `make run`
+
+Assemble one source directly:
+
+```sh
+cargo run --quiet -p asm -- user/sh.asm -o user/sh.bin
+```
+
+Use `make`, `make kernel`, `make user`, or `make tests` for the repository images, and `make run`
+to launch the VM.

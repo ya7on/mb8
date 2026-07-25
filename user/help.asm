@@ -1,18 +1,19 @@
-#include "../asm/cpu.asm"
-#include "../asm/ext.asm"
+.origin 0x1000
 
 start:
-    LDI R1 0x03
-    LDI R2 R3 HELP_TEXT
+    LDI R1, 0x03
+    LDI R2:R3, HELP_TEXT
     CALL [0xE500]
 
-    LDI R1 0x0F
+    LDI R1, 0x0F
     CALL [0xE500]
 
 HELP_TEXT:
-    #d "MB8 - 8bit fantasy computer\n"
-    #d "\n"
-    #d "Commands:\n"
-    #d "help  - Display help information\n"
-    #d "ls    - List files\n"
-    #d "exit  - Exit the system\n\0"
+    .ascii "MB8 - 8bit fantasy computer\n"
+    .ascii "\n"
+    .ascii "Commands:\n"
+    .ascii "help  - Display help information\n"
+    .ascii "ls    - List files\n"
+    .ascii "exit  - Exit the system\n\0"
+
+.addr 0x2000

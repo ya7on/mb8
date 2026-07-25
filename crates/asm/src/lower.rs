@@ -14,7 +14,11 @@ fn lower_expression(expr: &Expression, labels: &HashMap<String, u16>) -> Result<
             severity: Severity::Error,
             span: Some(label.span.clone()),
             kind: DiagnosticKind::UnknownLabel {
-                label: label.value.clone(),
+                label: label
+                    .value
+                    .rsplit_once("::")
+                    .map_or(label.value.as_str(), |(_, local)| local)
+                    .to_string(),
             },
         }),
         Expression::Immediate(value) => Ok(*value),
@@ -210,6 +214,21 @@ impl AssemblerPass for LowerPass {
                         return None;
                     };
                     current_address = address;
+                }
+                IRItem::Address(address) => {
+                    let Some(padding) = address.value.checked_sub(current_address) else {
+                        context.emit_fatal(Diagnostic {
+                            severity: Severity::Error,
+                            span: Some(address.span.clone()),
+                            kind: DiagnosticKind::InvalidAddressDirective {
+                                current: current_address,
+                                target: address.value,
+                            },
+                        });
+                        return None;
+                    };
+                    result.resize(result.len() + usize::from(padding), 0);
+                    current_address = address.value;
                 }
                 IRItem::Label(_) => {}
             }

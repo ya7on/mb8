@@ -20,14 +20,6 @@ jobs:
           components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2
 
-      - name: Cache cargo tools
-        uses: actions/cache@v4
-        id: cache-cargo-tools
-        with:
-          path: ~/.cargo/bin
-          key: ${{ runner.os }}-cargo-tools-v1
-      - name: Install customasm
-        run: command -v customasm >/dev/null || cargo install --git https://github.com/hlorenzi/customasm
       - name: Compile asm
         run: make
       # - name: Install cargo-binstall
