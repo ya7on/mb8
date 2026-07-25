@@ -206,8 +206,8 @@ sys_disk_read_block:
     ; R6:R7 = 0xF201
     LDI R6, 0xF2
     LDI R7, 0x01
-    LDI R0, 0x01
-    ST [R6:R7], R0
+    LDI A, 0x01
+    ST [R6:R7], A
     RET
 
 ; Writes a disk buffer into the disk
@@ -223,8 +223,8 @@ sys_disk_write_block:
     ; R6:R7 = 0xF201
     LDI R6, 0xF2
     LDI R7, 0x01
-    LDI R0, 0x02
-    ST [R6:R7], R0
+    LDI A, 0x02
+    ST [R6:R7], A
     RET
 
 ; Writes a directory block into the memory
@@ -304,11 +304,11 @@ _load_byte:
 
 _metadata:
     INC16 R4:R5 ; start_block
-    LD R0, [R4:R5]
-    PUSH R0
+    LD A, [R4:R5]
+    PUSH A
     INC16 R4:R5 ; size
-    LD R0, [R4:R5]
-    PUSH R0
+    LD A, [R4:R5]
+    PUSH A
     INC16 R4:R5 ; filename
 
     PUSH R1
@@ -322,8 +322,8 @@ _metadata:
     POP R1
     CMP R7, 0x00
     JZR [_success]
-    POP R0
-    POP R0
+    POP A
+    POP A
 _next_file:
     INC R3
     LDI R7, 0x10
@@ -373,11 +373,11 @@ _copy_block:
 
     LDI R1, 0x00
 _copy_byte:
-    LD R0, [R6:R7]
-    ST [R4:R5], R0
+    LD A, [R6:R7]
+    ST [R4:R5], A
 
-    LDI R0, 0x01
-    ADD R7, R0
+    LDI A, 0x01
+    ADD R7, A
     CMP R7, 0x00
     JNZR [_no_carry_buf]
     INC R6
@@ -430,8 +430,8 @@ sys_exec:
     CMP R1, 0x00
     JNZR [_error]
 
-    POP R0
-    POP R0
+    POP A
+    POP A
 
     JMP [0x1000]
 
@@ -439,8 +439,8 @@ _error:
     RET
 
 sys_exit:
-    POP R0
-    POP R0
+    POP A
+    POP A
     JMP [0xE100]
     RET
 

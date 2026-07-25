@@ -18,6 +18,7 @@ use constants::ConstPass;
 use desugar::DesugarPass;
 pub use diagnostics::{Diagnostic, DiagnosticKind, DiagnosticResult, Severity, SourceFile};
 use include::IncludePass;
+use lints::register_alias::RegisterAliasPass;
 use lints::scratch_register::ScratchRegisterPass;
 use lower::LowerPass;
 use parser::ParsePass;
@@ -74,6 +75,7 @@ pub fn compile_source(
     .then(LexPass)
     .then(ParsePass)
     .then(IncludePass { base_dir })
+    .then(RegisterAliasPass)
     .then(ConstPass)
     .then(ScratchRegisterPass)
     .then(DesugarPass)

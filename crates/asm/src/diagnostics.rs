@@ -91,6 +91,10 @@ pub enum DiagnosticKind {
     UnknownConstant {
         name: String,
     },
+    RegisterAlias {
+        register: Register,
+        alias: Register,
+    },
 }
 
 impl Diagnostic {
@@ -112,6 +116,7 @@ impl Diagnostic {
             DiagnosticKind::InvalidAddressDirective { .. } => "A0309",
             DiagnosticKind::DuplicateConstant { .. } => "A0310",
             DiagnosticKind::UnknownConstant { .. } => "A0311",
+            DiagnosticKind::RegisterAlias { .. } => "A0312",
         }
     }
 
@@ -162,6 +167,9 @@ impl Diagnostic {
                 format!("Duplicate constant: @{name}")
             }
             DiagnosticKind::UnknownConstant { name } => format!("Unknown constant: @{name}"),
+            DiagnosticKind::RegisterAlias { register, alias } => {
+                format!("Prefer register alias {alias:?} over {register:?}")
+            }
         }
     }
 }

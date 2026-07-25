@@ -22,7 +22,7 @@ fn assemble_rom(body: &str) -> Vec<u8> {
 
 const MEMCPY_PROGRAM: &str = r"
 start:
-    LDI R0, 0x00
+    LDI A, 0x00
     LDI R1, 0xFF
     LDI R2, 0x00
     LDI R3, 0x00
@@ -34,13 +34,13 @@ start:
 
 const STRCMP_PROGRAM: &str = r"
 start:
-    LDI R0, 0x00
+    LDI A, 0x00
     LDI R1, 0x00
     LDI R2, 0x00
     LDI R3, 0x00
     LDI R4, 0x00
     LDI R5, 0x14
-    STRCMP R0, R1, R2, R3, R4, R5
+    STRCMP A, R1, R2, R3, R4, R5
     HALT
 ";
 
