@@ -1,10 +1,24 @@
+use std::collections::HashMap;
+
 use crate::{
-    ast::{ASTItem, ASTProgram, Directive},
-    diagnostics::{Diagnostic, DiagnosticKind, Severity, Spanned},
+    ast::{ASTItem, ASTProgram, DataSource, Directive, Operand},
+    diagnostics::{Diagnostic, DiagnosticKind, Severity, SourceId, Spanned},
     instructions::HANDLERS,
     ir::{IRItem, IRProgram},
     pass::{AssemblerPass, PassContext},
 };
+
+fn qualify_local_label(label: &mut Spanned<String>, scopes: &HashMap<SourceId, String>) {
+    if !label.value.starts_with('_') {
+        return;
+    }
+
+    let source = label.span.source;
+    label.value = match scopes.get(&source) {
+        Some(scope) => format!("{scope}::{}", label.value),
+        None => format!("@source{source}::{}", label.value),
+    };
+}
 
 pub(crate) struct DesugarPass;
 
@@ -12,15 +26,28 @@ impl AssemblerPass for DesugarPass {
     type Input = ASTProgram;
     type Output = IRProgram;
 
-    fn run(&mut self, input: Self::Input, context: &mut PassContext<'_>) -> Option<Self::Output> {
+    fn run(
+        &mut self,
+        mut input: Self::Input,
+        context: &mut PassContext<'_>,
+    ) -> Option<Self::Output> {
         let mut result = IRProgram {
             origin: None,
             items: Vec::new(),
         };
+        let mut scopes = HashMap::<SourceId, String>::new();
 
-        for (id, item) in input.items.iter().enumerate() {
+        for (id, item) in input.items.iter_mut().enumerate() {
             match item {
                 ASTItem::Instruction(instruction) => {
+                    for operand in &mut instruction.value.operands {
+                        if let Operand::Raw(DataSource::Label(label))
+                        | Operand::MemoryWrapped(DataSource::Label(label)) = operand
+                        {
+                            qualify_local_label(label, &scopes);
+                        }
+                    }
+
                     let Some(items) = HANDLERS
                         .iter()
                         .filter(|definition| definition.mnemonic == instruction.value.mnemonic)
@@ -41,6 +68,11 @@ impl AssemblerPass for DesugarPass {
                     result.items.extend(items);
                 }
                 ASTItem::Label(label) => {
+                    if label.value.starts_with('_') {
+                        qualify_local_label(label, &scopes);
+                    } else {
+                        scopes.insert(label.span.source, label.value.clone());
+                    }
                     result.items.push(IRItem::Label(label.clone()));
                 }
                 ASTItem::Directive(directive) => match &directive.value {

@@ -14,7 +14,11 @@ fn lower_expression(expr: &Expression, labels: &HashMap<String, u16>) -> Result<
             severity: Severity::Error,
             span: Some(label.span.clone()),
             kind: DiagnosticKind::UnknownLabel {
-                label: label.value.clone(),
+                label: label
+                    .value
+                    .rsplit_once("::")
+                    .map_or(label.value.as_str(), |(_, local)| local)
+                    .to_string(),
             },
         }),
         Expression::Immediate(value) => Ok(*value),
