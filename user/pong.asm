@@ -266,8 +266,8 @@ draw_ball:
     SHR R4, 0x03
 
     MOV R5, R2
-    LDI R0, 0x07
-    AND R5, R0
+    LDI A, 0x07
+    AND R5, A
 
     LDI R6:R7, MASKS
     ADD R7, R5
@@ -337,15 +337,15 @@ clear_bitmap:
     LDI R6, 0xF0
     LDI R7, 0x01
     ZERO R3
-    LDI R0, 0x01
+    LDI A, 0x01
     LDI R4, 0x20
 _row_loop:
     LDI R5, 0x08
 _col_loop:
     ST [R6:R7], R3
-    ADD R7, R0
+    ADD R7, A
     JNCR [_no_carry]
-    ADD R6, R0
+    ADD R6, A
 _no_carry:
     DEC R5
     CMP R5, 0x00

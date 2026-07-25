@@ -326,3 +326,35 @@ Define the constant or correct its spelling.
 .const @COLOR, 0x01
 LDI R1, @COLOR
 ```
+
+## A0312
+
+**Register Alias Preferred**
+
+A physical register name was used even though the register has a semantic alias. Aliases make the
+purpose of special registers clearer:
+
+| Physical name | Preferred alias |
+|---------------|-----------------|
+| `R0`          | `A`             |
+| `R9`          | `IH`            |
+| `R10`         | `IL`            |
+| `R11`         | `FPH`           |
+| `R12`         | `FPL`           |
+| `R13`         | `SPH`           |
+| `R14`         | `SPL`           |
+| `R15`         | `F`             |
+
+**Example**
+
+```asm
+LDI R0, 0x01
+```
+
+**How to fix**
+
+Use the preferred alias instead of the physical register name.
+
+```asm
+LDI A, 0x01
+```

@@ -10,7 +10,7 @@ start:
     LDI IL, 0x01
 
     ; Constants
-    LDI R0, 0x01 ; const 1
+    LDI A, 0x01 ; const 1
     LDI R3, 0xFF ; pixel byte
 
     ; Row counter (32 rows)
@@ -22,7 +22,7 @@ _row_loop:
 _col_loop:
     ST [IH:IL], R3
     INC16 IH:IL
-    SUB R5, R0
+    SUB R5, A
     CMP R5, 0x00
     JNZR [_col_loop]
 
@@ -31,15 +31,15 @@ _col_loop:
 _delay_outer:
     LDI R5, 0xFF
 _delay_inner:
-    SUB R5, R0
+    SUB R5, A
     CMP R5, 0x00
     JNZR [_delay_inner]
-    SUB R6, R0
+    SUB R6, A
     CMP R6, 0x00
     JNZR [_delay_outer]
 
     ; Next row
-    SUB R4, R0
+    SUB R4, A
     CMP R4, 0x00
     JNZR [_row_loop]
 
