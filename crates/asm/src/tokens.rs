@@ -20,6 +20,7 @@ pub enum TokenKind {
     Colon,
     Dot,
     Minus,
+    Comment(String),
     Newline,
 }
 
@@ -42,6 +43,7 @@ impl fmt::Display for TokenKind {
             Self::Colon => write!(f, ":"),
             Self::Dot => write!(f, "."),
             Self::Minus => write!(f, "-"),
+            Self::Comment(value) => write!(f, ";{value}"),
             Self::Newline => writeln!(f),
         }
     }
@@ -67,6 +69,10 @@ fn build_lexer<'src>(
                     .map_err(|_| Rich::custom(span, "HEX number does not fit in u16"))
             });
 
+    let comment = just(';')
+        .ignore_then(none_of("\r\n").repeated().to_slice())
+        .map(|value: &'src str| TokenKind::Comment(value.to_owned()));
+
     let punctuation = choice((
         just('[').to(TokenKind::LeftBracket),
         just(']').to(TokenKind::RightBracket),
@@ -77,7 +83,7 @@ fn build_lexer<'src>(
         just('\n').to(TokenKind::Newline),
     ));
 
-    let token = choice((ident, string, hex_number, punctuation))
+    let token = choice((ident, string, hex_number, comment, punctuation))
         .map_with(|token, e| (token, e.span()))
         .padded_by(one_of(" \t\r").repeated());
 

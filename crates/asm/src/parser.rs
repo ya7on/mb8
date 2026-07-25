@@ -215,8 +215,14 @@ impl AssemblerPass for ParsePass {
 
     fn run(&mut self, input: Self::Input, context: &mut PassContext<'_>) -> Option<Self::Output> {
         let eoi = SimpleSpan::from(input.end..input.end);
-        let token_input = input.tokens.as_slice().split_token_span(eoi);
-        match build_parser(input.source).parse(token_input).into_result() {
+        let tokens = input
+            .tokens
+            .into_iter()
+            .filter(|(token, _)| !matches!(token, TokenKind::Comment(_)))
+            .collect::<Vec<_>>();
+        let token_input = tokens.as_slice().split_token_span(eoi);
+        let parsed = build_parser(input.source).parse(token_input).into_result();
+        match parsed {
             Ok(ast) => Some(ast),
             Err(errors) => {
                 let diagnostics = errors
