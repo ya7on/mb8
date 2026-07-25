@@ -19,6 +19,7 @@ pub enum TokenKind {
     Comma,
     Colon,
     Dot,
+    At,
     Minus,
     Comment(String),
     Newline,
@@ -42,6 +43,7 @@ impl fmt::Display for TokenKind {
             Self::Comma => write!(f, ","),
             Self::Colon => write!(f, ":"),
             Self::Dot => write!(f, "."),
+            Self::At => write!(f, "@"),
             Self::Minus => write!(f, "-"),
             Self::Comment(value) => write!(f, ";{value}"),
             Self::Newline => writeln!(f),
@@ -85,6 +87,7 @@ fn build_lexer<'src>(
         just(',').to(TokenKind::Comma),
         just(':').to(TokenKind::Colon),
         just('.').to(TokenKind::Dot),
+        just('@').to(TokenKind::At),
         just('-').to(TokenKind::Minus),
         just('\n').to(TokenKind::Newline),
     ));

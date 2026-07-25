@@ -110,7 +110,7 @@ impl AssemblerPass for DesugarPass {
                             span: directive.span.clone(),
                         }));
                     }
-                    Directive::Include(_) => {
+                    Directive::Include(_) | Directive::Const { .. } => {
                         context.emit_fatal(Diagnostic {
                             severity: Severity::Error,
                             span: Some(directive.span.clone()),

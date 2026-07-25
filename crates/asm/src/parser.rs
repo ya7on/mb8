@@ -69,6 +69,20 @@ where
         .then_ignore(just(TokenKind::Colon))
         .then(register_parser)
         .map(|(register1, register2)| DataSource::RegisterPair(register1, register2));
+    let constant_reference = just(TokenKind::At)
+        .ignore_then(select! {
+            TokenKind::Ident(name) => name,
+        })
+        .map_with(move |name, extra| {
+            let span: SimpleSpan<usize> = extra.span();
+            Spanned {
+                value: name,
+                span: Span {
+                    source,
+                    range: span.start..span.end,
+                },
+            }
+        });
     let register_pair_offset = register_parser
         .then_ignore(just(TokenKind::Colon))
         .then(register_parser)
@@ -106,6 +120,10 @@ where
         register_pair.clone().map(Operand::Raw),
         register.map(Operand::Raw),
         immediate.map(Operand::Raw),
+        constant_reference
+            .clone()
+            .map(DataSource::Constant)
+            .map(Operand::Raw),
         label_reference.map(Operand::Raw),
         register
             .delimited_by(just(TokenKind::LeftBracket), just(TokenKind::RightBracket))
@@ -114,6 +132,11 @@ where
             .delimited_by(just(TokenKind::LeftBracket), just(TokenKind::RightBracket))
             .map(Operand::MemoryWrapped),
         immediate
+            .delimited_by(just(TokenKind::LeftBracket), just(TokenKind::RightBracket))
+            .map(Operand::MemoryWrapped),
+        constant_reference
+            .clone()
+            .map(DataSource::Constant)
             .delimited_by(just(TokenKind::LeftBracket), just(TokenKind::RightBracket))
             .map(Operand::MemoryWrapped),
         label_reference
@@ -180,8 +203,17 @@ where
             TokenKind::StringLiteral(value) => value,
         })
         .map(Directive::Ascii);
+    let const_directive = just(TokenKind::Dot)
+        .ignore_then(just(TokenKind::Ident("const".to_string())))
+        .ignore_then(constant_reference)
+        .then_ignore(just(TokenKind::Comma))
+        .then(select! {
+            TokenKind::Integer(value) => value,
+        })
+        .map(|(name, value)| Directive::Const { name, value });
 
     let directive = choice((
+        const_directive,
         origin_directive,
         address_directive,
         data_directive,

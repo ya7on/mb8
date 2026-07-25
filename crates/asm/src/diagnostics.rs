@@ -84,6 +84,13 @@ pub enum DiagnosticKind {
         mnemonic: String,
         register: Register,
     },
+    DuplicateConstant {
+        name: String,
+        first: Span,
+    },
+    UnknownConstant {
+        name: String,
+    },
 }
 
 impl Diagnostic {
@@ -103,6 +110,8 @@ impl Diagnostic {
             DiagnosticKind::RelativeJumpOutOfRange { .. } => "ASM0307",
             DiagnosticKind::ScratchRegisterConflict { .. } => "ASM0308",
             DiagnosticKind::InvalidAddressDirective { .. } => "ASM0309",
+            DiagnosticKind::DuplicateConstant { .. } => "ASM0310",
+            DiagnosticKind::UnknownConstant { .. } => "ASM0311",
         }
     }
 
@@ -140,6 +149,10 @@ impl Diagnostic {
             DiagnosticKind::ScratchRegisterConflict { mnemonic, register } => {
                 format!("Scratch register {register:?} conflicts with an operand of {mnemonic}")
             }
+            DiagnosticKind::DuplicateConstant { name, .. } => {
+                format!("Duplicate constant: @{name}")
+            }
+            DiagnosticKind::UnknownConstant { name } => format!("Unknown constant: @{name}"),
         }
     }
 }

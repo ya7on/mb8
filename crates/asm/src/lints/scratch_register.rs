@@ -33,7 +33,9 @@ impl AssemblerPass for ScratchRegisterPass {
                     Operand::Raw(source) | Operand::MemoryWrapped(source) => match source {
                         DataSource::Register(register) => [Some(*register), None],
                         DataSource::RegisterPair(hi, lo) => [Some(*hi), Some(*lo)],
-                        DataSource::Immediate(_) | DataSource::Label(_) => [None, None],
+                        DataSource::Immediate(_)
+                        | DataSource::Constant(_)
+                        | DataSource::Label(_) => [None, None],
                     },
                     Operand::MemoryOffset { hi, lo, .. } => [Some(*hi), Some(*lo)],
                 };
