@@ -126,7 +126,18 @@ fn print_diagnostic(diagnostic: &Diagnostic, source_files: &[SourceFile]) {
     };
     let mut report = Report::build(report_kind, primary)
         .with_code(diagnostic.code())
-        .with_message(diagnostic.message());
+        .with_message(diagnostic.message())
+        .with_note(format!(
+            "For more information\nhttps://ya7on.github.io/mb8/asm/diagnostics.html#{}",
+            diagnostic.code().to_ascii_lowercase()
+        ));
+
+    if let DiagnosticKind::UnsupportedInstruction { mnemonic, .. } = &diagnostic.kind {
+        report = report.with_note(format!(
+            "For mnemonic documentation\nhttps://ya7on.github.io/mb8/asm/instructions.html#{}",
+            mnemonic.to_ascii_lowercase()
+        ));
+    }
 
     if let DiagnosticKind::DuplicateLabel { first, .. }
     | DiagnosticKind::DuplicateOrigin { first } = &diagnostic.kind
