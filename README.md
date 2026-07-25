@@ -22,7 +22,7 @@ MicroBot-8bit is an 8-bit microcomputer in the vein of the ZX Spectrum/Commodore
 The assembler is implemented in Rust and is part of this workspace. No external assembler is
 required.
 
-Build everything (kernel, user-space programs, tests):
+Build the kernel and user-space programs:
 ```sh
 make all
 ```
@@ -37,7 +37,6 @@ Targets:
 
 - `make kernel` — build the kernel image (`kernel/main.bin`)
 - `make user` — build user-space programs under `user/`
-- `make tests` — build assembly tests under `kernel/tests`
 
 ## Run VM
 

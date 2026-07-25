@@ -66,5 +66,5 @@ Assemble one source directly:
 cargo run --quiet -p asm -- user/sh.asm -o user/sh.bin
 ```
 
-Use `make`, `make kernel`, `make user`, or `make tests` for the repository images, and `make run`
+Use `make`, `make kernel`, `make user` for the repository images, and `make run`
 to launch the VM.

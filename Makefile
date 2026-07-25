@@ -1,6 +1,6 @@
 .PHONY: run clean book build test lint ci
 
-all: kernel user tests
+all: kernel user
 
 # Kernel
 KERNEL_MAIN := kernel/main.bin
@@ -15,13 +15,6 @@ user: $(USER_TARGETS)
 user/%.bin: user/%.asm $(KERNEL_MAIN)
 	cargo run --quiet -p asm -- $< -o $@
 
-# Tests
-TEST_ASM := $(wildcard kernel/tests/*.asm)
-TEST_BINS := $(TEST_ASM:%.asm=%.bin)
-tests: $(TEST_BINS)
-kernel/tests/%.bin: kernel/tests/%.asm $(KERNEL_MAIN)
-	cargo run --quiet -p asm -- $< -o $@
-
 run: $(KERNEL_MAIN) $(USER_TARGETS)
 	cargo run --features desktop --bin cli-desktop -- run $^
 
@@ -29,7 +22,7 @@ debug: $(KERNEL_MAIN) $(USER_TARGETS)
 	cargo run --features desktop --bin cli-desktop -- run --debug $^
 
 clean:
-	rm -f kernel/*.bin user/*.bin kernel/tests/*.bin
+	rm -f kernel/*.bin user/*.bin
 
 book:
 	mdbook serve ./docs
