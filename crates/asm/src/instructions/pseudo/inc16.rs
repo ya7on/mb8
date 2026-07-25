@@ -6,11 +6,14 @@ use crate::{
     ir::{Expression, IRInstruction, IRItem, RelativeOffset},
 };
 
-use super::super::InstructionDefinition;
+use super::super::{InstructionDefinition, RegisterEffect, RegisterSet};
 
 pub(in crate::instructions) const DESUGAR: InstructionDefinition = InstructionDefinition {
     mnemonic: "inc16",
     handler: desugar,
+    effect: RegisterEffect {
+        scratch: RegisterSet::from_registers(&[Register::R0]),
+    },
 };
 
 #[allow(clippy::too_many_lines)]

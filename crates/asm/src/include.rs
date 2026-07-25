@@ -1,93 +1,58 @@
 use std::path::Path;
 
-use chumsky::{input::Input, span::SimpleSpan, Parser};
-
 use crate::{
     ast::{ASTItem, ASTProgram, Directive},
-    diagnostics::{SourceFile, Span, Spanned},
-    error::{AsmError, AsmErrorKind},
-    parser::parser,
-    tokens::lexer,
+    diagnostics::{Diagnostic, DiagnosticKind, Severity, Spanned},
+    parser::ParsePass,
+    pass::{AssemblerPass, PassContext},
+    tokens::LexPass,
 };
 
-pub fn expand(
-    ast: ASTProgram,
-    base_dir: &Path,
-    sources: &mut Vec<SourceFile>,
-) -> Result<ASTProgram, AsmError> {
-    let mut items = Vec::new();
+pub(crate) struct IncludePass<'a> {
+    pub base_dir: &'a Path,
+}
 
-    for item in ast.items {
-        match item {
-            ASTItem::Directive(directive) => {
-                match directive.value {
+impl AssemblerPass for IncludePass<'_> {
+    type Input = ASTProgram;
+    type Output = ASTProgram;
+
+    fn run(&mut self, input: Self::Input, context: &mut PassContext<'_>) -> Option<Self::Output> {
+        let mut items = Vec::new();
+
+        for item in input.items {
+            match item {
+                ASTItem::Directive(directive) => match directive.value {
                     Directive::Include(include_path) => {
-                        let path = base_dir.join(include_path);
-                        let source = std::fs::read_to_string(&path).map_err(|err| AsmError {
-                            span: Some(directive.span.clone()),
-                            kind: AsmErrorKind::Include {
-                                message: format!("{}: {err}", path.display()),
-                            },
-                        })?;
-                        let source_id = sources.len();
-                        sources.push(SourceFile {
-                            id: source_id,
-                            name: path.display().to_string(),
-                            source: source.clone(),
-                        });
-                        let tokens =
-                            lexer()
-                                .parse(source.as_str())
-                                .into_result()
-                                .map_err(|errors| {
-                                    let error = errors.first();
-                                    AsmError {
-                                        span: error.map(|error| Span {
-                                            source: source_id,
-                                            range: error.span().into_range(),
-                                        }),
-                                        kind: AsmErrorKind::Lex {
-                                            message: error.map_or_else(
-                                                || "unknown lexer error".to_string(),
-                                                |error| format!("{error}"),
-                                            ),
-                                        },
-                                    }
-                                })?;
-                        let eoi = SimpleSpan::from(source.len()..source.len());
-                        let token_input = tokens.as_slice().split_token_span(eoi);
-                        let ast = parser(source_id).parse(token_input).into_result().map_err(
-                            |errors| {
-                                let error = errors.first();
-                                AsmError {
-                                    span: error.map(|error| {
-                                        let span = *error.span();
-                                        Span {
-                                            source: source_id,
-                                            range: span.start..span.end,
-                                        }
-                                    }),
-                                    kind: AsmErrorKind::Parse {
-                                        message: error.map_or_else(
-                                            || "unknown parser error".to_string(),
-                                            |error| format!("{error}"),
-                                        ),
+                        let path = self.base_dir.join(include_path);
+                        let source = match std::fs::read_to_string(&path) {
+                            Ok(source) => source,
+                            Err(error) => {
+                                context.emit_fatal(Diagnostic {
+                                    severity: Severity::Error,
+                                    span: Some(directive.span.clone()),
+                                    kind: DiagnosticKind::Include {
+                                        message: format!("{}: {error}", path.display()),
                                     },
-                                }
-                            },
-                        )?;
-                        let base_dir = path.parent().unwrap_or(base_dir);
-                        items.extend(expand(ast, base_dir, sources)?.items);
+                                });
+                                return None;
+                            }
+                        };
+                        let source_id = context.add_source(path.display().to_string(), source);
+                        let tokens = LexPass.run(source_id, context)?;
+                        let ast = ParsePass.run(tokens, context)?;
+                        let base_dir = path.parent().unwrap_or(self.base_dir);
+                        let expanded = IncludePass { base_dir }.run(ast, context)?;
+                        items.extend(expanded.items);
                     }
                     value => items.push(ASTItem::Directive(Spanned {
                         value,
                         span: directive.span,
                     })),
-                }
+                },
+                item => items.push(item),
             }
-            item => items.push(item),
         }
-    }
 
-    Ok(ASTProgram { items })
+        Some(ASTProgram { items })
+    }
 }

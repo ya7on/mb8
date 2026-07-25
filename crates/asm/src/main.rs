@@ -1,7 +1,7 @@
 use std::{fs, path::PathBuf, process::ExitCode};
 
 use ariadne::{sources, Color, Label, Report, ReportKind};
-use asm::{compile_file, AsmErrorKind, AsmFailure};
+use asm::{compile_file, Diagnostic, DiagnosticKind, Severity, SourceFile};
 use clap::Parser;
 
 #[derive(Debug, Parser)]
@@ -19,10 +19,12 @@ struct Cli {
 fn main() -> ExitCode {
     let cli = Cli::parse();
 
-    let bytes = compile_file(&cli.input).map_err(|failure| {
-        print_diagnostic(&failure);
-    });
-    let Ok(bytes) = bytes else {
+    let mut compilation = compile_file(&cli.input);
+    for diagnostic in &compilation.diagnostics {
+        print_diagnostic(diagnostic, &compilation.sources);
+    }
+
+    let Some(bytes) = compilation.result.take() else {
         return ExitCode::FAILURE;
     };
 
@@ -46,45 +48,62 @@ fn main() -> ExitCode {
     ExitCode::SUCCESS
 }
 
-fn print_diagnostic(failure: &AsmFailure) {
-    let source_names: Vec<_> = failure
-        .sources
+fn print_diagnostic(diagnostic: &Diagnostic, source_files: &[SourceFile]) {
+    let source_names: Vec<_> = source_files
         .iter()
         .map(|source| source.name.clone())
         .collect();
-    let primary = failure.error.span().map_or_else(
-        || (source_names[0].clone(), 0..0),
-        |span| (source_names[span.source].clone(), span.range.clone()),
-    );
-    let mut report = Report::build(ReportKind::Error, primary)
-        .with_code(failure.error.code())
-        .with_message(failure.error.message());
+    let fallback_name = source_names
+        .first()
+        .cloned()
+        .unwrap_or_else(|| "<unknown>".to_string());
+    let primary = diagnostic
+        .span
+        .as_ref()
+        .and_then(|span| {
+            source_names
+                .get(span.source)
+                .map(|name| (name.clone(), span.range.clone()))
+        })
+        .unwrap_or((fallback_name, 0..0));
+    let (report_kind, color) = match diagnostic.severity {
+        Severity::Error => (ReportKind::Error, Color::Red),
+        Severity::Warning => (ReportKind::Warning, Color::Yellow),
+    };
+    let mut report = Report::build(report_kind, primary)
+        .with_code(diagnostic.code())
+        .with_message(diagnostic.message());
 
-    if let AsmErrorKind::DuplicateLabel { first, .. } | AsmErrorKind::DuplicateOrigin { first } =
-        &failure.error.kind
+    if let DiagnosticKind::DuplicateLabel { first, .. }
+    | DiagnosticKind::DuplicateOrigin { first } = &diagnostic.kind
     {
-        report = report.with_label(
-            Label::new((source_names[first.source].clone(), first.range.clone()))
-                .with_color(Color::Red)
-                .with_message("first defined here"),
-        );
-        if let Some(span) = failure.error.span() {
+        if let Some(source_name) = source_names.get(first.source) {
             report = report.with_label(
-                Label::new((source_names[span.source].clone(), span.range.clone()))
-                    .with_color(Color::Red)
-                    .with_message("duplicate here"),
+                Label::new((source_name.clone(), first.range.clone()))
+                    .with_color(color)
+                    .with_message("first defined here"),
             );
         }
-    } else if let Some(span) = failure.error.span() {
-        report = report.with_label(
-            Label::new((source_names[span.source].clone(), span.range.clone()))
-                .with_color(Color::Red)
-                .with_message(failure.error.message()),
-        );
+        if let Some(span) = diagnostic.span.as_ref() {
+            if let Some(source_name) = source_names.get(span.source) {
+                report = report.with_label(
+                    Label::new((source_name.clone(), span.range.clone()))
+                        .with_color(color)
+                        .with_message("duplicate here"),
+                );
+            }
+        }
+    } else if let Some(span) = diagnostic.span.as_ref() {
+        if let Some(source_name) = source_names.get(span.source) {
+            report = report.with_label(
+                Label::new((source_name.clone(), span.range.clone()))
+                    .with_color(color)
+                    .with_message(diagnostic.message()),
+            );
+        }
     }
 
-    let source_entries: Vec<_> = failure
-        .sources
+    let source_entries: Vec<_> = source_files
         .iter()
         .zip(source_names.iter())
         .map(|(source, name)| (name.clone(), source.source.clone()))

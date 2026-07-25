@@ -4,11 +4,14 @@ use crate::{
     ir::{IRInstruction, IRItem},
 };
 
-use super::super::InstructionDefinition;
+use super::super::{InstructionDefinition, RegisterEffect, RegisterSet};
 
 pub(in crate::instructions) const DESUGAR: InstructionDefinition = InstructionDefinition {
     mnemonic: "swap",
     handler: desugar,
+    effect: RegisterEffect {
+        scratch: RegisterSet::EMPTY,
+    },
 };
 
 pub(super) fn desugar(
