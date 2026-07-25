@@ -15,7 +15,10 @@
 
             CMP A {len}
             JZR [end]
-            INC A
+            PUSH R7
+            LDI R7 1
+            ADD A R7
+            POP R7
 
             INC16 {srchi}:{srclo}
             INC16 {dsthi}:{dstlo}

@@ -12,7 +12,7 @@ pub(in crate::instructions) const DESUGAR: InstructionDefinition = InstructionDe
     mnemonic: "ld",
     handler: desugar,
     effect: RegisterEffect {
-        scratch: RegisterSet::from_registers(&[Register::R0, Register::R7]),
+        scratch: RegisterSet::from_registers(&[Register::A]),
     },
 };
 
@@ -36,7 +36,7 @@ pub(super) fn desugar(instruction: &ASTInstruction, span: &Span, id: usize) -> O
     let mut items = vec![
         IRItem::Instruction(Spanned {
             value: IRInstruction::Ldi {
-                dst: Register::R0,
+                dst: Register::A,
                 src: Expression::Immediate(u16::from(*offset)),
             },
             span: span.clone(),
@@ -44,7 +44,7 @@ pub(super) fn desugar(instruction: &ASTInstruction, span: &Span, id: usize) -> O
         IRItem::Instruction(Spanned {
             value: IRInstruction::Sub {
                 dst: *lo,
-                src: Register::R0,
+                src: Register::A,
             },
             span: span.clone(),
         }),
@@ -60,12 +60,12 @@ pub(super) fn desugar(instruction: &ASTInstruction, span: &Span, id: usize) -> O
     ];
     items.extend([
         IRItem::Instruction(Spanned {
-            value: IRInstruction::Push { src: Register::R7 },
+            value: IRInstruction::Push { src: Register::A },
             span: span.clone(),
         }),
         IRItem::Instruction(Spanned {
             value: IRInstruction::Ldi {
-                dst: Register::R7,
+                dst: Register::A,
                 src: Expression::Immediate(1),
             },
             span: span.clone(),
@@ -73,12 +73,12 @@ pub(super) fn desugar(instruction: &ASTInstruction, span: &Span, id: usize) -> O
         IRItem::Instruction(Spanned {
             value: IRInstruction::Sub {
                 dst: *hi,
-                src: Register::R7,
+                src: Register::A,
             },
             span: span.clone(),
         }),
         IRItem::Instruction(Spanned {
-            value: IRInstruction::Pop { dst: Register::R7 },
+            value: IRInstruction::Pop { dst: Register::A },
             span: span.clone(),
         }),
     ]);

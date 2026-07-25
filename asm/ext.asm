@@ -25,9 +25,9 @@
         hi = addr >> 8;
         lo = addr & 0xFF;
         asm {
-            LDI R6 {hi}
-            LDI R7 {lo}
-            CALL [R6:R7]
+            LDI IH {hi}
+            LDI IL {lo}
+            CALL [IH:IL]
         }
     }
 
@@ -36,9 +36,9 @@
         hi = addr >> 8;
         lo = addr & 0xFF;
         asm {
-            LDI R6 {hi}
-            LDI R7 {lo}
-            JMP [R6:R7]
+            LDI IH {hi}
+            LDI IL {lo}
+            JMP [IH:IL]
         }
     }
 
@@ -82,19 +82,19 @@
     ; Increment register value by one
     ; WARNING: This macro may modify the stack pointer.
     INC { reg: register } => asm {
-        PUSH R7
-        LDI R7 1
-        ADD {reg} R7
-        POP R7
+        PUSH A
+        LDI A 1
+        ADD {reg} A
+        POP A
     }
 
     ; Decrement register value by one
     ; WARNING: This macro may modify the stack pointer.
     DEC { reg: register } => asm {
-        PUSH R7
-        LDI R7 1
-        SUB {reg} R7
-        POP R7
+        PUSH A
+        LDI A 1
+        SUB {reg} A
+        POP A
     }
 
     ; Increment register pair as 16 bit value

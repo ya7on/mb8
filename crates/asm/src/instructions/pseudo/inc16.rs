@@ -12,7 +12,7 @@ pub(in crate::instructions) const DESUGAR: InstructionDefinition = InstructionDe
     mnemonic: "inc16",
     handler: desugar,
     effect: RegisterEffect {
-        scratch: RegisterSet::from_registers(&[Register::R0]),
+        scratch: RegisterSet::from_registers(&[Register::A]),
     },
 };
 
@@ -31,25 +31,25 @@ pub(super) fn desugar(instruction: &ASTInstruction, span: &Span, id: usize) -> O
 
     Some(vec![
         IRItem::Instruction(Spanned {
-            value: IRInstruction::Push { src: Register::R0 },
+            value: IRInstruction::Push { src: Register::A },
             span: span.clone(),
         }),
         IRItem::Instruction(Spanned {
             value: IRInstruction::Ldi {
-                dst: Register::R0,
+                dst: Register::A,
                 src: Expression::Immediate(0xFF),
             },
             span: span.clone(),
         }),
         IRItem::Instruction(Spanned {
             value: IRInstruction::Sub {
-                dst: Register::R0,
+                dst: Register::A,
                 src: *lo,
             },
             span: span.clone(),
         }),
         IRItem::Instruction(Spanned {
-            value: IRInstruction::Pop { dst: Register::R0 },
+            value: IRInstruction::Pop { dst: Register::A },
             span: span.clone(),
         }),
         IRItem::Instruction(Spanned {
@@ -62,12 +62,12 @@ pub(super) fn desugar(instruction: &ASTInstruction, span: &Span, id: usize) -> O
             span: span.clone(),
         }),
         IRItem::Instruction(Spanned {
-            value: IRInstruction::Push { src: Register::R0 },
+            value: IRInstruction::Push { src: Register::A },
             span: span.clone(),
         }),
         IRItem::Instruction(Spanned {
             value: IRInstruction::Ldi {
-                dst: Register::R0,
+                dst: Register::A,
                 src: Expression::Immediate(1),
             },
             span: span.clone(),
@@ -75,12 +75,12 @@ pub(super) fn desugar(instruction: &ASTInstruction, span: &Span, id: usize) -> O
         IRItem::Instruction(Spanned {
             value: IRInstruction::Add {
                 dst: *lo,
-                src: Register::R0,
+                src: Register::A,
             },
             span: span.clone(),
         }),
         IRItem::Instruction(Spanned {
-            value: IRInstruction::Pop { dst: Register::R0 },
+            value: IRInstruction::Pop { dst: Register::A },
             span: span.clone(),
         }),
         IRItem::Instruction(Spanned {
@@ -104,12 +104,12 @@ pub(super) fn desugar(instruction: &ASTInstruction, span: &Span, id: usize) -> O
             span: span.clone(),
         }),
         IRItem::Instruction(Spanned {
-            value: IRInstruction::Push { src: Register::R0 },
+            value: IRInstruction::Push { src: Register::A },
             span: span.clone(),
         }),
         IRItem::Instruction(Spanned {
             value: IRInstruction::Ldi {
-                dst: Register::R0,
+                dst: Register::A,
                 src: Expression::Immediate(1),
             },
             span: span.clone(),
@@ -117,12 +117,12 @@ pub(super) fn desugar(instruction: &ASTInstruction, span: &Span, id: usize) -> O
         IRItem::Instruction(Spanned {
             value: IRInstruction::Add {
                 dst: *hi,
-                src: Register::R0,
+                src: Register::A,
             },
             span: span.clone(),
         }),
         IRItem::Instruction(Spanned {
-            value: IRInstruction::Pop { dst: Register::R0 },
+            value: IRInstruction::Pop { dst: Register::A },
             span: span.clone(),
         }),
         IRItem::Label(Spanned {
